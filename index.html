@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1000yo</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <main class="app">
+      <h1>Thousand Year Old Vampire</h1>
+      <p class="subtitle">Capture and review your vampire's memories.</p>
+
+      <section class="card">
+        <label for="name">Character name</label>
+        <input id="name" value="Unnamed Vampire" />
+
+        <label for="memory">New memory</label>
+        <textarea id="memory" rows="3" placeholder="I remember..."></textarea>
+
+        <button id="add-memory">Add memory</button>
+      </section>
+
+      <section class="card">
+        <h2 id="character-title">Unnamed Vampire's Memories</h2>
+        <ul id="memory-list"></ul>
+      </section>
+    </main>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

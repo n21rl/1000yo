@@ -4,33 +4,31 @@ const character = new Character();
 
 const elements = {
   nameInput: document.querySelector("#name"),
-  setupStatus: document.querySelector("#setup-status"),
-  readinessDetail: document.querySelector("#readiness-detail"),
   memoryForm: document.querySelector("#memory-form"),
   memoryTitle: document.querySelector("#memory-title"),
   memoryExperience: document.querySelector("#memory-experience"),
   memoryList: document.querySelector("#memory-list"),
+  memoriesStatus: document.querySelector("#memories-status"),
   skillForm: document.querySelector("#skill-form"),
   skillInput: document.querySelector("#skill-input"),
   skillList: document.querySelector("#skill-list"),
+  skillsStatus: document.querySelector("#skills-status"),
   resourceForm: document.querySelector("#resource-form"),
   resourceInput: document.querySelector("#resource-input"),
   resourceList: document.querySelector("#resource-list"),
+  resourcesStatus: document.querySelector("#resources-status"),
   characterForm: document.querySelector("#character-form"),
   characterName: document.querySelector("#character-name"),
   characterDescription: document.querySelector("#character-description"),
   characterType: document.querySelector("#character-type"),
   characterList: document.querySelector("#character-list"),
+  charactersStatus: document.querySelector("#characters-status"),
   markForm: document.querySelector("#mark-form"),
   markInput: document.querySelector("#mark-input"),
   markList: document.querySelector("#mark-list"),
-  summaryName: document.querySelector("#summary-name"),
-  summaryCounts: document.querySelector("#summary-counts"),
+  marksStatus: document.querySelector("#marks-status"),
   promptHint: document.querySelector("#prompt-hint"),
 };
-
-const formatRequirement = ({ label, count, minimum, met }) =>
-  `${met ? "Complete" : "Needed"}: ${label} ${count}/${minimum}`;
 
 const bindRemove = (button, handler) => {
   button.addEventListener("click", handler);
@@ -130,36 +128,35 @@ const renderCharacters = () => {
   }
 };
 
-const renderReadiness = () => {
-  const requirements = character.getSetupRequirements();
-  elements.readinessDetail.innerHTML = "";
-
-  for (const requirement of requirements) {
-    const item = document.createElement("li");
-    item.className = requirement.met ? "check complete" : "check";
-    item.textContent = formatRequirement(requirement);
-    elements.readinessDetail.append(item);
-  }
-
-  const ready = character.isReadyForPromptOne();
-  elements.setupStatus.textContent = ready
-    ? "Setup complete. You are ready to begin Prompt 1."
-    : "Build the vampire's prelude until every requirement is complete.";
-  elements.setupStatus.className = ready ? "status ready" : "status";
-  elements.promptHint.textContent = ready
-    ? "Prompt 1 starts once you begin answering the prompt deck."
-    : "Prompt 1 stays locked until the starting vampire is fully built.";
+const setSectionStatus = (element, isReady, label) => {
+  element.textContent = isReady ? "✓" : label;
+  element.className = isReady ? "section-status complete" : "section-status";
 };
 
-const renderSummary = () => {
-  elements.summaryName.textContent = character.name;
-  elements.summaryCounts.textContent =
-    `${character.memories.length} memories, ` +
-    `${character.skills.length} skills, ` +
-    `${character.resources.length} resources, ` +
-    `${character.mortalCount} mortals, ` +
-    `${character.immortalCount} immortals, ` +
-    `${character.marks.length} marks`;
+const renderSectionStatus = () => {
+  setSectionStatus(
+    elements.memoriesStatus,
+    character.memories.length >= 5,
+    `${character.memories.length}/5`,
+  );
+  setSectionStatus(elements.skillsStatus, character.skills.length >= 3, `${character.skills.length}/3`);
+  setSectionStatus(
+    elements.resourcesStatus,
+    character.resources.length >= 3,
+    `${character.resources.length}/3`,
+  );
+  setSectionStatus(
+    elements.charactersStatus,
+    character.mortalCount >= 3 && character.immortalCount >= 1,
+    `${character.mortalCount}M ${character.immortalCount}I`,
+  );
+  setSectionStatus(elements.marksStatus, character.marks.length >= 1, `${character.marks.length}/1`);
+
+  const ready = character.isReadyForPromptOne();
+  elements.promptHint.textContent = ready
+    ? "Setup complete. You are ready to begin Prompt 1."
+    : "Add the remaining setup pieces, then begin Prompt 1.";
+  elements.promptHint.className = ready ? "supporting hero-status ready" : "supporting hero-status";
 };
 
 const render = () => {
@@ -171,8 +168,7 @@ const render = () => {
   );
   renderCharacters();
   renderStringList(elements.markList, character.marks, (index) => character.removeMark(index));
-  renderReadiness();
-  renderSummary();
+  renderSectionStatus();
 };
 
 elements.nameInput.addEventListener("change", () => {

@@ -33,6 +33,15 @@ select {
   padding: 1rem 0 0.5rem;
 }
 
+.hero-status {
+  margin-bottom: 0;
+  color: #f2c885;
+}
+
+.hero-status.ready {
+  color: #99d8ae;
+}
+
 .eyebrow {
   margin: 0;
   letter-spacing: 0.16em;
@@ -80,23 +89,25 @@ h2 {
   backdrop-filter: blur(4px);
 }
 
-.card-heading {
+.section-heading {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
-  align-items: start;
+  align-items: center;
 }
 
-.summary {
-  text-align: right;
+.section-status {
+  min-width: 3.5rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid #725145;
+  color: #d9cbb4;
+  text-align: center;
+  font-size: 0.9rem;
 }
 
-.status {
-  margin-bottom: 0;
-  color: #f2c885;
-}
-
-.status.ready {
+.section-status.complete {
+  border-color: #5f8f69;
   color: #99d8ae;
 }
 
@@ -143,12 +154,6 @@ button:hover {
 }
 
 .record-list,
-.checklist {
-  list-style: none;
-  padding: 0;
-  margin: 1rem 0 0;
-}
-
 .record {
   display: flex;
   justify-content: space-between;
@@ -175,32 +180,14 @@ button:hover {
   margin-bottom: 0;
 }
 
-.check {
-  padding: 0.45rem 0;
-  border-top: 1px solid rgba(158, 122, 106, 0.25);
-  color: #f0d8b5;
-}
-
-.check:first-child {
-  border-top: 0;
-}
-
-.check.complete {
-  color: #99d8ae;
-}
-
 @media (max-width: 720px) {
   .app {
     padding-inline: 0.8rem;
   }
 
-  .card-heading,
+  .section-heading,
   .record {
     flex-direction: column;
-  }
-
-  .summary {
-    text-align: left;
   }
 
   .ghost-button {

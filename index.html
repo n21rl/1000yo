@@ -12,134 +12,161 @@
         <p class="eyebrow">Pre-Prompt 1</p>
         <h1>Thousand Year Old Vampire</h1>
         <p class="subtitle">
-          Build the mortal life, the curse, and the five starting memories before the
-          prompt deck begins.
+          Build your vampire in rules order: mortal life, mortals, skills/resources,
+          additional memories, then the curse.
         </p>
         <p id="prompt-hint" class="supporting hero-status"></p>
       </section>
 
-      <section class="grid">
-        <section class="card">
-          <div class="section-heading">
-            <h2>Identity</h2>
-          </div>
+      <section class="wizard card">
+        <div class="wizard-header">
+          <h2 id="step-title">Step 1</h2>
+          <span id="step-progress" class="section-status">1/5</span>
+        </div>
+
+        <ol class="step-list" id="step-list">
+          <li data-step="0">Identity + first Memory</li>
+          <li data-step="1">At least 3 Mortals</li>
+          <li data-step="2">3 Skills + 3 Resources</li>
+          <li data-step="3">Three more Memories</li>
+          <li data-step="4">Immortal + Mark + final Memory</li>
+        </ol>
+
+        <section class="step-panel" data-step-panel="0">
           <p class="supporting">
-            Name the vampire and use the first memory to summarize their mortal life.
+            Start with who they were before undeath, then record the first Memory.
           </p>
           <label for="name">Vampire name</label>
           <input id="name" value="Unnamed Vampire" />
+
+          <form id="memory-form-identity" class="stack">
+            <label for="memory-title-identity">First memory theme</label>
+            <input id="memory-title-identity" placeholder="Mortal life" />
+
+            <label for="memory-experience-identity">First Experience</label>
+            <textarea
+              id="memory-experience-identity"
+              rows="3"
+              placeholder="I was born near the Loire and denied my inheritance."
+            ></textarea>
+
+            <button type="submit">Add first memory</button>
+          </form>
+
+          <ul id="identity-memory-list" class="record-list"></ul>
         </section>
 
-        <section class="card">
-          <div class="section-heading">
-            <h2>Memories</h2>
-            <span id="memories-status" class="section-status"></span>
-          </div>
-          <p class="supporting">
-            Add five starting memories. Each begins with one Experience; the fifth should
-            cover the curse and transformation.
-          </p>
-          <form id="memory-form" class="stack">
-            <label for="memory-title">Memory theme</label>
-            <input id="memory-title" placeholder="Birthright denied" />
+        <section class="step-panel" data-step-panel="1" hidden>
+          <p class="supporting">Create at least three mortal Characters tied to your past.</p>
+          <form id="mortal-form" class="stack">
+            <label for="mortal-name">Mortal name</label>
+            <input id="mortal-name" placeholder="Rhea" />
 
-            <label for="memory-experience">Experience</label>
+            <label for="mortal-description">Description</label>
             <textarea
-              id="memory-experience"
-              rows="4"
-              placeholder="I was born near the Loire and swindled out of my inheritance."
+              id="mortal-description"
+              rows="3"
+              placeholder="My sister, still loyal despite what I become."
+            ></textarea>
+
+            <button type="submit">Add mortal</button>
+          </form>
+
+          <ul id="mortal-list" class="record-list"></ul>
+        </section>
+
+        <section class="step-panel" data-step-panel="2" hidden>
+          <p class="supporting">Add three Skills and three Resources from mortal life.</p>
+          <div class="grid">
+            <section>
+              <form id="skill-form" class="stack">
+                <label for="skill-input">Skill</label>
+                <input id="skill-input" placeholder="Swordplay" />
+                <button type="submit">Add skill</button>
+              </form>
+              <ul id="skill-list" class="record-list"></ul>
+            </section>
+
+            <section>
+              <form id="resource-form" class="stack">
+                <label for="resource-input">Resource</label>
+                <input id="resource-input" placeholder="A longship named Bokesuden" />
+                <button type="submit">Add resource</button>
+              </form>
+              <ul id="resource-list" class="record-list"></ul>
+            </section>
+          </div>
+        </section>
+
+        <section class="step-panel" data-step-panel="3" hidden>
+          <p class="supporting">
+            Add three more Memories (for a total of four before the curse).
+          </p>
+          <form id="memory-form-later" class="stack">
+            <label for="memory-title-later">Memory theme</label>
+            <input id="memory-title-later" placeholder="War service" />
+
+            <label for="memory-experience-later">Experience</label>
+            <textarea
+              id="memory-experience-later"
+              rows="3"
+              placeholder="Gundar calmed me when I first sailed beyond sight of land."
             ></textarea>
 
             <button type="submit">Add memory</button>
           </form>
 
-          <ul id="memory-list" class="record-list"></ul>
+          <ul id="later-memory-list" class="record-list"></ul>
         </section>
 
-        <section class="card">
-          <div class="section-heading">
-            <h2>Characters</h2>
-            <span id="characters-status" class="section-status"></span>
-          </div>
+        <section class="step-panel" data-step-panel="4" hidden>
           <p class="supporting">
-            Start with at least three mortals and one immortal who brought the curse.
+            Lastly: define the Immortal, record your Mark, and add the curse Memory.
           </p>
-          <form id="character-form" class="stack">
-            <label for="character-name">Character name</label>
-            <input id="character-name" placeholder="Baron Hollmueller" />
+          <form id="immortal-form" class="stack">
+            <label for="immortal-name">Immortal name</label>
+            <input id="immortal-name" placeholder="Baron Hollmueller" />
 
-            <label for="character-description">Description</label>
+            <label for="immortal-description">Description</label>
             <textarea
-              id="character-description"
+              id="immortal-description"
               rows="3"
-              placeholder="Austrian noble and vampire; he stole the deed to my land."
+              placeholder="An Austrian noble vampire who stole my land."
             ></textarea>
 
-            <label for="character-type">Type</label>
-            <select id="character-type">
-              <option value="mortal">Mortal</option>
-              <option value="immortal">Immortal</option>
-            </select>
-
-            <button type="submit">Add character</button>
+            <button type="submit">Add immortal</button>
           </form>
 
-          <ul id="character-list" class="record-list"></ul>
-        </section>
+          <ul id="immortal-list" class="record-list"></ul>
 
-        <section class="card">
-          <div class="section-heading">
-            <h2>Skills</h2>
-            <span id="skills-status" class="section-status"></span>
-          </div>
-          <p class="supporting">
-            Add the three capabilities your character possessed before undeath.
-          </p>
-          <form id="skill-form" class="stack">
-            <label for="skill-input">Skill</label>
-            <input id="skill-input" placeholder="Swordplay" />
-            <button type="submit">Add skill</button>
-          </form>
-
-          <ul id="skill-list" class="record-list"></ul>
-        </section>
-
-        <section class="card">
-          <div class="section-heading">
-            <h2>Resources</h2>
-            <span id="resources-status" class="section-status"></span>
-          </div>
-          <p class="supporting">
-            Add three mortal-world assets, from keepsakes to estates or warships.
-          </p>
-          <form id="resource-form" class="stack">
-            <label for="resource-input">Resource</label>
-            <input id="resource-input" placeholder="A longship named Bokesuden" />
-            <button type="submit">Add resource</button>
-          </form>
-
-          <ul id="resource-list" class="record-list"></ul>
-        </section>
-
-        <section class="card">
-          <div class="section-heading">
-            <h2>Marks</h2>
-            <span id="marks-status" class="section-status"></span>
-          </div>
-          <p class="supporting">
-            Record the visible sign of undeath that follows the vampire forever.
-          </p>
           <form id="mark-form" class="stack">
             <label for="mark-input">Mark</label>
-            <input
-              id="mark-input"
-              placeholder="My neck is permanently broken; I hide it with scarves."
-            />
+            <input id="mark-input" placeholder="My neck is permanently broken beneath scarves." />
             <button type="submit">Add mark</button>
           </form>
-
           <ul id="mark-list" class="record-list"></ul>
+
+          <form id="memory-form-curse" class="stack">
+            <label for="memory-title-curse">Curse memory theme</label>
+            <input id="memory-title-curse" placeholder="The curse" />
+
+            <label for="memory-experience-curse">Curse Experience</label>
+            <textarea
+              id="memory-experience-curse"
+              rows="3"
+              placeholder="I dueled the Baron at dawn and still rose after the killing blow."
+            ></textarea>
+
+            <button type="submit">Add final memory</button>
+          </form>
+
+          <ul id="curse-memory-list" class="record-list"></ul>
         </section>
+
+        <div class="wizard-nav">
+          <button type="button" class="ghost-button" id="back-button">Back</button>
+          <button type="button" id="next-button">Next</button>
+        </div>
       </section>
     </main>
 

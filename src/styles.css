@@ -89,11 +89,43 @@ h2 {
   backdrop-filter: blur(4px);
 }
 
+.wizard {
+  max-width: 56rem;
+}
+
+.wizard-header,
 .section-heading {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
   align-items: center;
+}
+
+.step-list {
+  margin: 0 0 1rem;
+  padding-left: 1.2rem;
+  color: #d9cbb4;
+}
+
+.step-list li {
+  opacity: 0.68;
+}
+
+.step-list li.active {
+  color: #f6eddc;
+  opacity: 1;
+}
+
+.step-list li.complete {
+  color: #99d8ae;
+  opacity: 1;
+}
+
+.wizard-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
 }
 
 .section-status {
@@ -146,6 +178,12 @@ button:hover {
   filter: brightness(1.06);
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: none;
+}
+
 .ghost-button {
   width: auto;
   min-width: 6rem;
@@ -186,7 +224,8 @@ button:hover {
   }
 
   .section-heading,
-  .record {
+  .record,
+  .wizard-nav {
     flex-direction: column;
   }
 

@@ -334,3 +334,62 @@ button:disabled {
     width: 100%;
   }
 }
+
+
+.menu-screen {
+  max-width: 64rem;
+}
+
+.menu-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.menu-actions {
+  height: 100%;
+}
+
+.menu-heading {
+  margin-bottom: 0.5rem;
+  font-family: "Georgia", "Times New Roman", serif;
+}
+
+.menu-button-stack button + button {
+  margin-top: 0.9rem;
+}
+
+.vampire-record {
+  align-items: center;
+}
+
+.vampire-record.selected {
+  border-color: #c9a370;
+  box-shadow: 0 0 0 1px rgba(201, 163, 112, 0.35);
+}
+
+.vampire-option {
+  width: auto;
+  flex: 1;
+  text-align: left;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.vampire-option strong {
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.vampire-option p {
+  margin: 0;
+  color: #d9cbb4;
+}
+
+@media (max-width: 720px) {
+  .menu-layout {
+    grid-template-columns: 1fr;
+  }
+}

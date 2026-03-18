@@ -20,6 +20,59 @@ export class Character {
     this.marks = [];
   }
 
+
+
+  static from(data = {}) {
+    const character = new Character(data.name);
+    character.memories = Array.isArray(data.memories)
+      ? data.memories
+        .map((memory) => ({
+          text: cleanText(memory?.text),
+          traits: Array.isArray(memory?.traits)
+            ? memory.traits.map((trait) => cleanText(trait)).filter(Boolean)
+            : [],
+        }))
+        .filter((memory) => Boolean(memory.text))
+        .slice(0, MAX_MEMORIES)
+      : [];
+    character.skills = Array.isArray(data.skills)
+      ? data.skills
+        .map((item) => ({
+          name: cleanText(item?.name),
+          description: cleanText(item?.description),
+        }))
+        .filter((item) => Boolean(item.name))
+      : [];
+    character.resources = Array.isArray(data.resources)
+      ? data.resources
+        .map((item) => ({
+          name: cleanText(item?.name),
+          description: cleanText(item?.description),
+        }))
+        .filter((item) => Boolean(item.name))
+      : [];
+    character.characters = Array.isArray(data.characters)
+      ? data.characters
+        .map((entry) => ({
+          name: cleanText(entry?.name),
+          description: cleanText(entry?.description),
+          type: CHARACTER_TYPES.has(cleanText(entry?.type).toLowerCase())
+            ? cleanText(entry?.type).toLowerCase()
+            : null,
+        }))
+        .filter((entry) => Boolean(entry.name) && Boolean(entry.type))
+      : [];
+    character.marks = Array.isArray(data.marks)
+      ? data.marks
+        .map((item) => ({
+          name: cleanText(item?.name),
+          description: cleanText(item?.description),
+        }))
+        .filter((item) => Boolean(item.name))
+      : [];
+    return character;
+  }
+
   rename(name) {
     this.name = cleanText(name);
     return Boolean(this.name);

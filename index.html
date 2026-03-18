@@ -12,7 +12,35 @@
         <h1>Thousand Year Old Vampire</h1>
       </section>
 
-      <section id="creation-screen" class="wizard card">
+      <section id="menu-screen" class="card menu-screen">
+        <div class="wizard-header">
+          <div>
+            <h2 class="wizard-title">Start Menu</h2>
+            <p class="subtitle">Choose an existing vampire, remove one, or begin a new chronicle.</p>
+          </div>
+          <span class="section-status complete">Menu</span>
+        </div>
+
+        <div class="menu-layout">
+          <section>
+            <h3 class="menu-heading">Saved Vampires</h3>
+            <p id="menu-empty-state" class="supporting">No vampires saved yet. Create one to begin.</p>
+            <ul id="vampire-list" class="record-list"></ul>
+          </section>
+
+          <section class="card menu-actions">
+            <h3 class="menu-heading">Actions</h3>
+            <p class="supporting">Creation stays separate from play until every required setup step is complete.</p>
+            <div class="stack menu-button-stack">
+              <button type="button" id="continue-button">Continue creation</button>
+              <button type="button" id="delete-button" class="ghost-button">Delete selected vampire</button>
+              <button type="button" id="new-vampire-button" class="ghost-button">Create new vampire</button>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <section id="creation-screen" class="wizard card" hidden>
         <div class="wizard-header">
           <h2 class="wizard-title">Vampire Creation</h2>
           <span id="step-progress" class="section-status">1/8</span>

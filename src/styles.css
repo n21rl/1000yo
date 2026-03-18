@@ -1,5 +1,5 @@
 :root {
-  font-family: "Georgia", "Times New Roman", serif;
+  font-family: "Helvetica Neue", Arial, sans-serif;
   color: #f6eddc;
   background:
     radial-gradient(circle at top, rgba(167, 39, 51, 0.28), transparent 36%),
@@ -33,27 +33,16 @@ select {
   padding: 1rem 0 0.5rem;
 }
 
-.hero-status {
-  margin-bottom: 0;
-  color: #f2c885;
-}
-
-.hero-status.ready {
-  color: #99d8ae;
-}
-
-.eyebrow {
-  margin: 0;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #caa46f;
-  font-size: 0.8rem;
-}
-
 h1,
 h2,
 p {
   margin-top: 0;
+}
+
+h1,
+h2,
+.wizard-title {
+  font-family: "Georgia", "Times New Roman", serif;
 }
 
 h1 {
@@ -99,26 +88,13 @@ h2 {
   justify-content: space-between;
   gap: 1rem;
   align-items: center;
+  margin-bottom: 1rem;
 }
 
-.step-list {
-  margin: 0 0 1rem;
-  padding-left: 1.2rem;
-  color: #d9cbb4;
-}
-
-.step-list li {
-  opacity: 0.68;
-}
-
-.step-list li.active {
-  color: #f6eddc;
-  opacity: 1;
-}
-
-.step-list li.complete {
-  color: #99d8ae;
-  opacity: 1;
+.wizard-title {
+  margin-bottom: 0;
+  font-size: clamp(1.9rem, 3vw, 2.8rem);
+  line-height: 1;
 }
 
 .wizard-nav {
@@ -126,6 +102,19 @@ h2 {
   justify-content: space-between;
   gap: 1rem;
   margin-top: 1rem;
+}
+
+.save-confirmation {
+  margin: 1rem 0 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid #5f8f69;
+  border-radius: 0.85rem;
+  background: rgba(36, 67, 42, 0.3);
+  color: #b8ebc5;
+}
+
+.step-panel > * + * {
+  margin-top: 1.75rem;
 }
 
 .section-status {
@@ -144,12 +133,83 @@ h2 {
 }
 
 .stack > * + * {
-  margin-top: 0.65rem;
+  margin-top: 0;
 }
 
 label {
   display: block;
   color: #efe0c0;
+  margin-bottom: 0.6rem;
+  font-weight: 700;
+}
+
+.stack label:not(:first-child) {
+  margin-top: 1.5rem;
+}
+
+.stack button {
+  margin-top: 1.75rem;
+}
+
+.trait-guidance {
+  margin: -0.1rem 0 0.85rem;
+}
+
+.trait-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  column-gap: 1.8rem;
+  row-gap: 0.9rem;
+  align-items: start;
+}
+
+.trait-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  align-self: start;
+}
+
+.trait-group-title {
+  margin: 0;
+  color: #efe0c0;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.trait-pills {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  column-gap: 0.45rem;
+  row-gap: 0.1rem;
+}
+
+.trait-pill,
+.record-tag {
+  width: auto;
+  border-radius: 999px;
+  border: 1px solid #725145;
+  background: rgba(20, 14, 14, 0.72);
+  color: #d9cbb4;
+  padding: 0.35rem 0.8rem;
+}
+
+.trait-pill {
+  cursor: pointer;
+}
+
+.trait-pill.selected {
+  border-color: #c9a370;
+  background: rgba(123, 46, 45, 0.3);
+  color: #f6eddc;
+}
+
+.record-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.75rem;
 }
 
 input,
@@ -191,18 +251,23 @@ button:disabled {
   border-color: #725145;
 }
 
-.record-list,
+.record-list {
+  list-style: none;
+  margin: 1rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
 .record {
   display: flex;
   justify-content: space-between;
   gap: 1rem;
   align-items: start;
-  padding: 0.85rem 0;
-  border-top: 1px solid rgba(158, 122, 106, 0.25);
-}
-
-.record:first-child {
-  border-top: 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(158, 122, 106, 0.25);
+  border-radius: 0.85rem;
+  background: rgba(20, 14, 14, 0.48);
 }
 
 .record-body {
@@ -215,6 +280,7 @@ button:disabled {
 }
 
 .record-body p {
+  margin-top: 0;
   margin-bottom: 0;
 }
 

@@ -9,64 +9,41 @@
   <body>
     <main class="app">
       <section class="hero">
-        <p class="eyebrow">Pre-Prompt 1</p>
         <h1>Thousand Year Old Vampire</h1>
-        <p class="subtitle">
-          Build your vampire in rules order: mortal life, mortals, skills/resources,
-          additional memories, then the curse.
-        </p>
-        <p id="prompt-hint" class="supporting hero-status"></p>
       </section>
 
       <section class="wizard card">
         <div class="wizard-header">
-          <h2 id="step-title">Step 1</h2>
-          <span id="step-progress" class="section-status">1/5</span>
+          <h2 class="wizard-title">Vampire Creation</h2>
+          <span id="step-progress" class="section-status">1/8</span>
         </div>
 
-        <ol class="step-list" id="step-list">
-          <li data-step="0">Identity + first Memory</li>
-          <li data-step="1">At least 3 Mortals</li>
-          <li data-step="2">3 Skills + 3 Resources</li>
-          <li data-step="3">Three more Memories</li>
-          <li data-step="4">Immortal + Mark + final Memory</li>
-        </ol>
-
         <section class="step-panel" data-step-panel="0">
-          <p class="supporting">
-            Start with who they were before undeath, then record the first Memory.
-          </p>
-          <label for="name">Vampire name</label>
-          <input id="name" value="Unnamed Vampire" />
+          <label for="name">Vampire name *</label>
+          <input id="name" placeholder="Enter the vampire's name" />
 
-          <form id="memory-form-identity" class="stack">
-            <label for="memory-title-identity">First memory theme</label>
-            <input id="memory-title-identity" placeholder="Mortal life" />
-
-            <label for="memory-experience-identity">First Experience</label>
-            <textarea
-              id="memory-experience-identity"
-              rows="3"
-              placeholder="I was born near the Loire and denied my inheritance."
-            ></textarea>
-
-            <button type="submit">Add first memory</button>
-          </form>
+          <label for="memory-identity">First memory *</label>
+          <textarea
+            id="memory-identity"
+            rows="4"
+            placeholder="Describe the vampire's first defining memory"
+          ></textarea>
 
           <ul id="identity-memory-list" class="record-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="1" hidden>
-          <p class="supporting">Create at least three mortal Characters tied to your past.</p>
+          <p class="supporting">Add at least 3 mortals before continuing.</p>
+
           <form id="mortal-form" class="stack">
-            <label for="mortal-name">Mortal name</label>
-            <input id="mortal-name" placeholder="Rhea" />
+            <label for="mortal-name">Mortal name *</label>
+            <input id="mortal-name" placeholder="Enter a mortal's name" />
 
             <label for="mortal-description">Description</label>
             <textarea
               id="mortal-description"
               rows="3"
-              placeholder="My sister, still loyal despite what I become."
+              placeholder="Describe this mortal's role or relationship to the vampire"
             ></textarea>
 
             <button type="submit">Add mortal</button>
@@ -76,42 +53,61 @@
         </section>
 
         <section class="step-panel" data-step-panel="2" hidden>
-          <p class="supporting">Add three Skills and three Resources from mortal life.</p>
-          <div class="grid">
-            <section>
-              <form id="skill-form" class="stack">
-                <label for="skill-input">Skill</label>
-                <input id="skill-input" placeholder="Swordplay" />
-                <button type="submit">Add skill</button>
-              </form>
-              <ul id="skill-list" class="record-list"></ul>
-            </section>
+          <p class="supporting">Add at least 3 skills before continuing.</p>
 
-            <section>
-              <form id="resource-form" class="stack">
-                <label for="resource-input">Resource</label>
-                <input id="resource-input" placeholder="A longship named Bokesuden" />
-                <button type="submit">Add resource</button>
-              </form>
-              <ul id="resource-list" class="record-list"></ul>
-            </section>
-          </div>
+          <form id="skill-form" class="stack">
+            <label for="skill-name">Skill *</label>
+            <input id="skill-name" placeholder="Enter a skill the vampire has learned" />
+
+            <label for="skill-description">Description</label>
+            <textarea
+              id="skill-description"
+              rows="3"
+              placeholder="Describe how this skill was learned or how it is used"
+            ></textarea>
+
+            <button type="submit">Add skill</button>
+          </form>
+
+          <ul id="skill-list" class="record-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="3" hidden>
-          <p class="supporting">
-            Add three more Memories (for a total of four before the curse).
-          </p>
-          <form id="memory-form-later" class="stack">
-            <label for="memory-title-later">Memory theme</label>
-            <input id="memory-title-later" placeholder="War service" />
+          <p class="supporting">Add at least 3 resources before continuing.</p>
 
-            <label for="memory-experience-later">Experience</label>
+          <form id="resource-form" class="stack">
+            <label for="resource-name">Resource *</label>
+            <input id="resource-name" placeholder="Enter a resource the vampire can rely on" />
+
+            <label for="resource-description">Description</label>
             <textarea
-              id="memory-experience-later"
+              id="resource-description"
               rows="3"
-              placeholder="Gundar calmed me when I first sailed beyond sight of land."
+              placeholder="Describe what this resource is or why it matters"
             ></textarea>
+
+            <button type="submit">Add resource</button>
+          </form>
+
+          <ul id="resource-list" class="record-list"></ul>
+        </section>
+
+        <section class="step-panel" data-step-panel="4" hidden>
+          <p class="supporting">Add 3 more memories here before continuing.</p>
+
+          <form id="memory-form-later" class="stack">
+            <label for="memory-later">Memory *</label>
+            <textarea
+              id="memory-later"
+              rows="4"
+              placeholder="Describe another important memory from the vampire's life"
+            ></textarea>
+
+            <label>Traits *</label>
+            <p class="supporting trait-guidance">
+              Select at least 2 traits this memory combines.
+            </p>
+            <div id="memory-traits-later" class="trait-groups"></div>
 
             <button type="submit">Add memory</button>
           </form>
@@ -119,45 +115,52 @@
           <ul id="later-memory-list" class="record-list"></ul>
         </section>
 
-        <section class="step-panel" data-step-panel="4" hidden>
-          <p class="supporting">
-            Lastly: define the Immortal, record your Mark, and add the curse Memory.
-          </p>
+        <section class="step-panel" data-step-panel="5" hidden>
           <form id="immortal-form" class="stack">
-            <label for="immortal-name">Immortal name</label>
-            <input id="immortal-name" placeholder="Baron Hollmueller" />
+            <label for="immortal-name">Immortal name *</label>
+            <input id="immortal-name" placeholder="Enter an immortal's name" />
 
             <label for="immortal-description">Description</label>
             <textarea
               id="immortal-description"
               rows="3"
-              placeholder="An Austrian noble vampire who stole my land."
+              placeholder="Describe this immortal's role or relationship to the vampire"
             ></textarea>
-
-            <button type="submit">Add immortal</button>
           </form>
 
           <ul id="immortal-list" class="record-list"></ul>
+        </section>
 
+        <section class="step-panel" data-step-panel="6" hidden>
           <form id="mark-form" class="stack">
-            <label for="mark-input">Mark</label>
-            <input id="mark-input" placeholder="My neck is permanently broken beneath scarves." />
-            <button type="submit">Add mark</button>
-          </form>
-          <ul id="mark-list" class="record-list"></ul>
+            <label for="mark-input">Mark *</label>
+            <input id="mark-input" placeholder="Describe a lasting physical or supernatural mark" />
 
-          <form id="memory-form-curse" class="stack">
-            <label for="memory-title-curse">Curse memory theme</label>
-            <input id="memory-title-curse" placeholder="The curse" />
-
-            <label for="memory-experience-curse">Curse Experience</label>
+            <label for="mark-description">Description</label>
             <textarea
-              id="memory-experience-curse"
+              id="mark-description"
               rows="3"
-              placeholder="I dueled the Baron at dawn and still rose after the killing blow."
+              placeholder="Describe what this mark looks like or how it affects the vampire"
+            ></textarea>
+          </form>
+
+          <ul id="mark-list" class="record-list"></ul>
+        </section>
+
+        <section class="step-panel" data-step-panel="7" hidden>
+          <form id="memory-form-curse" class="stack">
+            <label for="memory-curse">Curse memory *</label>
+            <textarea
+              id="memory-curse"
+              rows="4"
+              placeholder="Describe the memory of the vampire's curse or transformation"
             ></textarea>
 
-            <button type="submit">Add final memory</button>
+            <label>Traits *</label>
+            <p class="supporting trait-guidance">
+              Select at least 2 traits this memory combines.
+            </p>
+            <div id="memory-traits-curse" class="trait-groups"></div>
           </form>
 
           <ul id="curse-memory-list" class="record-list"></ul>
@@ -165,8 +168,12 @@
 
         <div class="wizard-nav">
           <button type="button" class="ghost-button" id="back-button">Back</button>
+          <button type="button" class="ghost-button" id="autofill-button">Autofill Step</button>
           <button type="button" id="next-button">Next</button>
         </div>
+        <p id="save-confirmation" class="save-confirmation" hidden>
+          Vampire creation saved. All setup fields are complete.
+        </p>
       </section>
     </main>
 

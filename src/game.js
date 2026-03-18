@@ -1,8 +1,7 @@
 const MAX_MEMORIES = 5;
-const MEMORY_EXPERIENCE_LIMIT = 3;
 const CHARACTER_TYPES = new Set(["mortal", "immortal"]);
 
-const cleanText = (value) => value.trim().replace(/\s+/g, " ");
+const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
 
 const buildRequirement = (label, count, minimum) => ({
   label,
@@ -12,8 +11,8 @@ const buildRequirement = (label, count, minimum) => ({
 });
 
 export class Character {
-  constructor(name = "Unnamed Vampire") {
-    this.name = cleanText(name) || "Unnamed Vampire";
+  constructor(name = "") {
+    this.name = cleanText(name);
     this.memories = [];
     this.skills = [];
     this.resources = [];
@@ -22,24 +21,21 @@ export class Character {
   }
 
   rename(name) {
-    const cleaned = cleanText(name);
-    if (!cleaned) return false;
-
-    this.name = cleaned;
-    return true;
+    this.name = cleanText(name);
+    return Boolean(this.name);
   }
 
-  addMemory(title, experience) {
+  addMemory(memory, traits = []) {
     if (this.memories.length >= MAX_MEMORIES) return false;
 
-    const cleanedTitle = cleanText(title);
-    const cleanedExperience = cleanText(experience);
+    const cleanedMemory = cleanText(memory);
+    const cleanedTraits = traits.map((trait) => cleanText(trait)).filter(Boolean);
 
-    if (!cleanedTitle || !cleanedExperience) return false;
+    if (!cleanedMemory) return false;
 
     this.memories.push({
-      title: cleanedTitle,
-      experiences: [cleanedExperience],
+      text: cleanedMemory,
+      traits: cleanedTraits,
     });
     return true;
   }
@@ -48,47 +44,36 @@ export class Character {
     return this.#removeAt(this.memories, index);
   }
 
-  addExperienceToMemory(index, experience) {
-    const memory = this.memories[index];
-    const cleanedExperience = cleanText(experience);
-
-    if (!memory || !cleanedExperience) return false;
-    if (memory.experiences.length >= MEMORY_EXPERIENCE_LIMIT) return false;
-
-    memory.experiences.push(cleanedExperience);
-    return true;
-  }
-
-  addSkill(skill) {
-    return this.#addListItem(this.skills, skill);
+  addSkill(name, description = "") {
+    return this.#addDetailItem(this.skills, name, description);
   }
 
   removeSkill(index) {
     return this.#removeAt(this.skills, index);
   }
 
-  addResource(resource) {
-    return this.#addListItem(this.resources, resource);
+  addResource(name, description = "") {
+    return this.#addDetailItem(this.resources, name, description);
   }
 
   removeResource(index) {
     return this.#removeAt(this.resources, index);
   }
 
-  addMark(mark) {
-    return this.#addListItem(this.marks, mark);
+  addMark(name, description = "") {
+    return this.#addDetailItem(this.marks, name, description);
   }
 
   removeMark(index) {
     return this.#removeAt(this.marks, index);
   }
 
-  addCharacter(name, description, type = "mortal") {
+  addCharacter(name, description = "", type = "mortal") {
     const cleanedName = cleanText(name);
     const cleanedDescription = cleanText(description);
     const cleanedType = cleanText(type).toLowerCase();
 
-    if (!cleanedName || !cleanedDescription) return false;
+    if (!cleanedName) return false;
     if (!CHARACTER_TYPES.has(cleanedType)) return false;
 
     this.characters.push({
@@ -126,11 +111,16 @@ export class Character {
     return this.characters.filter((character) => character.type === "immortal").length;
   }
 
-  #addListItem(list, value) {
-    const cleaned = cleanText(value);
-    if (!cleaned) return false;
+  #addDetailItem(list, name, description) {
+    const cleanedName = cleanText(name);
+    const cleanedDescription = cleanText(description);
 
-    list.push(cleaned);
+    if (!cleanedName) return false;
+
+    list.push({
+      name: cleanedName,
+      description: cleanedDescription,
+    });
     return true;
   }
 

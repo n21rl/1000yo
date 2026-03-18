@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { Character } from "../src/game.js";
 
-test("Character tracks memories as descriptions without themes", () => {
+test("Character tracks memories as collections of experiences", () => {
   const character = new Character("Aster");
 
   const result = character.addMemory("I was born beside the sea.", ["Skill: Swordplay"]);
@@ -10,8 +10,13 @@ test("Character tracks memories as descriptions without themes", () => {
   assert.equal(result, true);
   assert.deepEqual(character.memories, [
     {
-      text: "I was born beside the sea.",
-      traits: ["Skill: Swordplay"],
+      experiences: [
+        {
+          text: "I was born beside the sea.",
+          traits: ["Skill: Swordplay"],
+        },
+      ],
+      lost: false,
     },
   ]);
 });
@@ -43,6 +48,21 @@ test("Character limits current memory slots to five", () => {
   assert.equal(character.memories.length, 5);
 });
 
+test("Character appends experiences to existing memories up to three each", () => {
+  const character = new Character("Aster");
+
+  assert.equal(character.addMemory("First"), true);
+  assert.equal(character.addMemory("Second", ["Skill: Swordplay"], 0), true);
+  assert.equal(character.addMemory("Third", [], 0), true);
+  assert.equal(character.addMemory("Fourth", [], 0), false);
+
+  assert.deepEqual(character.memories[0].experiences.map((experience) => experience.text), [
+    "First",
+    "Second",
+    "Third",
+  ]);
+});
+
 test("Character counts mortal and immortal setup characters separately", () => {
   const character = new Character("Aster");
 
@@ -54,16 +74,31 @@ test("Character counts mortal and immortal setup characters separately", () => {
   assert.equal(character.immortalCount, 1);
 });
 
-test("Character stores optional descriptions for skills and resources", () => {
+test("Character stores optional descriptions and status flags for trackable traits", () => {
   const character = new Character("Aster");
 
   assert.equal(character.addSkill("Swordplay"), true);
   assert.equal(character.addResource("A warhorse", "A mount kept ready for flight."), true);
+  assert.equal(character.addCharacter("Rhea", "A mortal ally.", "mortal"), true);
   assert.equal(character.addMark("Broken neck", "Always hidden beneath high collars."), true);
 
-  assert.deepEqual(character.skills, [{ name: "Swordplay", description: "" }]);
+  character.setSkillUsed(0, true);
+  character.setResourceLost(0, true);
+  character.setCharacterUsed(0, true);
+  character.setCharacterLost(0, true);
+
+  assert.deepEqual(character.skills, [{ name: "Swordplay", description: "", used: true, lost: false }]);
   assert.deepEqual(character.resources, [
-    { name: "A warhorse", description: "A mount kept ready for flight." },
+    { name: "A warhorse", description: "A mount kept ready for flight.", used: false, lost: true },
+  ]);
+  assert.deepEqual(character.characters, [
+    {
+      name: "Rhea",
+      description: "A mortal ally.",
+      type: "mortal",
+      used: true,
+      lost: true,
+    },
   ]);
   assert.deepEqual(character.marks, [
     { name: "Broken neck", description: "Always hidden beneath high collars." },
@@ -77,10 +112,7 @@ test("Character becomes ready for Prompt 1 after the full setup is complete", ()
   character.addMemory("My sister carried my debts in silence.", ["Mortal: Rhea", "Skill: Swordplay"]);
   character.addMemory("I learned to ride with soldiers at my back.");
   character.addMemory("My uncle hid the ledgers that proved my claim.");
-  character.addMemory("I dueled a baron at dawn and did not die.", [
-    "Immortal: Baron Hollmueller",
-    "Mark: Broken neck",
-  ]);
+  character.addMemory("I dueled a baron at dawn and did not die.", ["Immortal: Baron Hollmueller", "Mark: Broken neck"]);
 
   character.addSkill("Swordplay", "A talent carried over from mortal campaigns.");
   character.addSkill("Courtly etiquette");
@@ -95,10 +127,7 @@ test("Character becomes ready for Prompt 1 after the full setup is complete", ()
   character.addCharacter("Luc", "", "mortal");
   character.addCharacter("Baron Hollmueller", "The vampire who cursed me.", "immortal");
 
-  character.addMark(
-    "My neck is permanently broken beneath my scarves.",
-    "A visible reminder of the night I died.",
-  );
+  character.addMark("My neck is permanently broken beneath my scarves.", "A visible reminder of the night I died.");
 
   assert.equal(character.isReadyForPromptOne(), true);
   assert.deepEqual(

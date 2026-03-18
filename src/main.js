@@ -999,7 +999,7 @@ const renderCollapsibleCards = () => {
     const indicator = card.querySelector(".card-toggle-indicator");
     const collapsed = collapsedCards.has(key);
     if (content) content.hidden = collapsed;
-    if (indicator) indicator.textContent = collapsed ? "+" : "−";
+    if (indicator) indicator.textContent = collapsed ? "▸" : "▾";
   });
 };
 

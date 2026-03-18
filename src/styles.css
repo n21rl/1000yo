@@ -82,6 +82,33 @@ h2 {
   max-width: 56rem;
 }
 
+.play-layout {
+  display: grid;
+  gap: 1rem;
+}
+
+.play-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(16rem, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.prompt-card {
+  grid-column: 1 / -1;
+}
+
+.play-card h2,
+.prompt-card h2 {
+  margin-bottom: 0.45rem;
+}
+
+.prompt-text {
+  margin: 0.8rem 0 0;
+  font-size: 1.03rem;
+  line-height: 1.55;
+}
+
 .wizard-header,
 .section-heading {
   display: flex;
@@ -284,6 +311,10 @@ button:disabled {
   margin-bottom: 0;
 }
 
+.record-empty {
+  justify-content: flex-start;
+}
+
 @media (max-width: 720px) {
   .app {
     padding-inline: 0.8rem;
@@ -293,6 +324,10 @@ button:disabled {
   .record,
   .wizard-nav {
     flex-direction: column;
+  }
+
+  .play-grid {
+    grid-template-columns: 1fr;
   }
 
   .ghost-button {

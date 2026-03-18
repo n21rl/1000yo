@@ -1,11 +1,13 @@
 import { Character } from "./game.js";
 
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
+const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
 const MIN_MEMORY_TRAITS = 2;
 
 const character = new Character();
 let currentStep = 0;
 let hasSavedSetup = false;
+let currentScreen = "creation";
 const selectedLaterTraitIds = new Set();
 const selectedCurseTraitIds = new Set();
 const sampleMortals = [
@@ -29,7 +31,19 @@ const sampleLaterMemories = [
   "I abandoned a refuge to protect the people tied to my mortal name.",
 ];
 
+const promptState = {
+  deck: [],
+  isLoading: false,
+  loadError: "",
+  currentPrompt: 1,
+  visits: new Map(),
+  lastRoll: null,
+};
+
 const elements = {
+  creationScreen: document.querySelector("#creation-screen"),
+  playScreen: document.querySelector("#play-screen"),
+
   nameInput: document.querySelector("#name"),
   identityMemoryInput: document.querySelector("#memory-identity"),
   stepProgress: document.querySelector("#step-progress"),
@@ -75,6 +89,19 @@ const elements = {
   curseMemoryList: document.querySelector("#curse-memory-list"),
 
   identityMemoryList: document.querySelector("#identity-memory-list"),
+
+  playName: document.querySelector("#play-name"),
+  playMemoryList: document.querySelector("#play-memory-list"),
+  playCharacterList: document.querySelector("#play-character-list"),
+  playSkillList: document.querySelector("#play-skill-list"),
+  playResourceList: document.querySelector("#play-resource-list"),
+  playMarkList: document.querySelector("#play-mark-list"),
+
+  rollButton: document.querySelector("#roll-button"),
+  promptPosition: document.querySelector("#prompt-position"),
+  promptRollResult: document.querySelector("#prompt-roll-result"),
+  promptVisit: document.querySelector("#prompt-visit"),
+  promptText: document.querySelector("#prompt-text"),
 };
 
 const totalSteps = elements.stepPanels.length;
@@ -86,6 +113,12 @@ const bindRemove = (button, handler) => {
 
 const markDirty = () => {
   hasSavedSetup = false;
+};
+
+const setScreen = (screen) => {
+  currentScreen = screen;
+  elements.creationScreen.hidden = currentScreen !== "creation";
+  elements.playScreen.hidden = currentScreen !== "play";
 };
 
 const getTraitGroups = () => [
@@ -203,8 +236,34 @@ const renderTraitSelector = (container, selectedIds) => {
   }
 };
 
-const renderRecords = (listElement, records, removeItem) => {
+const createEmptyRecord = (message) => {
+  const item = document.createElement("li");
+  item.className = "record record-empty";
+
+  const body = document.createElement("div");
+  body.className = "record-body";
+
+  const text = document.createElement("p");
+  text.className = "supporting";
+  text.textContent = message;
+
+  body.append(text);
+  item.append(body);
+  return item;
+};
+
+const renderRecords = (
+  listElement,
+  records,
+  removeItem = null,
+  emptyMessage = "No entries yet.",
+) => {
   listElement.innerHTML = "";
+
+  if (!records.length) {
+    listElement.append(createEmptyRecord(emptyMessage));
+    return;
+  }
 
   for (const record of records) {
     const item = document.createElement("li");
@@ -239,17 +298,23 @@ const renderRecords = (listElement, records, removeItem) => {
       body.append(tags);
     }
 
-    const removeButton = document.createElement("button");
-    removeButton.type = "button";
-    removeButton.className = "ghost-button";
-    removeButton.textContent = "Remove";
-    bindRemove(removeButton, () => {
-      removeItem(record.index);
-      markDirty();
-      render();
-    });
+    if (removeItem) {
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "ghost-button";
+      removeButton.textContent = "Remove";
+      bindRemove(removeButton, () => {
+        removeItem(record.index);
+        markDirty();
+        render();
+      });
 
-    item.append(body, removeButton);
+      item.append(body, removeButton);
+      listElement.append(item);
+      continue;
+    }
+
+    item.append(body);
     listElement.append(item);
   }
 };
@@ -263,7 +328,7 @@ const renderMemoryList = (listElement, startIndex, endIndexExclusive) => {
     }))
     .filter(({ index }) => index >= startIndex && index < endIndexExclusive);
 
-  renderRecords(listElement, records, (index) => character.removeMemory(index));
+  renderRecords(listElement, records, (index) => character.removeMemory(index), "No memories yet.");
 };
 
 const renderCharacterList = (listElement, type) => {
@@ -276,7 +341,7 @@ const renderCharacterList = (listElement, type) => {
       text: entry.description,
     }));
 
-  renderRecords(listElement, records, (index) => character.removeCharacter(index));
+  renderRecords(listElement, records, (index) => character.removeCharacter(index), "No characters yet.");
 };
 
 const renderDetailList = (listElement, items, removeItem) => {
@@ -287,6 +352,298 @@ const renderDetailList = (listElement, items, removeItem) => {
   }));
 
   renderRecords(listElement, records, removeItem);
+};
+
+const renderPlayLists = () => {
+  elements.playName.textContent = character.name || "Unnamed Vampire";
+
+  renderRecords(
+    elements.playMemoryList,
+    character.memories.map((memory, index) => ({
+      title: `Memory ${index + 1}`,
+      text: memory.text,
+      tags: memory.traits,
+    })),
+    null,
+    "No memories were recorded during creation.",
+  );
+
+  renderRecords(
+    elements.playSkillList,
+    character.skills.map((item) => ({
+      title: item.name,
+      text: item.description,
+    })),
+    null,
+    "No skills available.",
+  );
+
+  renderRecords(
+    elements.playResourceList,
+    character.resources.map((item) => ({
+      title: item.name,
+      text: item.description,
+    })),
+    null,
+    "No resources available.",
+  );
+
+  renderRecords(
+    elements.playMarkList,
+    character.marks.map((item) => ({
+      title: item.name,
+      text: item.description,
+    })),
+    null,
+    "No marks available.",
+  );
+
+  renderRecords(
+    elements.playCharacterList,
+    character.characters.map((entry) => ({
+      title: entry.name,
+      text: entry.description,
+      tags: [entry.type === "mortal" ? "Mortal" : "Immortal"],
+    })),
+    null,
+    "No characters available.",
+  );
+};
+
+const parseCsv = (csvText = "") => {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+  const source = String(csvText).replace(/^\uFEFF/, "");
+
+  for (let index = 0; index < source.length; index += 1) {
+    const char = source[index];
+
+    if (inQuotes) {
+      if (char === "\"") {
+        if (source[index + 1] === "\"") {
+          field += "\"";
+          index += 1;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        field += char;
+      }
+
+      continue;
+    }
+
+    if (char === "\"") {
+      inQuotes = true;
+      continue;
+    }
+
+    if (char === ",") {
+      row.push(field);
+      field = "";
+      continue;
+    }
+
+    if (char === "\n") {
+      row.push(field);
+      rows.push(row);
+      row = [];
+      field = "";
+      continue;
+    }
+
+    if (char === "\r") continue;
+    field += char;
+  }
+
+  row.push(field);
+  rows.push(row);
+
+  return rows.filter((candidate) => candidate.some((value) => cleanText(value)));
+};
+
+const parsePromptDeck = (csvText) => {
+  const rows = parseCsv(csvText);
+  if (!rows.length) return [];
+
+  const [firstRow, ...remainingRows] = rows;
+  const hasHeader = firstRow
+    .slice(0, 3)
+    .map((value) => cleanPromptText(value).toLowerCase())
+    .join("|") === "a|b|c";
+  const dataRows = hasHeader ? remainingRows : rows;
+
+  return dataRows
+    .map((row) => ({
+      a: cleanPromptText(row[0] ?? ""),
+      b: cleanPromptText(row[1] ?? ""),
+      c: cleanPromptText(row[2] ?? ""),
+    }))
+    .filter((prompt) => Boolean(prompt.a || prompt.b || prompt.c));
+};
+
+const getPromptEntry = (prompt, visitCount) => {
+  if (!prompt) return { label: "", text: "" };
+
+  if (visitCount === 1) return { label: "A", text: prompt.a };
+  if (visitCount === 2) return { label: "B", text: prompt.b };
+  if (visitCount === 3) return { label: "C", text: prompt.c };
+  return { label: "-", text: "" };
+};
+
+const hasPromptEntryForVisit = (prompt, visitCount) => Boolean(getPromptEntry(prompt, visitCount).text);
+
+const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
+
+const clampPromptIndex = (index) => {
+  if (!promptState.deck.length) return 1;
+  return Math.max(1, Math.min(index, promptState.deck.length));
+};
+
+const moveToNextAvailablePrompt = (targetIndex) => {
+  if (!promptState.deck.length) {
+    return { prompt: 1, visit: 0, skipped: 0 };
+  }
+
+  let nextIndex = clampPromptIndex(targetIndex);
+  let skipped = 0;
+
+  while (nextIndex <= promptState.deck.length) {
+    const prompt = promptState.deck[nextIndex - 1];
+    const visitCount = (promptState.visits.get(nextIndex) ?? 0) + 1;
+
+    if (hasPromptEntryForVisit(prompt, visitCount)) {
+      promptState.visits.set(nextIndex, visitCount);
+      promptState.currentPrompt = nextIndex;
+      return { prompt: nextIndex, visit: visitCount, skipped };
+    }
+
+    promptState.visits.set(nextIndex, visitCount);
+    nextIndex += 1;
+    skipped += 1;
+  }
+
+  return {
+    prompt: promptState.currentPrompt,
+    visit: promptState.visits.get(promptState.currentPrompt) ?? 1,
+    skipped,
+  };
+};
+
+const formatSignedNumber = (value) => (value > 0 ? `+${value}` : String(value));
+
+const renderPromptPanel = () => {
+  const totalPrompts = promptState.deck.length;
+  const promptIndex = totalPrompts ? promptState.currentPrompt : 1;
+  elements.promptPosition.textContent = `Prompt ${promptIndex}/${totalPrompts || "?"}`;
+
+  if (promptState.isLoading) {
+    elements.rollButton.disabled = true;
+    elements.promptRollResult.textContent = "Loading prompts...";
+    elements.promptVisit.textContent = "";
+    elements.promptText.textContent = "Prompt data is loading.";
+    return;
+  }
+
+  if (promptState.loadError) {
+    elements.rollButton.disabled = true;
+    elements.promptRollResult.textContent = "Prompt load failed.";
+    elements.promptVisit.textContent = "";
+    elements.promptText.textContent = promptState.loadError;
+    return;
+  }
+
+  if (!totalPrompts) {
+    elements.rollButton.disabled = true;
+    elements.promptRollResult.textContent = "No prompts found.";
+    elements.promptVisit.textContent = "";
+    elements.promptText.textContent = "No prompt content is available.";
+    return;
+  }
+
+  const currentPrompt = promptState.deck[promptState.currentPrompt - 1];
+  const visitCount = promptState.visits.get(promptState.currentPrompt) ?? 1;
+  const entry = getPromptEntry(currentPrompt, visitCount);
+
+  elements.rollButton.disabled = false;
+  elements.promptVisit.textContent = entry.label
+    ? `Entry ${entry.label} • Visit ${visitCount}`
+    : `Visit ${visitCount}`;
+  elements.promptText.textContent = entry.text || "No remaining prompt entry at this position.";
+
+  if (!promptState.lastRoll) {
+    elements.promptRollResult.textContent = "Roll d10 - d6 to move to the next prompt.";
+    return;
+  }
+
+  const {
+    d10,
+    d6,
+    delta,
+    from,
+    to,
+    skipped,
+  } = promptState.lastRoll;
+  const moveText = from === to
+    ? `Stayed on Prompt ${to}`
+    : `Moved from Prompt ${from} to Prompt ${to}`;
+  const skippedText = skipped
+    ? ` Skipped ${skipped} exhausted prompt${skipped === 1 ? "" : "s"}.`
+    : "";
+
+  elements.promptRollResult.textContent =
+    `Rolled ${d10} - ${d6} = ${formatSignedNumber(delta)}. ${moveText}.${skippedText}`;
+};
+
+const loadPromptDeck = async () => {
+  if (promptState.deck.length || promptState.isLoading) return;
+
+  promptState.isLoading = true;
+  promptState.loadError = "";
+  renderPromptPanel();
+
+  try {
+    const response = await fetch("/refs/prompts.csv");
+    if (!response.ok) {
+      throw new Error(`Could not load prompts (${response.status}).`);
+    }
+
+    const csvText = await response.text();
+    promptState.deck = parsePromptDeck(csvText);
+
+    if (!promptState.deck.length) {
+      promptState.loadError = "No prompts were found in refs/prompts.csv.";
+    }
+  } catch (error) {
+    promptState.loadError = "Unable to load prompt data from refs/prompts.csv.";
+    console.error(error);
+  } finally {
+    promptState.isLoading = false;
+
+    if (promptState.deck.length) {
+      promptState.currentPrompt = clampPromptIndex(promptState.currentPrompt);
+      if (!promptState.visits.has(promptState.currentPrompt)) {
+        promptState.visits.set(promptState.currentPrompt, 1);
+      }
+    }
+
+    render();
+  }
+};
+
+const startPlay = async () => {
+  setScreen("play");
+
+  if (!promptState.visits.size) {
+    promptState.currentPrompt = 1;
+    promptState.visits.set(1, 1);
+    promptState.lastRoll = null;
+  }
+
+  render();
+  await loadPromptDeck();
 };
 
 const stepRequirements = [
@@ -332,7 +689,7 @@ const renderStep = () => {
   elements.nextButton.disabled = !canAdvanceFromStep(currentStep);
 };
 
-const render = () => {
+const renderCreation = () => {
   syncSelectedTraits(selectedLaterTraitIds);
   syncSelectedTraits(selectedCurseTraitIds);
   elements.nameInput.value = character.name;
@@ -350,6 +707,13 @@ const render = () => {
   renderTraitSelector(elements.memoryTraitsCurse, selectedCurseTraitIds);
   elements.saveConfirmation.hidden = !hasSavedSetup;
   renderStep();
+};
+
+const render = () => {
+  setScreen(currentScreen);
+  renderCreation();
+  renderPlayLists();
+  renderPromptPanel();
 };
 
 const saveIdentityStep = () => {
@@ -662,7 +1026,12 @@ elements.nextButton.addEventListener("click", () => {
     if (!saveCurseMemoryStep()) return;
 
     hasSavedSetup = character.isReadyForPromptOne();
-    render();
+    if (!hasSavedSetup) {
+      render();
+      return;
+    }
+
+    void startPlay();
     return;
   }
 
@@ -672,6 +1041,28 @@ elements.nextButton.addEventListener("click", () => {
 
   currentStep = Math.min(totalSteps - 1, currentStep + 1);
   render();
+});
+
+elements.rollButton.addEventListener("click", () => {
+  if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
+
+  const d10 = rollDie(10);
+  const d6 = rollDie(6);
+  const delta = d10 - d6;
+  const from = promptState.currentPrompt;
+  const target = clampPromptIndex(from + delta);
+  const result = moveToNextAvailablePrompt(target);
+
+  promptState.lastRoll = {
+    d10,
+    d6,
+    delta,
+    from,
+    to: result.prompt,
+    skipped: result.skipped,
+  };
+
+  renderPromptPanel();
 });
 
 render();

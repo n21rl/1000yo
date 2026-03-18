@@ -12,7 +12,7 @@
         <h1>Thousand Year Old Vampire</h1>
       </section>
 
-      <section class="wizard card">
+      <section id="creation-screen" class="wizard card">
         <div class="wizard-header">
           <h2 class="wizard-title">Vampire Creation</h2>
           <span id="step-progress" class="section-status">1/8</span>
@@ -174,6 +174,55 @@
         <p id="save-confirmation" class="save-confirmation" hidden>
           Vampire creation saved. All setup fields are complete.
         </p>
+      </section>
+
+      <section id="play-screen" class="play-layout" hidden>
+        <section class="card play-banner">
+          <div class="section-heading">
+            <h2 class="wizard-title">Night Chronicle</h2>
+            <span class="section-status complete">Play</span>
+          </div>
+          <p class="subtitle">Vampire: <strong id="play-name">Unnamed Vampire</strong></p>
+          <p class="supporting">Roll and resolve prompts to continue your vampire&rsquo;s story.</p>
+        </section>
+
+        <section class="play-grid">
+          <article class="card prompt-card">
+            <div class="section-heading">
+              <h2>Prompt</h2>
+              <span id="prompt-position" class="section-status">Prompt 1/0</span>
+            </div>
+            <button type="button" id="roll-button">Roll d10 - d6</button>
+            <p id="prompt-roll-result" class="supporting">Loading prompts...</p>
+            <p id="prompt-visit" class="supporting"></p>
+            <p id="prompt-text" class="prompt-text">Loading prompt data...</p>
+          </article>
+
+          <article class="card play-card">
+            <h2>Memories</h2>
+            <ul id="play-memory-list" class="record-list"></ul>
+          </article>
+
+          <article class="card play-card">
+            <h2>Characters</h2>
+            <ul id="play-character-list" class="record-list"></ul>
+          </article>
+
+          <article class="card play-card">
+            <h2>Skills</h2>
+            <ul id="play-skill-list" class="record-list"></ul>
+          </article>
+
+          <article class="card play-card">
+            <h2>Resources</h2>
+            <ul id="play-resource-list" class="record-list"></ul>
+          </article>
+
+          <article class="card play-card">
+            <h2>Marks</h2>
+            <ul id="play-mark-list" class="record-list"></ul>
+          </article>
+        </section>
       </section>
     </main>
 

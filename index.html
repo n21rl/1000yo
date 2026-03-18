@@ -37,11 +37,7 @@
           <input id="name" placeholder="Enter the vampire's name" />
 
           <label for="memory-identity">First memory *</label>
-          <textarea
-            id="memory-identity"
-            rows="4"
-            placeholder="Describe the vampire's first defining memory"
-          ></textarea>
+          <textarea id="memory-identity" rows="4" placeholder="Describe the vampire's first defining memory"></textarea>
 
           <ul id="identity-memory-list" class="record-list"></ul>
         </section>
@@ -54,11 +50,7 @@
             <input id="mortal-name" placeholder="Enter a mortal's name" />
 
             <label for="mortal-description">Description</label>
-            <textarea
-              id="mortal-description"
-              rows="3"
-              placeholder="Describe this mortal's role or relationship to the vampire"
-            ></textarea>
+            <textarea id="mortal-description" rows="3" placeholder="Describe this mortal's role or relationship to the vampire"></textarea>
 
             <button type="submit">Add mortal</button>
           </form>
@@ -74,11 +66,7 @@
             <input id="skill-name" placeholder="Enter a skill the vampire has learned" />
 
             <label for="skill-description">Description</label>
-            <textarea
-              id="skill-description"
-              rows="3"
-              placeholder="Describe how this skill was learned or how it is used"
-            ></textarea>
+            <textarea id="skill-description" rows="3" placeholder="Describe how this skill was learned or how it is used"></textarea>
 
             <button type="submit">Add skill</button>
           </form>
@@ -94,11 +82,7 @@
             <input id="resource-name" placeholder="Enter a resource the vampire can rely on" />
 
             <label for="resource-description">Description</label>
-            <textarea
-              id="resource-description"
-              rows="3"
-              placeholder="Describe what this resource is or why it matters"
-            ></textarea>
+            <textarea id="resource-description" rows="3" placeholder="Describe what this resource is or why it matters"></textarea>
 
             <button type="submit">Add resource</button>
           </form>
@@ -111,16 +95,10 @@
 
           <form id="memory-form-later" class="stack">
             <label for="memory-later">Memory *</label>
-            <textarea
-              id="memory-later"
-              rows="4"
-              placeholder="Describe another important memory from the vampire's life"
-            ></textarea>
+            <textarea id="memory-later" rows="4" placeholder="Describe another important memory from the vampire's life"></textarea>
 
             <label>Traits *</label>
-            <p class="supporting trait-guidance">
-              Select at least 2 traits this memory combines.
-            </p>
+            <p class="supporting trait-guidance">Select at least 2 traits this memory combines.</p>
             <div id="memory-traits-later" class="trait-groups"></div>
 
             <button type="submit">Add memory</button>
@@ -135,11 +113,9 @@
             <input id="immortal-name" placeholder="Enter an immortal's name" />
 
             <label for="immortal-description">Description</label>
-            <textarea
-              id="immortal-description"
-              rows="3"
-              placeholder="Describe this immortal's role or relationship to the vampire"
-            ></textarea>
+            <textarea id="immortal-description" rows="3" placeholder="Describe this immortal's role or relationship to the vampire"></textarea>
+
+            <button type="submit">Add immortal</button>
           </form>
 
           <ul id="immortal-list" class="record-list"></ul>
@@ -151,11 +127,9 @@
             <input id="mark-input" placeholder="Describe a lasting physical or supernatural mark" />
 
             <label for="mark-description">Description</label>
-            <textarea
-              id="mark-description"
-              rows="3"
-              placeholder="Describe what this mark looks like or how it affects the vampire"
-            ></textarea>
+            <textarea id="mark-description" rows="3" placeholder="Describe what this mark looks like or how it affects the vampire"></textarea>
+
+            <button type="submit">Add mark</button>
           </form>
 
           <ul id="mark-list" class="record-list"></ul>
@@ -164,17 +138,13 @@
         <section class="step-panel" data-step-panel="7" hidden>
           <form id="memory-form-curse" class="stack">
             <label for="memory-curse">Curse memory *</label>
-            <textarea
-              id="memory-curse"
-              rows="4"
-              placeholder="Describe the memory of the vampire's curse or transformation"
-            ></textarea>
+            <textarea id="memory-curse" rows="4" placeholder="Describe the memory of the vampire's curse or transformation"></textarea>
 
             <label>Traits *</label>
-            <p class="supporting trait-guidance">
-              Select at least 2 traits this memory combines.
-            </p>
+            <p class="supporting trait-guidance">Select at least 2 traits this memory combines.</p>
             <div id="memory-traits-curse" class="trait-groups"></div>
+
+            <button type="submit">Add curse memory</button>
           </form>
 
           <ul id="curse-memory-list" class="record-list"></ul>
@@ -193,48 +163,125 @@
       <section id="play-screen" class="play-layout" hidden>
         <section class="card play-banner">
           <div class="section-heading">
-            <h2 class="wizard-title">Night Chronicle</h2>
+            <h2 id="play-name-heading" class="wizard-title">Unnamed Vampire</h2>
             <span class="section-status complete">Play</span>
           </div>
-          <p class="subtitle">Vampire: <strong id="play-name">Unnamed Vampire</strong></p>
-          <p class="supporting">Roll and resolve prompts to continue your vampire&rsquo;s story.</p>
+          <p class="supporting">Advance prompts, log experiences, and keep the record updated as traits are used or struck out.</p>
         </section>
 
         <section class="play-grid">
-          <article class="card prompt-card">
+          <article class="card play-card prompt-card" data-card-key="prompt">
             <div class="section-heading">
               <h2>Prompt</h2>
-              <span id="prompt-position" class="section-status">Prompt 1/0</span>
+              <button type="button" class="ghost-button collapse-button" data-card-toggle>Collapse</button>
             </div>
-            <button type="button" id="roll-button">Roll d10 - d6</button>
-            <p id="prompt-roll-result" class="supporting">Loading prompts...</p>
-            <p id="prompt-visit" class="supporting"></p>
-            <p id="prompt-text" class="prompt-text">Loading prompt data...</p>
+            <div data-card-content>
+              <button type="button" id="next-prompt-button">Next prompt</button>
+              <p id="prompt-text" class="prompt-text">Loading prompt data...</p>
+            </div>
           </article>
 
-          <article class="card play-card">
-            <h2>Memories</h2>
-            <ul id="play-memory-list" class="record-list"></ul>
+          <article class="card play-card" data-card-key="memories">
+            <div class="section-heading">
+              <h2>Memories & experiences</h2>
+              <button type="button" class="ghost-button collapse-button" data-card-toggle>Collapse</button>
+            </div>
+            <div data-card-content>
+              <form id="play-experience-form" class="stack inline-form">
+                <label for="play-experience-text">Current experience</label>
+                <textarea id="play-experience-text" rows="3" placeholder="Write a single evocative sentence for the current prompt."></textarea>
+
+                <label for="play-memory-target">Add to</label>
+                <select id="play-memory-target"></select>
+                <p id="play-memory-hint" class="supporting"></p>
+
+                <label>Related traits</label>
+                <p class="supporting trait-guidance">Click traits to add reference pills to this experience.</p>
+                <div id="play-experience-traits" class="trait-groups"></div>
+
+                <button type="submit">Add experience</button>
+              </form>
+
+              <ul id="play-memory-list" class="record-list"></ul>
+            </div>
           </article>
 
-          <article class="card play-card">
-            <h2>Characters</h2>
-            <ul id="play-character-list" class="record-list"></ul>
+          <article class="card play-card" data-card-key="characters">
+            <div class="section-heading">
+              <h2>Characters</h2>
+              <button type="button" class="ghost-button collapse-button" data-card-toggle>Open</button>
+            </div>
+            <div data-card-content hidden>
+              <form id="play-character-form" class="stack inline-form compact-form">
+                <h3 id="play-character-form-title">Add character</h3>
+                <label for="play-character-name">Name</label>
+                <input id="play-character-name" placeholder="Name the character" />
+                <label for="play-character-description">Description</label>
+                <textarea id="play-character-description" rows="2" placeholder="Describe their relationship to the vampire"></textarea>
+                <label for="play-character-type">Type</label>
+                <select id="play-character-type">
+                  <option value="mortal">Mortal</option>
+                  <option value="immortal">Immortal</option>
+                </select>
+                <div class="form-actions">
+                  <button type="submit" id="play-character-submit">Add character</button>
+                  <button type="button" class="ghost-button" id="play-character-cancel" hidden>Cancel edit</button>
+                </div>
+              </form>
+              <ul id="play-character-list" class="record-list"></ul>
+            </div>
           </article>
 
-          <article class="card play-card">
-            <h2>Skills</h2>
-            <ul id="play-skill-list" class="record-list"></ul>
+          <article class="card play-card" data-card-key="skills">
+            <div class="section-heading">
+              <h2>Skills</h2>
+              <button type="button" class="ghost-button collapse-button" data-card-toggle>Open</button>
+            </div>
+            <div data-card-content hidden>
+              <form id="play-skill-form" class="stack inline-form compact-form">
+                <h3 id="play-skill-form-title">Add skill</h3>
+                <label for="play-skill-name">Skill</label>
+                <input id="play-skill-name" placeholder="Record a skill" />
+                <label for="play-skill-description">Description</label>
+                <textarea id="play-skill-description" rows="2" placeholder="What does this skill mean in play?"></textarea>
+                <div class="form-actions">
+                  <button type="submit" id="play-skill-submit">Add skill</button>
+                  <button type="button" class="ghost-button" id="play-skill-cancel" hidden>Cancel edit</button>
+                </div>
+              </form>
+              <ul id="play-skill-list" class="record-list"></ul>
+            </div>
           </article>
 
-          <article class="card play-card">
-            <h2>Resources</h2>
-            <ul id="play-resource-list" class="record-list"></ul>
+          <article class="card play-card" data-card-key="resources">
+            <div class="section-heading">
+              <h2>Resources</h2>
+              <button type="button" class="ghost-button collapse-button" data-card-toggle>Open</button>
+            </div>
+            <div data-card-content hidden>
+              <form id="play-resource-form" class="stack inline-form compact-form">
+                <h3 id="play-resource-form-title">Add resource</h3>
+                <label for="play-resource-name">Resource</label>
+                <input id="play-resource-name" placeholder="Record a resource" />
+                <label for="play-resource-description">Description</label>
+                <textarea id="play-resource-description" rows="2" placeholder="Why does this resource matter?"></textarea>
+                <div class="form-actions">
+                  <button type="submit" id="play-resource-submit">Add resource</button>
+                  <button type="button" class="ghost-button" id="play-resource-cancel" hidden>Cancel edit</button>
+                </div>
+              </form>
+              <ul id="play-resource-list" class="record-list"></ul>
+            </div>
           </article>
 
-          <article class="card play-card">
-            <h2>Marks</h2>
-            <ul id="play-mark-list" class="record-list"></ul>
+          <article class="card play-card" data-card-key="marks">
+            <div class="section-heading">
+              <h2>Marks</h2>
+              <button type="button" class="ghost-button collapse-button" data-card-toggle>Open</button>
+            </div>
+            <div data-card-content hidden>
+              <ul id="play-mark-list" class="record-list"></ul>
+            </div>
           </article>
         </section>
       </section>

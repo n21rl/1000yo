@@ -1,13 +1,15 @@
 import { Character } from "./game.js";
 
+const STORAGE_KEY = "1000yo.vampires";
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
 const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
 const MIN_MEMORY_TRAITS = 2;
 
-const character = new Character();
+let character = new Character();
 let currentStep = 0;
 let hasSavedSetup = false;
-let currentScreen = "creation";
+let currentScreen = "menu";
+let selectedVampireId = "";
 const selectedLaterTraitIds = new Set();
 const selectedCurseTraitIds = new Set();
 const sampleMortals = [
@@ -40,9 +42,34 @@ const promptState = {
   lastRoll: null,
 };
 
+const safeLocalStorage = {
+  getItem(key) {
+    try {
+      return window.localStorage.getItem(key);
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  },
+  setItem(key, value) {
+    try {
+      window.localStorage.setItem(key, value);
+      return true;
+    } catch (error) {
+      console.error(error);
+      return false;
+    }
+  },
+};
+
 const elements = {
+  menuScreen: document.querySelector("#menu-screen"),
   creationScreen: document.querySelector("#creation-screen"),
   playScreen: document.querySelector("#play-screen"),
+
+  vampireList: document.querySelector("#vampire-list"),
+  menuEmptyState: document.querySelector("#menu-empty-state"),
+  newVampireButton: document.querySelector("#new-vampire-button"),
 
   nameInput: document.querySelector("#name"),
   identityMemoryInput: document.querySelector("#memory-identity"),
@@ -111,14 +138,104 @@ const bindRemove = (button, handler) => {
   return button;
 };
 
+const getStoredVampires = () => {
+  try {
+    const rawValue = safeLocalStorage.getItem(STORAGE_KEY);
+    const parsed = rawValue ? JSON.parse(rawValue) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    console.error(error);
+    return [];
+  }
+};
+
+const saveStoredVampires = (vampires) => safeLocalStorage.setItem(STORAGE_KEY, JSON.stringify(vampires));
+
+const serializeCharacter = () => ({
+  name: character.name,
+  memories: character.memories,
+  skills: character.skills,
+  resources: character.resources,
+  characters: character.characters,
+  marks: character.marks,
+});
+
+const createStoredRecord = () => ({
+  id: selectedVampireId || crypto.randomUUID(),
+  updatedAt: new Date().toISOString(),
+  isComplete: character.isReadyForPromptOne(),
+  data: serializeCharacter(),
+});
+
+const persistCurrentCharacter = () => {
+  selectedVampireId = selectedVampireId || crypto.randomUUID();
+  const vampires = getStoredVampires();
+  const record = createStoredRecord();
+  const existingIndex = vampires.findIndex((entry) => entry.id === record.id);
+
+  if (existingIndex >= 0) {
+    vampires.splice(existingIndex, 1, record);
+  } else {
+    vampires.push(record);
+  }
+
+  saveStoredVampires(vampires);
+};
+
+const loadCharacter = (storedCharacter) => {
+  character = Character.from(storedCharacter?.data ?? {});
+  selectedVampireId = storedCharacter?.id ?? "";
+  hasSavedSetup = Boolean(storedCharacter?.isComplete && character.isReadyForPromptOne());
+  currentStep = 0;
+  selectedLaterTraitIds.clear();
+  selectedCurseTraitIds.clear();
+};
+
+const resetCreationForms = () => {
+  elements.mortalForm.reset();
+  elements.skillForm.reset();
+  elements.resourceForm.reset();
+  elements.memoryFormLater.reset();
+  elements.immortalForm.reset();
+  elements.markForm.reset();
+  elements.memoryFormCurse.reset();
+};
+
+const resetPromptState = () => {
+  promptState.currentPrompt = 1;
+  promptState.visits = new Map();
+  promptState.lastRoll = null;
+};
+
+const startNewVampire = () => {
+  character = new Character();
+  selectedVampireId = crypto.randomUUID();
+  currentStep = 0;
+  hasSavedSetup = false;
+  selectedLaterTraitIds.clear();
+  selectedCurseTraitIds.clear();
+  resetPromptState();
+  resetCreationForms();
+  setScreen("creation");
+  render();
+};
+
 const markDirty = () => {
   hasSavedSetup = false;
+  persistCurrentCharacter();
 };
 
 const setScreen = (screen) => {
   currentScreen = screen;
+  elements.menuScreen.hidden = currentScreen !== "menu";
   elements.creationScreen.hidden = currentScreen !== "creation";
   elements.playScreen.hidden = currentScreen !== "play";
+};
+
+const formatTimestamp = (isoString) => {
+  if (!isoString) return "Unsaved";
+  const value = new Date(isoString);
+  return Number.isNaN(value.getTime()) ? "Unsaved" : value.toLocaleString();
 };
 
 const getTraitGroups = () => [
@@ -316,6 +433,59 @@ const renderRecords = (
 
     item.append(body);
     listElement.append(item);
+  }
+};
+
+const renderMenu = () => {
+  const vampires = getStoredVampires();
+  elements.vampireList.innerHTML = "";
+  elements.menuEmptyState.hidden = vampires.length > 0;
+
+  for (const vampire of vampires) {
+    const item = document.createElement("li");
+    item.className = "record vampire-record";
+
+    const body = document.createElement("button");
+    body.type = "button";
+    body.className = "vampire-option";
+    body.addEventListener("click", () => {
+      loadCharacter(vampire);
+      resetCreationForms();
+      resetPromptState();
+      void startPlay(true);
+    });
+
+    const title = document.createElement("strong");
+    title.textContent = vampire.data?.name || "Unnamed Vampire";
+
+    const text = document.createElement("p");
+    text.textContent = `Updated ${formatTimestamp(vampire.updatedAt)}`;
+
+    body.append(title, text);
+
+    const actions = document.createElement("div");
+    actions.className = "menu-record-actions";
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "ghost-button menu-delete-button";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => {
+      const displayName = vampire.data?.name || "this vampire";
+      if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
+
+      const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id);
+      saveStoredVampires(remaining);
+      if (selectedVampireId === vampire.id) {
+        selectedVampireId = "";
+      }
+      setScreen("menu");
+      render();
+    });
+
+    actions.append(deleteButton);
+    item.append(body, actions);
+    elements.vampireList.append(item);
   }
 };
 
@@ -633,7 +803,15 @@ const loadPromptDeck = async () => {
   }
 };
 
-const startPlay = async () => {
+const startPlay = async (skipCreationGate = false) => {
+  if (!skipCreationGate && !character.isReadyForPromptOne()) {
+    setScreen("creation");
+    render();
+    return;
+  }
+
+  hasSavedSetup = true;
+  persistCurrentCharacter();
   setScreen("play");
 
   if (!promptState.visits.size) {
@@ -711,6 +889,7 @@ const renderCreation = () => {
 
 const render = () => {
   setScreen(currentScreen);
+  renderMenu();
   renderCreation();
   renderPlayLists();
   renderPromptPanel();
@@ -728,6 +907,7 @@ const saveIdentityStep = () => {
     elements.identityMemoryInput.value = "";
   }
 
+  persistCurrentCharacter();
   return isStepComplete(0);
 };
 
@@ -735,18 +915,22 @@ const saveImmortalStep = () => {
   if (character.immortalCount > 0) return true;
 
   markDirty();
-  return character.addCharacter(
+  const didSave = character.addCharacter(
     elements.immortalName.value,
     elements.immortalDescription.value,
     "immortal",
   );
+  if (didSave) persistCurrentCharacter();
+  return didSave;
 };
 
 const saveMarkStep = () => {
   if (character.marks.length > 0) return true;
 
   markDirty();
-  return character.addMark(elements.markInput.value, elements.markDescription.value);
+  const didSave = character.addMark(elements.markInput.value, elements.markDescription.value);
+  if (didSave) persistCurrentCharacter();
+  return didSave;
 };
 
 const saveCurseMemoryStep = () => {
@@ -763,6 +947,7 @@ const saveCurseMemoryStep = () => {
   if (didSave) {
     elements.memoryCurse.value = "";
     selectedCurseTraitIds.clear();
+    persistCurrentCharacter();
   }
 
   return didSave;
@@ -795,6 +980,7 @@ const autofillCurrentStep = () => {
       character.addCharacter(name, description, "mortal");
     }
 
+    persistCurrentCharacter();
     render();
     return;
   }
@@ -808,6 +994,7 @@ const autofillCurrentStep = () => {
       character.addSkill(name, description);
     }
 
+    persistCurrentCharacter();
     render();
     return;
   }
@@ -821,6 +1008,7 @@ const autofillCurrentStep = () => {
       character.addResource(name, description);
     }
 
+    persistCurrentCharacter();
     render();
     return;
   }
@@ -836,6 +1024,7 @@ const autofillCurrentStep = () => {
     }
 
     selectedLaterTraitIds.clear();
+    persistCurrentCharacter();
     render();
     return;
   }
@@ -879,6 +1068,10 @@ const autofillCurrentStep = () => {
     render();
   }
 };
+
+elements.newVampireButton.addEventListener("click", () => {
+  startNewVampire();
+});
 
 elements.nameInput.addEventListener("input", () => {
   markDirty();
@@ -1026,6 +1219,7 @@ elements.nextButton.addEventListener("click", () => {
     if (!saveCurseMemoryStep()) return;
 
     hasSavedSetup = character.isReadyForPromptOne();
+    persistCurrentCharacter();
     if (!hasSavedSetup) {
       render();
       return;
@@ -1065,4 +1259,11 @@ elements.rollButton.addEventListener("click", () => {
   renderPromptPanel();
 });
 
-render();
+const initialize = () => {
+  const vampires = getStoredVampires();
+  selectedVampireId = vampires[0]?.id ?? "";
+  setScreen("menu");
+  render();
+};
+
+initialize();

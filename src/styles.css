@@ -334,3 +334,48 @@ button:disabled {
     width: 100%;
   }
 }
+
+
+.menu-screen {
+  max-width: 64rem;
+}
+
+.menu-screen > * + * {
+  margin-top: 1rem;
+}
+
+.vampire-record {
+  align-items: center;
+}
+
+.vampire-option {
+  width: auto;
+  flex: 1;
+  text-align: left;
+  border: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.vampire-option strong {
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+.vampire-option p {
+  margin: 0;
+  color: #d9cbb4;
+}
+
+.menu-record-actions {
+  display: flex;
+  align-items: center;
+}
+
+.menu-delete-button {
+  min-width: 7rem;
+}
+
+.menu-new-button {
+  max-width: 18rem;
+}

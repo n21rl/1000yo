@@ -12,7 +12,21 @@
         <h1>Thousand Year Old Vampire</h1>
       </section>
 
-      <section id="creation-screen" class="wizard card">
+      <section id="menu-screen" class="card menu-screen">
+        <div class="wizard-header">
+          <div>
+            <h2 class="wizard-title">Start Menu</h2>
+            <p class="subtitle">Choose a saved vampire to play, or create a new one.</p>
+          </div>
+          <span class="section-status complete">Menu</span>
+        </div>
+
+        <p id="menu-empty-state" class="supporting">No vampires saved yet. Create one to begin.</p>
+        <ul id="vampire-list" class="record-list"></ul>
+        <button type="button" id="new-vampire-button" class="menu-new-button">New character</button>
+      </section>
+
+      <section id="creation-screen" class="wizard card" hidden>
         <div class="wizard-header">
           <h2 class="wizard-title">Vampire Creation</h2>
           <span id="step-progress" class="section-status">1/8</span>

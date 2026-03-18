@@ -161,19 +161,17 @@
       </section>
 
       <section id="play-screen" class="play-layout" hidden>
-        <section class="card play-banner">
-          <div class="section-heading">
-            <h2 id="play-name-heading" class="wizard-title">Unnamed Vampire</h2>
-            <span class="section-status complete">Play</span>
-          </div>
-          <p class="supporting">Advance prompts, log experiences, and keep the record updated as traits are used or struck out.</p>
+        <section class="play-titlebar">
+          <h2 id="play-name-heading" class="wizard-title">Unnamed Vampire</h2>
         </section>
 
         <section class="play-grid">
           <article class="card play-card prompt-card" data-card-key="prompt">
-            <div class="section-heading">
-              <h2>Prompt</h2>
-              <button type="button" class="ghost-button collapse-button" data-card-toggle>Collapse</button>
+            <div class="section-heading" data-card-toggle>
+              <div class="card-title-row">
+                <h2>Prompt</h2>
+                <span class="card-toggle-indicator" aria-hidden="true">−</span>
+              </div>
             </div>
             <div data-card-content>
               <button type="button" id="next-prompt-button">Next prompt</button>
@@ -182,24 +180,24 @@
           </article>
 
           <article class="card play-card" data-card-key="memories">
-            <div class="section-heading">
-              <h2>Memories & experiences</h2>
-              <button type="button" class="ghost-button collapse-button" data-card-toggle>Collapse</button>
+            <div class="section-heading" data-card-toggle>
+              <div class="card-title-row">
+                <h2>Memories & experiences</h2>
+                <span class="card-toggle-indicator" aria-hidden="true">−</span>
+              </div>
+              <button type="button" class="icon-button" id="add-memory-button">+</button>
             </div>
             <div data-card-content>
-              <form id="play-experience-form" class="stack inline-form">
+              <form id="play-experience-form" class="stack inline-form compact-form" hidden>
+                <h3 id="play-experience-form-title">Add memory</h3>
+                <p id="play-memory-hint" class="supporting"></p>
                 <label for="play-experience-text">Current experience</label>
                 <textarea id="play-experience-text" rows="3" placeholder="Write a single evocative sentence for the current prompt."></textarea>
-
-                <label for="play-memory-target">Add to</label>
-                <select id="play-memory-target"></select>
-                <p id="play-memory-hint" class="supporting"></p>
-
-                <label>Related traits</label>
-                <p class="supporting trait-guidance">Click traits to add reference pills to this experience.</p>
-                <div id="play-experience-traits" class="trait-groups"></div>
-
-                <button type="submit">Add experience</button>
+                <div id="play-selected-traits" class="record-tags"></div>
+                <div class="form-actions">
+                  <button type="submit" id="play-experience-submit">Save</button>
+                  <button type="button" class="ghost-button" id="play-experience-cancel">Cancel</button>
+                </div>
               </form>
 
               <ul id="play-memory-list" class="record-list"></ul>
@@ -207,12 +205,15 @@
           </article>
 
           <article class="card play-card" data-card-key="characters">
-            <div class="section-heading">
-              <h2>Characters</h2>
-              <button type="button" class="ghost-button collapse-button" data-card-toggle>Open</button>
+            <div class="section-heading" data-card-toggle>
+              <div class="card-title-row">
+                <h2>Characters</h2>
+                <span class="card-toggle-indicator" aria-hidden="true">+</span>
+              </div>
+              <button type="button" class="icon-button" id="add-character-button">+</button>
             </div>
             <div data-card-content hidden>
-              <form id="play-character-form" class="stack inline-form compact-form">
+              <form id="play-character-form" class="stack inline-form compact-form" hidden>
                 <h3 id="play-character-form-title">Add character</h3>
                 <label for="play-character-name">Name</label>
                 <input id="play-character-name" placeholder="Name the character" />
@@ -225,7 +226,7 @@
                 </select>
                 <div class="form-actions">
                   <button type="submit" id="play-character-submit">Add character</button>
-                  <button type="button" class="ghost-button" id="play-character-cancel" hidden>Cancel edit</button>
+                  <button type="button" class="ghost-button" id="play-character-cancel">Cancel</button>
                 </div>
               </form>
               <ul id="play-character-list" class="record-list"></ul>
@@ -233,12 +234,15 @@
           </article>
 
           <article class="card play-card" data-card-key="skills">
-            <div class="section-heading">
-              <h2>Skills</h2>
-              <button type="button" class="ghost-button collapse-button" data-card-toggle>Open</button>
+            <div class="section-heading" data-card-toggle>
+              <div class="card-title-row">
+                <h2>Skills</h2>
+                <span class="card-toggle-indicator" aria-hidden="true">+</span>
+              </div>
+              <button type="button" class="icon-button" id="add-skill-button">+</button>
             </div>
             <div data-card-content hidden>
-              <form id="play-skill-form" class="stack inline-form compact-form">
+              <form id="play-skill-form" class="stack inline-form compact-form" hidden>
                 <h3 id="play-skill-form-title">Add skill</h3>
                 <label for="play-skill-name">Skill</label>
                 <input id="play-skill-name" placeholder="Record a skill" />
@@ -246,7 +250,7 @@
                 <textarea id="play-skill-description" rows="2" placeholder="What does this skill mean in play?"></textarea>
                 <div class="form-actions">
                   <button type="submit" id="play-skill-submit">Add skill</button>
-                  <button type="button" class="ghost-button" id="play-skill-cancel" hidden>Cancel edit</button>
+                  <button type="button" class="ghost-button" id="play-skill-cancel">Cancel</button>
                 </div>
               </form>
               <ul id="play-skill-list" class="record-list"></ul>
@@ -254,12 +258,15 @@
           </article>
 
           <article class="card play-card" data-card-key="resources">
-            <div class="section-heading">
-              <h2>Resources</h2>
-              <button type="button" class="ghost-button collapse-button" data-card-toggle>Open</button>
+            <div class="section-heading" data-card-toggle>
+              <div class="card-title-row">
+                <h2>Resources</h2>
+                <span class="card-toggle-indicator" aria-hidden="true">+</span>
+              </div>
+              <button type="button" class="icon-button" id="add-resource-button">+</button>
             </div>
             <div data-card-content hidden>
-              <form id="play-resource-form" class="stack inline-form compact-form">
+              <form id="play-resource-form" class="stack inline-form compact-form" hidden>
                 <h3 id="play-resource-form-title">Add resource</h3>
                 <label for="play-resource-name">Resource</label>
                 <input id="play-resource-name" placeholder="Record a resource" />
@@ -267,7 +274,7 @@
                 <textarea id="play-resource-description" rows="2" placeholder="Why does this resource matter?"></textarea>
                 <div class="form-actions">
                   <button type="submit" id="play-resource-submit">Add resource</button>
-                  <button type="button" class="ghost-button" id="play-resource-cancel" hidden>Cancel edit</button>
+                  <button type="button" class="ghost-button" id="play-resource-cancel">Cancel</button>
                 </div>
               </form>
               <ul id="play-resource-list" class="record-list"></ul>
@@ -275,9 +282,11 @@
           </article>
 
           <article class="card play-card" data-card-key="marks">
-            <div class="section-heading">
-              <h2>Marks</h2>
-              <button type="button" class="ghost-button collapse-button" data-card-toggle>Open</button>
+            <div class="section-heading" data-card-toggle>
+              <div class="card-title-row">
+                <h2>Marks</h2>
+                <span class="card-toggle-indicator" aria-hidden="true">+</span>
+              </div>
             </div>
             <div data-card-content hidden>
               <ul id="play-mark-list" class="record-list"></ul>

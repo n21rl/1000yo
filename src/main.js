@@ -13,9 +13,14 @@ let currentScreen = "menu";
 let selectedVampireId = "";
 const selectedLaterTraitIds = new Set();
 const selectedCurseTraitIds = new Set();
-const playExperienceTraitIds = new Set();
-let selectedMemoryTarget = "new";
+const pendingExperienceTraitIds = new Set();
 let editingTrait = null;
+let experienceComposer = { open: false, target: "new" };
+const openForms = {
+  skill: false,
+  resource: false,
+  character: false,
+};
 const collapsedCards = new Set(["characters", "skills", "resources", "marks"]);
 const sampleMortals = [
   ["Yvette", "A mortal sibling who still writes to me."],
@@ -118,23 +123,29 @@ const elements = {
   playMarkList: document.querySelector("#play-mark-list"),
   promptButton: document.querySelector("#next-prompt-button"),
   promptText: document.querySelector("#prompt-text"),
+  addMemoryButton: document.querySelector("#add-memory-button"),
   playExperienceForm: document.querySelector("#play-experience-form"),
+  playExperienceFormTitle: document.querySelector("#play-experience-form-title"),
   playExperienceText: document.querySelector("#play-experience-text"),
-  playMemoryTarget: document.querySelector("#play-memory-target"),
-  playExperienceTraits: document.querySelector("#play-experience-traits"),
+  playSelectedTraits: document.querySelector("#play-selected-traits"),
+  playExperienceSubmit: document.querySelector("#play-experience-submit"),
+  playExperienceCancel: document.querySelector("#play-experience-cancel"),
   playMemoryHint: document.querySelector("#play-memory-hint"),
+  addSkillButton: document.querySelector("#add-skill-button"),
   playSkillForm: document.querySelector("#play-skill-form"),
   playSkillTitle: document.querySelector("#play-skill-form-title"),
   playSkillName: document.querySelector("#play-skill-name"),
   playSkillDescription: document.querySelector("#play-skill-description"),
   playSkillSubmit: document.querySelector("#play-skill-submit"),
   playSkillCancel: document.querySelector("#play-skill-cancel"),
+  addResourceButton: document.querySelector("#add-resource-button"),
   playResourceForm: document.querySelector("#play-resource-form"),
   playResourceTitle: document.querySelector("#play-resource-form-title"),
   playResourceName: document.querySelector("#play-resource-name"),
   playResourceDescription: document.querySelector("#play-resource-description"),
   playResourceSubmit: document.querySelector("#play-resource-submit"),
   playResourceCancel: document.querySelector("#play-resource-cancel"),
+  addCharacterButton: document.querySelector("#add-character-button"),
   playCharacterForm: document.querySelector("#play-character-form"),
   playCharacterTitle: document.querySelector("#play-character-form-title"),
   playCharacterName: document.querySelector("#play-character-name"),
@@ -149,11 +160,6 @@ const SCREEN_TITLES = {
   menu: "Start Menu",
   creation: "Vampire Creation",
   play: "Play",
-};
-
-const bindRemove = (button, handler) => {
-  button.addEventListener("click", handler);
-  return button;
 };
 
 const getStoredVampires = () => {
@@ -197,6 +203,15 @@ const persistCurrentCharacter = () => {
   saveStoredVampires(vampires);
 };
 
+const resetPlayState = () => {
+  pendingExperienceTraitIds.clear();
+  editingTrait = null;
+  experienceComposer = { open: false, target: "new" };
+  openForms.skill = false;
+  openForms.resource = false;
+  openForms.character = false;
+};
+
 const loadCharacter = (storedCharacter) => {
   character = Character.from(storedCharacter?.data ?? {});
   selectedVampireId = storedCharacter?.id ?? "";
@@ -204,9 +219,7 @@ const loadCharacter = (storedCharacter) => {
   currentStep = 0;
   selectedLaterTraitIds.clear();
   selectedCurseTraitIds.clear();
-  playExperienceTraitIds.clear();
-  selectedMemoryTarget = "new";
-  editingTrait = null;
+  resetPlayState();
 };
 
 const resetCreationForms = () => {
@@ -220,13 +233,10 @@ const resetCreationForms = () => {
 };
 
 const resetPlayForms = () => {
-  elements.playExperienceForm?.reset();
-  elements.playSkillForm?.reset();
-  elements.playResourceForm?.reset();
-  elements.playCharacterForm?.reset();
-  playExperienceTraitIds.clear();
-  selectedMemoryTarget = "new";
-  editingTrait = null;
+  elements.playExperienceForm.reset();
+  elements.playSkillForm.reset();
+  elements.playResourceForm.reset();
+  elements.playCharacterForm.reset();
 };
 
 const resetPromptState = () => {
@@ -270,6 +280,7 @@ const startNewVampire = () => {
   selectedCurseTraitIds.clear();
   resetPromptState();
   resetCreationForms();
+  resetPlayState();
   resetPlayForms();
   setScreen("creation", { updateRoute: true });
   render();
@@ -292,53 +303,31 @@ const getTraitGroups = () => [
     options: character.characters
       .map((entry, index) => ({ entry, index }))
       .filter(({ entry }) => entry.type === "mortal")
-      .map(({ entry, index }) => ({
-        id: `character-${index}`,
-        label: entry.name,
-        value: `Mortal: ${entry.name}`,
-      })),
+      .map(({ entry, index }) => ({ id: `character-${index}`, label: entry.name, value: `Mortal: ${entry.name}` })),
   },
   {
     title: "Immortals",
     options: character.characters
       .map((entry, index) => ({ entry, index }))
       .filter(({ entry }) => entry.type === "immortal")
-      .map(({ entry, index }) => ({
-        id: `character-${index}`,
-        label: entry.name,
-        value: `Immortal: ${entry.name}`,
-      })),
+      .map(({ entry, index }) => ({ id: `character-${index}`, label: entry.name, value: `Immortal: ${entry.name}` })),
   },
   {
     title: "Skills",
-    options: character.skills.map((item, index) => ({
-      id: `skill-${index}`,
-      label: item.name,
-      value: `Skill: ${item.name}`,
-    })),
+    options: character.skills.map((item, index) => ({ id: `skill-${index}`, label: item.name, value: `Skill: ${item.name}` })),
   },
   {
     title: "Resources",
-    options: character.resources.map((item, index) => ({
-      id: `resource-${index}`,
-      label: item.name,
-      value: `Resource: ${item.name}`,
-    })),
+    options: character.resources.map((item, index) => ({ id: `resource-${index}`, label: item.name, value: `Resource: ${item.name}` })),
   },
   {
     title: "Marks",
-    options: character.marks.map((item, index) => ({
-      id: `mark-${index}`,
-      label: item.name,
-      value: `Mark: ${item.name}`,
-    })),
+    options: character.marks.map((item, index) => ({ id: `mark-${index}`, label: item.name, value: `Mark: ${item.name}` })),
   },
 ];
 
 const getSelectedTraitLabels = (selectedIds) => {
-  const optionsById = new Map(
-    getTraitGroups().flatMap((group) => group.options).map((option) => [option.id, option.value]),
-  );
+  const optionsById = new Map(getTraitGroups().flatMap((group) => group.options).map((option) => [option.id, option.value]));
   return [...selectedIds].map((id) => optionsById.get(id)).filter(Boolean);
 };
 
@@ -374,12 +363,14 @@ const createButton = (label, className, handler) => {
   button.type = "button";
   button.className = className;
   button.textContent = label;
-  button.addEventListener("click", handler);
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    handler();
+  });
   return button;
 };
 
 const renderTraitSelector = (container, selectedIds) => {
-  if (!container) return;
   container.innerHTML = "";
 
   for (const group of getTraitGroups()) {
@@ -394,21 +385,18 @@ const renderTraitSelector = (container, selectedIds) => {
     pills.className = "trait-pills";
 
     for (const option of group.options) {
-      const pill = document.createElement("button");
-      pill.type = "button";
-      pill.className = selectedIds.has(option.id) ? "trait-pill selected" : "trait-pill";
-      pill.textContent = option.label;
-      pill.addEventListener("click", () => {
-        markDirty();
-        if (selectedIds.has(option.id)) selectedIds.delete(option.id);
-        else selectedIds.add(option.id);
-        render();
-      });
+      const pill = document.createElement("span");
+      pill.className = selectedIds.has(option.id) ? "record-tag selected-trait" : "record-tag";
+      pill.textContent = option.value;
       pills.append(pill);
     }
 
     section.append(title, pills);
     container.append(section);
+  }
+
+  if (!container.childElementCount) {
+    container.append(createEmptyRecord("Select characters, skills, resources, or marks to tag this experience."));
   }
 };
 
@@ -430,22 +418,20 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
       title.textContent = record.title;
       body.append(title);
     }
-
     if (record.text) {
       const text = document.createElement("p");
       text.textContent = record.text;
       body.append(text);
     }
-
     if (record.tags?.length) {
       const tags = document.createElement("div");
       tags.className = "record-tags";
-      for (const tagText of record.tags) {
+      record.tags.forEach((tagText) => {
         const tag = document.createElement("span");
         tag.className = "record-tag";
         tag.textContent = tagText;
         tags.append(tag);
-      }
+      });
       body.append(tags);
     }
 
@@ -472,6 +458,7 @@ const renderMenu = () => {
   for (const vampire of vampires) {
     const item = document.createElement("li");
     item.className = "record vampire-record";
+
     const body = document.createElement("button");
     body.type = "button";
     body.className = "vampire-option";
@@ -533,37 +520,12 @@ const renderDetailList = (listElement, items, removeItem) => {
   renderRecords(listElement, records, removeItem);
 };
 
-const getMemoryTargetOptions = () => {
-  const options = [{ value: "new", label: `New memory (${character.memories.length}/${MAX_MEMORIES})`, disabled: character.memories.length >= MAX_MEMORIES }];
-  character.memories.forEach((memory, index) => {
-    options.push({
-      value: String(index),
-      label: `Memory ${index + 1} (${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY})${memory.lost ? " — struck out" : ""}`,
-      disabled: memory.lost || memory.experiences.length >= MAX_EXPERIENCES_PER_MEMORY,
-    });
-  });
-  return options;
-};
-
-const updateMemoryTargetControl = () => {
-  const options = getMemoryTargetOptions();
-  elements.playMemoryTarget.innerHTML = "";
-  const validValues = new Set();
-
-  for (const option of options) {
-    const element = document.createElement("option");
-    element.value = option.value;
-    element.textContent = option.label;
-    element.disabled = option.disabled;
-    elements.playMemoryTarget.append(element);
-    if (!option.disabled) validValues.add(option.value);
-  }
-
-  if (!validValues.has(selectedMemoryTarget)) selectedMemoryTarget = validValues.has("new") ? "new" : [...validValues][0] ?? "new";
-  elements.playMemoryTarget.value = selectedMemoryTarget;
-  elements.playMemoryHint.textContent = selectedMemoryTarget === "new"
-    ? `Create a fresh memory if you still have fewer than ${MAX_MEMORIES}.`
-    : `Add this experience to an existing memory until it reaches ${MAX_EXPERIENCES_PER_MEMORY} experiences.`;
+const togglePendingTrait = (traitId) => {
+  if (!experienceComposer.open) return;
+  if (pendingExperienceTraitIds.has(traitId)) pendingExperienceTraitIds.delete(traitId);
+  else pendingExperienceTraitIds.add(traitId);
+  renderPlayComposer();
+  renderPlayLists();
 };
 
 const formatStatusTags = (item, kind) => {
@@ -573,8 +535,48 @@ const formatStatusTags = (item, kind) => {
   return tags;
 };
 
-const appendActionButtons = (actions, buttons) => {
-  for (const button of buttons) actions.append(button);
+const renderSelectedTraitPills = () => {
+  elements.playSelectedTraits.innerHTML = "";
+  const labels = getSelectedTraitLabels(pendingExperienceTraitIds);
+  if (!labels.length) return;
+  labels.forEach((label) => {
+    const pill = document.createElement("span");
+    pill.className = "record-tag selected-trait";
+    pill.textContent = label;
+    elements.playSelectedTraits.append(pill);
+  });
+};
+
+const openExperienceComposer = (target = "new") => {
+  experienceComposer = { open: true, target };
+  elements.playExperienceForm.hidden = false;
+  if (!collapsedCards.has("memories")) {
+    renderPlayComposer();
+  }
+};
+
+const closeExperienceComposer = () => {
+  experienceComposer = { open: false, target: "new" };
+  pendingExperienceTraitIds.clear();
+  elements.playExperienceForm.reset();
+  elements.playExperienceForm.hidden = true;
+};
+
+const renderPlayComposer = () => {
+  const targetIndex = experienceComposer.target === "new" ? null : Number(experienceComposer.target);
+  const isNewMemory = experienceComposer.target === "new";
+  elements.playExperienceForm.hidden = !experienceComposer.open;
+  elements.playExperienceFormTitle.textContent = isNewMemory ? "Add memory" : `Add experience to Memory ${targetIndex + 1}`;
+  elements.playExperienceSubmit.textContent = isNewMemory ? "Add memory" : "Add experience";
+  if (isNewMemory) {
+    elements.playMemoryHint.textContent = `This will create a new memory (${character.memories.length}/${MAX_MEMORIES}).`;
+  } else {
+    const memory = character.memories[targetIndex];
+    elements.playMemoryHint.textContent = memory
+      ? `This memory has ${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY} experiences.`
+      : "Select a memory to continue.";
+  }
+  renderSelectedTraitPills();
 };
 
 const renderPlayMemoryList = () => {
@@ -587,6 +589,7 @@ const renderPlayMemoryList = () => {
   character.memories.forEach((memory, memoryIndex) => {
     const item = document.createElement("li");
     item.className = memory.lost ? "record play-memory lost" : "record play-memory";
+
     const body = document.createElement("div");
     body.className = "record-body";
     const title = document.createElement("strong");
@@ -600,24 +603,19 @@ const renderPlayMemoryList = () => {
       const text = document.createElement("p");
       text.textContent = experience.text;
       experienceItem.append(text);
-      if (experience.traits.length) {
-        const tags = document.createElement("div");
-        tags.className = "record-tags";
-        experience.traits.forEach((trait) => {
-          const tag = document.createElement("span");
-          tag.className = "record-tag";
-          tag.textContent = trait;
-          tags.append(tag);
-        });
-        experienceItem.append(tags);
-      }
       experienceList.append(experienceItem);
     });
     body.append(experienceList);
 
     const actions = document.createElement("div");
     actions.className = "record-actions";
-    appendActionButtons(actions, [
+    if (!memory.lost && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
+      actions.append(createButton("+", "icon-button", () => {
+        openExperienceComposer(String(memoryIndex));
+        render();
+      }));
+    }
+    actions.append(
       createButton(memory.lost ? "Restore" : "Strike out", "ghost-button small-button", () => {
         character.setMemoryLost(memoryIndex, !memory.lost);
         markDirty();
@@ -625,10 +623,11 @@ const renderPlayMemoryList = () => {
       }),
       createButton("Remove", "ghost-button small-button", () => {
         character.removeMemory(memoryIndex);
+        if (experienceComposer.target === String(memoryIndex)) closeExperienceComposer();
         markDirty();
         render();
       }),
-    ]);
+    );
 
     item.append(body, actions);
     elements.playMemoryList.append(item);
@@ -644,32 +643,45 @@ const renderTraitList = (listElement, items, kind) => {
 
   items.forEach((item, index) => {
     const entry = document.createElement("li");
+    const traitId = `${kind}-${index}`;
+    const selectedForExperience = pendingExperienceTraitIds.has(traitId);
     entry.className = item.lost ? "record lost" : "record";
-    const body = document.createElement("div");
-    body.className = "record-body";
+    if (selectedForExperience) entry.classList.add("tag-target-active");
+
+    const body = document.createElement("button");
+    body.type = "button";
+    body.className = "record-select";
+    body.addEventListener("click", (event) => {
+      event.stopPropagation();
+      togglePendingTrait(traitId);
+    });
+
+    const bodyInner = document.createElement("div");
+    bodyInner.className = "record-body";
     const title = document.createElement("strong");
     title.textContent = item.name;
-    body.append(title);
-
+    bodyInner.append(title);
     if (item.description) {
       const text = document.createElement("p");
       text.textContent = item.description;
-      body.append(text);
+      bodyInner.append(text);
     }
 
     const tags = formatStatusTags(item, kind);
     if (kind === "character") tags.unshift(item.type === "mortal" ? "Mortal" : "Immortal");
+    if (selectedForExperience) tags.unshift("Tagged");
     if (tags.length) {
       const tagWrap = document.createElement("div");
       tagWrap.className = "record-tags";
       tags.forEach((label) => {
         const tag = document.createElement("span");
-        tag.className = "record-tag";
+        tag.className = label === "Tagged" ? "record-tag selected-trait" : "record-tag";
         tag.textContent = label;
         tagWrap.append(tag);
       });
-      body.append(tagWrap);
+      bodyInner.append(tagWrap);
     }
+    body.append(bodyInner);
 
     const actions = document.createElement("div");
     actions.className = "record-actions";
@@ -707,66 +719,78 @@ const renderTraitList = (listElement, items, kind) => {
           markDirty();
           render();
         });
-
     const editButton = createButton("Edit", "ghost-button small-button", () => {
       editingTrait = { kind, index };
-      renderPlayForms();
+      openForms[kind] = true;
+      collapsedCards.delete(`${kind}s`.replace("characterss", "characters"));
+      render();
     });
-
     const removeButton = createButton("Remove", "ghost-button small-button", () => {
       if (kind === "character") character.removeCharacter(index);
       if (kind === "skill") character.removeSkill(index);
       if (kind === "resource") character.removeResource(index);
+      pendingExperienceTraitIds.delete(traitId);
       markDirty();
       render();
     });
 
-    appendActionButtons(actions, [toggleUsed, toggleLost, editButton, removeButton]);
+    actions.append(toggleUsed, toggleLost, editButton, removeButton);
     entry.append(body, actions);
     listElement.append(entry);
   });
 };
 
-const renderPlayForms = () => {
-  const skillEditing = editingTrait?.kind === "skill" ? character.skills[editingTrait.index] : null;
-  elements.playSkillTitle.textContent = skillEditing ? "Edit skill" : "Add skill";
-  elements.playSkillSubmit.textContent = skillEditing ? "Save skill" : "Add skill";
-  elements.playSkillCancel.hidden = !skillEditing;
-  elements.playSkillName.value = skillEditing?.name ?? "";
-  elements.playSkillDescription.value = skillEditing?.description ?? "";
+const renderFormState = (kind, item) => {
+  if (kind === "skill") {
+    elements.playSkillForm.hidden = !(openForms.skill || editingTrait?.kind === "skill");
+    elements.playSkillTitle.textContent = item ? "Edit skill" : "Add skill";
+    elements.playSkillSubmit.textContent = item ? "Save skill" : "Add skill";
+    elements.playSkillName.value = item?.name ?? "";
+    elements.playSkillDescription.value = item?.description ?? "";
+  }
 
-  const resourceEditing = editingTrait?.kind === "resource" ? character.resources[editingTrait.index] : null;
-  elements.playResourceTitle.textContent = resourceEditing ? "Edit resource" : "Add resource";
-  elements.playResourceSubmit.textContent = resourceEditing ? "Save resource" : "Add resource";
-  elements.playResourceCancel.hidden = !resourceEditing;
-  elements.playResourceName.value = resourceEditing?.name ?? "";
-  elements.playResourceDescription.value = resourceEditing?.description ?? "";
+  if (kind === "resource") {
+    elements.playResourceForm.hidden = !(openForms.resource || editingTrait?.kind === "resource");
+    elements.playResourceTitle.textContent = item ? "Edit resource" : "Add resource";
+    elements.playResourceSubmit.textContent = item ? "Save resource" : "Add resource";
+    elements.playResourceName.value = item?.name ?? "";
+    elements.playResourceDescription.value = item?.description ?? "";
+  }
 
-  const characterEditing = editingTrait?.kind === "character" ? character.characters[editingTrait.index] : null;
-  elements.playCharacterTitle.textContent = characterEditing ? "Edit character" : "Add character";
-  elements.playCharacterSubmit.textContent = characterEditing ? "Save character" : "Add character";
-  elements.playCharacterCancel.hidden = !characterEditing;
-  elements.playCharacterName.value = characterEditing?.name ?? "";
-  elements.playCharacterDescription.value = characterEditing?.description ?? "";
-  elements.playCharacterType.value = characterEditing?.type ?? "mortal";
+  if (kind === "character") {
+    elements.playCharacterForm.hidden = !(openForms.character || editingTrait?.kind === "character");
+    elements.playCharacterTitle.textContent = item ? "Edit character" : "Add character";
+    elements.playCharacterSubmit.textContent = item ? "Save character" : "Add character";
+    elements.playCharacterName.value = item?.name ?? "";
+    elements.playCharacterDescription.value = item?.description ?? "";
+    elements.playCharacterType.value = item?.type ?? "mortal";
+  }
 };
 
 const renderPlayLists = () => {
   elements.playNameHeading.textContent = character.name || "Unnamed Vampire";
+  syncSelectedTraits(pendingExperienceTraitIds);
   renderPlayMemoryList();
   renderTraitList(elements.playSkillList, character.skills, "skill");
   renderTraitList(elements.playResourceList, character.resources, "resource");
   renderTraitList(elements.playCharacterList, character.characters, "character");
   renderRecords(
     elements.playMarkList,
-    character.marks.map((item) => ({ title: item.name, text: item.description })),
+    character.marks.map((item, index) => ({ title: item.name, text: item.description, index })),
     null,
     "No marks available.",
   );
-  syncSelectedTraits(playExperienceTraitIds);
-  renderTraitSelector(elements.playExperienceTraits, playExperienceTraitIds);
-  updateMemoryTargetControl();
-  renderPlayForms();
+
+  [...elements.playMarkList.querySelectorAll(".record")].forEach((entry, index) => {
+    const traitId = `mark-${index}`;
+    if (pendingExperienceTraitIds.has(traitId)) entry.classList.add("tag-target-active");
+    entry.addEventListener("click", () => togglePendingTrait(traitId));
+  });
+
+  renderPlayComposer();
+  renderFormState("skill", editingTrait?.kind === "skill" ? character.skills[editingTrait.index] : null);
+  renderFormState("resource", editingTrait?.kind === "resource" ? character.resources[editingTrait.index] : null);
+  renderFormState("character", editingTrait?.kind === "character" ? character.characters[editingTrait.index] : null);
 };
 
 const parseCsv = (csvText = "") => {
@@ -806,6 +830,7 @@ const parseCsv = (csvText = "") => {
     if (char === "\r") continue;
     field += char;
   }
+
   row.push(field);
   rows.push(row);
   return rows.filter((candidate) => candidate.some((value) => cleanText(value)));
@@ -867,7 +892,6 @@ const renderPromptPanel = () => {
     elements.promptText.textContent = "No prompt content is available.";
     return;
   }
-
   const currentPrompt = promptState.deck[promptState.currentPrompt - 1];
   const visitCount = promptState.visits.get(promptState.currentPrompt) ?? 1;
   elements.promptButton.disabled = false;
@@ -946,7 +970,6 @@ const renderStep = () => {
   });
   elements.stepProgress.textContent = `${currentStep + 1}/${totalSteps}`;
   elements.backButton.disabled = currentStep === 0;
-  elements.nextButton.hidden = false;
   elements.nextButton.textContent = currentStep === totalSteps - 1 ? "Save" : "Next";
   elements.nextButton.disabled = !canAdvanceFromStep(currentStep);
 };
@@ -973,10 +996,10 @@ const renderCollapsibleCards = () => {
   document.querySelectorAll("[data-card-key]").forEach((card) => {
     const key = card.dataset.cardKey;
     const content = card.querySelector("[data-card-content]");
-    const toggle = card.querySelector("[data-card-toggle]");
+    const indicator = card.querySelector(".card-toggle-indicator");
     const collapsed = collapsedCards.has(key);
     if (content) content.hidden = collapsed;
-    if (toggle) toggle.textContent = collapsed ? "Open" : "Collapse";
+    if (indicator) indicator.textContent = collapsed ? "+" : "−";
   });
 };
 
@@ -1157,6 +1180,7 @@ elements.memoryCurse.addEventListener("input", () => {
   markDirty();
   renderStep();
 });
+
 elements.mortalForm.addEventListener("submit", (event) => {
   event.preventDefault();
   if (character.addCharacter(elements.mortalName.value, elements.mortalDescription.value, "mortal")) {
@@ -1165,6 +1189,7 @@ elements.mortalForm.addEventListener("submit", (event) => {
     render();
   }
 });
+
 elements.skillForm.addEventListener("submit", (event) => {
   event.preventDefault();
   if (character.addSkill(elements.skillName.value, elements.skillDescription.value)) {
@@ -1173,6 +1198,7 @@ elements.skillForm.addEventListener("submit", (event) => {
     render();
   }
 });
+
 elements.resourceForm.addEventListener("submit", (event) => {
   event.preventDefault();
   if (character.addResource(elements.resourceName.value, elements.resourceDescription.value)) {
@@ -1181,6 +1207,7 @@ elements.resourceForm.addEventListener("submit", (event) => {
     render();
   }
 });
+
 elements.memoryFormLater.addEventListener("submit", (event) => {
   event.preventDefault();
   if (character.memories.length < 1 || character.memories.length >= 4) return;
@@ -1192,6 +1219,7 @@ elements.memoryFormLater.addEventListener("submit", (event) => {
     render();
   }
 });
+
 elements.immortalForm.addEventListener("submit", (event) => {
   event.preventDefault();
   if (character.addCharacter(elements.immortalName.value, elements.immortalDescription.value, "immortal")) {
@@ -1200,6 +1228,7 @@ elements.immortalForm.addEventListener("submit", (event) => {
     render();
   }
 });
+
 elements.markForm.addEventListener("submit", (event) => {
   event.preventDefault();
   if (character.addMark(elements.markInput.value, elements.markDescription.value)) {
@@ -1208,6 +1237,7 @@ elements.markForm.addEventListener("submit", (event) => {
     render();
   }
 });
+
 elements.memoryFormCurse.addEventListener("submit", (event) => {
   event.preventDefault();
   if (character.memories.length !== 4) return;
@@ -1219,6 +1249,7 @@ elements.memoryFormCurse.addEventListener("submit", (event) => {
     render();
   }
 });
+
 elements.backButton.addEventListener("click", () => {
   currentStep = Math.max(0, currentStep - 1);
   renderStep();
@@ -1262,27 +1293,53 @@ elements.nextButton.addEventListener("click", () => {
 elements.promptButton.addEventListener("click", () => {
   if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
   const delta = rollDie(10) - rollDie(6);
-  const from = promptState.currentPrompt;
-  const target = clampPromptIndex(from + delta);
+  const target = clampPromptIndex(promptState.currentPrompt + delta);
   moveToNextAvailablePrompt(target);
   renderPromptPanel();
 });
 
-elements.playMemoryTarget.addEventListener("change", () => {
-  selectedMemoryTarget = elements.playMemoryTarget.value;
-  renderPlayLists();
+elements.addMemoryButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  if (character.memories.length >= MAX_MEMORIES) return;
+  collapsedCards.delete("memories");
+  openExperienceComposer("new");
+  render();
 });
 
 elements.playExperienceForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  const memoryIndex = selectedMemoryTarget === "new" ? null : Number(selectedMemoryTarget);
-  const didSave = character.addMemory(elements.playExperienceText.value, getSelectedTraitLabels(playExperienceTraitIds), memoryIndex);
+  const memoryIndex = experienceComposer.target === "new" ? null : Number(experienceComposer.target);
+  const didSave = character.addMemory(elements.playExperienceText.value, getSelectedTraitLabels(pendingExperienceTraitIds), memoryIndex);
   if (!didSave) return;
   markDirty();
-  elements.playExperienceForm.reset();
-  playExperienceTraitIds.clear();
-  selectedMemoryTarget = "new";
+  closeExperienceComposer();
   render();
+});
+
+elements.playExperienceCancel.addEventListener("click", (event) => {
+  event.stopPropagation();
+  closeExperienceComposer();
+  render();
+});
+
+const openTraitForm = (kind) => {
+  collapsedCards.delete(kind === "character" ? "characters" : `${kind}s`);
+  openForms[kind] = true;
+  editingTrait = null;
+  render();
+};
+
+elements.addSkillButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  openTraitForm("skill");
+});
+elements.addResourceButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  openTraitForm("resource");
+});
+elements.addCharacterButton.addEventListener("click", (event) => {
+  event.stopPropagation();
+  openTraitForm("character");
 });
 
 elements.playSkillForm.addEventListener("submit", (event) => {
@@ -1292,12 +1349,11 @@ elements.playSkillForm.addEventListener("submit", (event) => {
     : character.addSkill(elements.playSkillName.value, elements.playSkillDescription.value);
   if (!didSave) return;
   markDirty();
-  editingTrait = editingTrait?.kind === "skill" ? null : editingTrait;
-  if (editingTrait?.kind !== "skill") elements.playSkillForm.reset();
+  openForms.skill = false;
   editingTrait = null;
+  elements.playSkillForm.reset();
   render();
 });
-
 elements.playResourceForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const didSave = editingTrait?.kind === "resource"
@@ -1305,10 +1361,11 @@ elements.playResourceForm.addEventListener("submit", (event) => {
     : character.addResource(elements.playResourceName.value, elements.playResourceDescription.value);
   if (!didSave) return;
   markDirty();
+  openForms.resource = false;
   editingTrait = null;
+  elements.playResourceForm.reset();
   render();
 });
-
 elements.playCharacterForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const didSave = editingTrait?.kind === "character"
@@ -1316,27 +1373,39 @@ elements.playCharacterForm.addEventListener("submit", (event) => {
     : character.addCharacter(elements.playCharacterName.value, elements.playCharacterDescription.value, elements.playCharacterType.value);
   if (!didSave) return;
   markDirty();
+  openForms.character = false;
   editingTrait = null;
+  elements.playCharacterForm.reset();
   render();
 });
 
-elements.playSkillCancel.addEventListener("click", () => {
-  editingTrait = null;
-  renderPlayForms();
+elements.playSkillCancel.addEventListener("click", (event) => {
+  event.stopPropagation();
+  openForms.skill = false;
+  editingTrait = editingTrait?.kind === "skill" ? null : editingTrait;
+  elements.playSkillForm.reset();
+  render();
 });
-elements.playResourceCancel.addEventListener("click", () => {
-  editingTrait = null;
-  renderPlayForms();
+elements.playResourceCancel.addEventListener("click", (event) => {
+  event.stopPropagation();
+  openForms.resource = false;
+  editingTrait = editingTrait?.kind === "resource" ? null : editingTrait;
+  elements.playResourceForm.reset();
+  render();
 });
-elements.playCharacterCancel.addEventListener("click", () => {
-  editingTrait = null;
-  renderPlayForms();
+elements.playCharacterCancel.addEventListener("click", (event) => {
+  event.stopPropagation();
+  openForms.character = false;
+  editingTrait = editingTrait?.kind === "character" ? null : editingTrait;
+  elements.playCharacterForm.reset();
+  render();
 });
 
-document.querySelectorAll("[data-card-toggle]").forEach((toggle) => {
-  toggle.addEventListener("click", () => {
-    const card = toggle.closest("[data-card-key]");
-    const key = card?.dataset.cardKey;
+document.querySelectorAll("[data-card-key]").forEach((card) => {
+  card.addEventListener("click", (event) => {
+    const interactive = event.target.closest("button, input, textarea, select, label");
+    if (interactive && !interactive.hasAttribute("data-card-toggle")) return;
+    const key = card.dataset.cardKey;
     if (!key) return;
     if (collapsedCards.has(key)) collapsedCards.delete(key);
     else collapsedCards.add(key);

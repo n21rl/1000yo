@@ -63,7 +63,6 @@ h2 {
 .subtitle,
 .supporting,
 .record-body p,
-.summary p,
 .experience-list p {
   color: #d9cbb4;
 }
@@ -87,6 +86,10 @@ h2 {
   gap: 1rem;
 }
 
+.play-titlebar {
+  padding: 0.25rem 0 0;
+}
+
 .play-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(18rem, 1fr));
@@ -104,17 +107,46 @@ h2 {
 .record,
 .record-actions,
 .form-actions,
-.wizard-nav {
+.wizard-nav,
+.card-title-row {
   display: flex;
   gap: 0.75rem;
 }
 
 .wizard-header,
-.section-heading,
 .record,
 .wizard-nav {
   justify-content: space-between;
   align-items: flex-start;
+}
+
+.section-heading {
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  margin: -1rem -1rem 0;
+  padding: 1rem;
+  border-radius: 1rem 1rem 0 0;
+}
+
+.section-heading:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.card-title-row {
+  align-items: center;
+}
+
+.card-toggle-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  border: 1px solid #725145;
+  color: #d9cbb4;
+  font-weight: 700;
 }
 
 .wizard-title {
@@ -175,7 +207,6 @@ label {
   gap: 0.45rem;
 }
 
-.trait-pill,
 .record-tag {
   width: auto;
   border-radius: 999px;
@@ -185,11 +216,7 @@ label {
   padding: 0.35rem 0.8rem;
 }
 
-.trait-pill {
-  cursor: pointer;
-}
-
-.trait-pill.selected {
+.selected-trait {
   border-color: #c9a370;
   background: rgba(123, 46, 45, 0.3);
   color: #f6eddc;
@@ -234,10 +261,19 @@ button:disabled {
   border-color: #725145;
 }
 
-.small-button,
-.collapse-button {
+.small-button {
   min-width: 0;
   padding: 0.5rem 0.7rem;
+}
+
+.icon-button {
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 999px;
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 .record-list,
@@ -254,6 +290,13 @@ button:disabled {
   border: 1px solid rgba(158, 122, 106, 0.25);
   border-radius: 0.85rem;
   background: rgba(20, 14, 14, 0.48);
+}
+
+.record-select {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
 }
 
 .record-body {
@@ -279,6 +322,11 @@ button:disabled {
 .form-actions {
   flex-wrap: wrap;
   justify-content: flex-end;
+}
+
+.tag-target-active {
+  border-color: #c9a370;
+  box-shadow: 0 0 0 1px rgba(201, 163, 112, 0.4);
 }
 
 .lost .record-body,
@@ -375,7 +423,8 @@ button:disabled {
   .record,
   .wizard-nav,
   .form-actions,
-  .record-actions {
+  .record-actions,
+  .card-title-row {
     flex-direction: column;
   }
 
@@ -385,8 +434,7 @@ button:disabled {
   }
 
   .ghost-button,
-  .small-button,
-  .collapse-button {
+  .small-button {
     width: 100%;
   }
 }

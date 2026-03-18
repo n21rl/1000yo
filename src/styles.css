@@ -340,33 +340,12 @@ button:disabled {
   max-width: 64rem;
 }
 
-.menu-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(18rem, 1fr);
-  gap: 1rem;
-  align-items: start;
-}
-
-.menu-actions {
-  height: 100%;
-}
-
-.menu-heading {
-  margin-bottom: 0.5rem;
-  font-family: "Georgia", "Times New Roman", serif;
-}
-
-.menu-button-stack button + button {
-  margin-top: 0.9rem;
+.menu-screen > * + * {
+  margin-top: 1rem;
 }
 
 .vampire-record {
   align-items: center;
-}
-
-.vampire-record.selected {
-  border-color: #c9a370;
-  box-shadow: 0 0 0 1px rgba(201, 163, 112, 0.35);
 }
 
 .vampire-option {
@@ -388,8 +367,15 @@ button:disabled {
   color: #d9cbb4;
 }
 
-@media (max-width: 720px) {
-  .menu-layout {
-    grid-template-columns: 1fr;
-  }
+.menu-record-actions {
+  display: flex;
+  align-items: center;
+}
+
+.menu-delete-button {
+  min-width: 7rem;
+}
+
+.menu-new-button {
+  max-width: 18rem;
 }

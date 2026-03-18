@@ -69,8 +69,6 @@ const elements = {
 
   vampireList: document.querySelector("#vampire-list"),
   menuEmptyState: document.querySelector("#menu-empty-state"),
-  continueButton: document.querySelector("#continue-button"),
-  deleteButton: document.querySelector("#delete-button"),
   newVampireButton: document.querySelector("#new-vampire-button"),
 
   nameInput: document.querySelector("#name"),
@@ -191,7 +189,6 @@ const loadCharacter = (storedCharacter) => {
   currentStep = 0;
   selectedLaterTraitIds.clear();
   selectedCurseTraitIds.clear();
-  promptState.lastRoll = null;
 };
 
 const resetCreationForms = () => {
@@ -204,6 +201,12 @@ const resetCreationForms = () => {
   elements.memoryFormCurse.reset();
 };
 
+const resetPromptState = () => {
+  promptState.currentPrompt = 1;
+  promptState.visits = new Map();
+  promptState.lastRoll = null;
+};
+
 const startNewVampire = () => {
   character = new Character();
   selectedVampireId = crypto.randomUUID();
@@ -211,7 +214,7 @@ const startNewVampire = () => {
   hasSavedSetup = false;
   selectedLaterTraitIds.clear();
   selectedCurseTraitIds.clear();
-  promptState.lastRoll = null;
+  resetPromptState();
   resetCreationForms();
   setScreen("creation");
   render();
@@ -440,38 +443,50 @@ const renderMenu = () => {
 
   for (const vampire of vampires) {
     const item = document.createElement("li");
-    item.className = selectedVampireId === vampire.id ? "record vampire-record selected" : "record vampire-record";
+    item.className = "record vampire-record";
 
     const body = document.createElement("button");
     body.type = "button";
     body.className = "vampire-option";
     body.addEventListener("click", () => {
-      selectedVampireId = vampire.id;
-      render();
+      loadCharacter(vampire);
+      resetCreationForms();
+      resetPromptState();
+      void startPlay(true);
     });
 
     const title = document.createElement("strong");
     title.textContent = vampire.data?.name || "Unnamed Vampire";
 
     const text = document.createElement("p");
-    text.textContent = vampire.isComplete
-      ? `Ready to play • Updated ${formatTimestamp(vampire.updatedAt)}`
-      : `Creation in progress • Updated ${formatTimestamp(vampire.updatedAt)}`;
+    text.textContent = `Updated ${formatTimestamp(vampire.updatedAt)}`;
 
     body.append(title, text);
 
-    const status = document.createElement("span");
-    status.className = vampire.isComplete ? "section-status complete" : "section-status";
-    status.textContent = vampire.isComplete ? "Ready" : "Draft";
+    const actions = document.createElement("div");
+    actions.className = "menu-record-actions";
 
-    item.append(body, status);
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "ghost-button menu-delete-button";
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", () => {
+      const displayName = vampire.data?.name || "this vampire";
+      if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
+
+      const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id);
+      saveStoredVampires(remaining);
+      if (selectedVampireId === vampire.id) {
+        selectedVampireId = "";
+      }
+      setScreen("menu");
+      render();
+    });
+
+    actions.append(deleteButton);
+    item.append(body, actions);
     elements.vampireList.append(item);
   }
-
-  const selectedVampire = vampires.find((entry) => entry.id === selectedVampireId) ?? null;
-  elements.continueButton.disabled = !selectedVampire;
-  elements.deleteButton.disabled = !selectedVampire;
-  elements.continueButton.textContent = selectedVampire?.isComplete ? "Play vampire" : "Continue creation";
 };
 
 const renderMemoryList = (listElement, startIndex, endIndexExclusive) => {
@@ -788,8 +803,8 @@ const loadPromptDeck = async () => {
   }
 };
 
-const startPlay = async () => {
-  if (!character.isReadyForPromptOne()) {
+const startPlay = async (skipCreationGate = false) => {
+  if (!skipCreationGate && !character.isReadyForPromptOne()) {
     setScreen("creation");
     render();
     return;
@@ -1056,38 +1071,6 @@ const autofillCurrentStep = () => {
 
 elements.newVampireButton.addEventListener("click", () => {
   startNewVampire();
-});
-
-elements.continueButton.addEventListener("click", () => {
-  const selectedVampire = getStoredVampires().find((entry) => entry.id === selectedVampireId);
-  if (!selectedVampire) return;
-
-  loadCharacter(selectedVampire);
-  resetCreationForms();
-
-  if (selectedVampire.isComplete && character.isReadyForPromptOne()) {
-    void startPlay();
-    return;
-  }
-
-  setScreen("creation");
-  render();
-});
-
-elements.deleteButton.addEventListener("click", () => {
-  const remaining = getStoredVampires().filter((entry) => entry.id !== selectedVampireId);
-  saveStoredVampires(remaining);
-  selectedVampireId = remaining[0]?.id ?? "";
-
-  if (selectedVampireId) {
-    loadCharacter(remaining.find((entry) => entry.id === selectedVampireId));
-  } else {
-    character = new Character();
-    hasSavedSetup = false;
-  }
-
-  setScreen("menu");
-  render();
 });
 
 elements.nameInput.addEventListener("input", () => {

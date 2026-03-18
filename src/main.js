@@ -132,6 +132,11 @@ const elements = {
 };
 
 const totalSteps = elements.stepPanels.length;
+const SCREEN_TITLES = {
+  menu: "Start Menu",
+  creation: "Vampire Creation",
+  play: "Night Chronicle",
+};
 
 const bindRemove = (button, handler) => {
   button.addEventListener("click", handler);
@@ -207,6 +212,36 @@ const resetPromptState = () => {
   promptState.lastRoll = null;
 };
 
+const getRouteForScreen = (screen) => {
+  if (screen === "creation") return "#/create";
+  if (screen === "play" && selectedVampireId) return `#/play/${selectedVampireId}`;
+  return "#/menu";
+};
+
+const updateDocumentTitle = () => {
+  const title = SCREEN_TITLES[currentScreen] ?? "1000yo";
+  document.title = `${title} · 1000yo`;
+};
+
+const setScreen = (screen, { updateRoute = false, replaceRoute = false } = {}) => {
+  currentScreen = screen;
+  elements.menuScreen.hidden = currentScreen !== "menu";
+  elements.creationScreen.hidden = currentScreen !== "creation";
+  elements.playScreen.hidden = currentScreen !== "play";
+  updateDocumentTitle();
+
+  if (updateRoute) {
+    const nextRoute = getRouteForScreen(screen);
+    if (window.location.hash !== nextRoute) {
+      if (replaceRoute) {
+        window.location.replace(nextRoute);
+      } else {
+        window.location.hash = nextRoute;
+      }
+    }
+  }
+};
+
 const startNewVampire = () => {
   character = new Character();
   selectedVampireId = crypto.randomUUID();
@@ -216,20 +251,13 @@ const startNewVampire = () => {
   selectedCurseTraitIds.clear();
   resetPromptState();
   resetCreationForms();
-  setScreen("creation");
+  setScreen("creation", { updateRoute: true });
   render();
 };
 
 const markDirty = () => {
   hasSavedSetup = false;
   persistCurrentCharacter();
-};
-
-const setScreen = (screen) => {
-  currentScreen = screen;
-  elements.menuScreen.hidden = currentScreen !== "menu";
-  elements.creationScreen.hidden = currentScreen !== "creation";
-  elements.playScreen.hidden = currentScreen !== "play";
 };
 
 const formatTimestamp = (isoString) => {
@@ -479,7 +507,7 @@ const renderMenu = () => {
       if (selectedVampireId === vampire.id) {
         selectedVampireId = "";
       }
-      setScreen("menu");
+      setScreen("menu", { updateRoute: true });
       render();
     });
 
@@ -805,14 +833,14 @@ const loadPromptDeck = async () => {
 
 const startPlay = async (skipCreationGate = false) => {
   if (!skipCreationGate && !character.isReadyForPromptOne()) {
-    setScreen("creation");
+    setScreen("creation", { updateRoute: true });
     render();
     return;
   }
 
   hasSavedSetup = true;
   persistCurrentCharacter();
-  setScreen("play");
+  setScreen("play", { updateRoute: true });
 
   if (!promptState.visits.size) {
     promptState.currentPrompt = 1;
@@ -893,6 +921,62 @@ const render = () => {
   renderCreation();
   renderPlayLists();
   renderPromptPanel();
+};
+
+const parseRoute = () => {
+  const hash = window.location.hash || "#/menu";
+  const match = hash.match(/^#\/([a-z]+)(?:\/([^/]+))?$/i);
+  const route = match?.[1]?.toLowerCase() ?? "menu";
+  const routeId = match?.[2] ?? "";
+
+  if (route === "create") {
+    return { screen: "creation", vampireId: "" };
+  }
+
+  if (route === "play") {
+    return { screen: "play", vampireId: routeId };
+  }
+
+  return { screen: "menu", vampireId: "" };
+};
+
+const handleRouteChange = async () => {
+  const { screen, vampireId } = parseRoute();
+
+  if (screen === "menu") {
+    setScreen("menu");
+    render();
+    return;
+  }
+
+  if (screen === "creation") {
+    if (!selectedVampireId) {
+      startNewVampire();
+      return;
+    }
+
+    setScreen("creation");
+    render();
+    return;
+  }
+
+  if (!vampireId) {
+    setScreen("menu", { updateRoute: true, replaceRoute: true });
+    render();
+    return;
+  }
+
+  const storedCharacter = getStoredVampires().find((entry) => entry.id === vampireId);
+  if (!storedCharacter) {
+    setScreen("menu", { updateRoute: true, replaceRoute: true });
+    render();
+    return;
+  }
+
+  loadCharacter(storedCharacter);
+  resetCreationForms();
+  resetPromptState();
+  await startPlay(true);
 };
 
 const saveIdentityStep = () => {
@@ -1262,8 +1346,10 @@ elements.rollButton.addEventListener("click", () => {
 const initialize = () => {
   const vampires = getStoredVampires();
   selectedVampireId = vampires[0]?.id ?? "";
-  setScreen("menu");
-  render();
+  window.addEventListener("hashchange", () => {
+    void handleRouteChange();
+  });
+  void handleRouteChange();
 };
 
 initialize();

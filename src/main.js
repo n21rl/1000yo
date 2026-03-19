@@ -17,11 +17,7 @@ const selectedCurseTraitIds = new Set();
 const pendingExperienceTraitIds = new Set();
 let editingTrait = null;
 let experienceComposer = { open: false, target: "new" };
-const openForms = {
-  skill: false,
-  resource: false,
-  character: false,
-};
+let activeModal = null;
 const collapsedCards = new Set(["characters", "skills", "resources", "marks"]);
 const sampleMortals = [
   ["Yvette", "A mortal sibling who still writes to me."],
@@ -153,6 +149,8 @@ const elements = {
   playCharacterType: document.querySelector("#play-character-type"),
   playCharacterSubmit: document.querySelector("#play-character-submit"),
   playCharacterCancel: document.querySelector("#play-character-cancel"),
+  playTraitModal: document.querySelector("#play-trait-modal"),
+  playModalTitle: document.querySelector("#play-modal-title"),
 };
 
 const totalSteps = elements.stepPanels.length;
@@ -208,9 +206,7 @@ const resetPlayState = () => {
   pendingExperienceTraitIds.clear();
   editingTrait = null;
   experienceComposer = { open: false, target: "new" };
-  openForms.skill = false;
-  openForms.resource = false;
-  openForms.character = false;
+  activeModal = null;
 };
 
 const loadCharacter = (storedCharacter) => {
@@ -535,7 +531,6 @@ const togglePendingTrait = (traitId) => {
   if (!experienceComposer.open) return;
   if (pendingExperienceTraitIds.has(traitId)) pendingExperienceTraitIds.delete(traitId);
   else pendingExperienceTraitIds.add(traitId);
-  renderPlayComposer();
   renderPlayLists();
 };
 
@@ -559,11 +554,9 @@ const renderSelectedTraitPills = () => {
 };
 
 const openExperienceComposer = (target = "new") => {
+  activeModal = "memory";
   experienceComposer = { open: true, target };
   elements.playExperienceForm.hidden = false;
-  if (!collapsedCards.has("memories")) {
-    renderPlayComposer();
-  }
 };
 
 const closeExperienceComposer = () => {
@@ -576,8 +569,7 @@ const closeExperienceComposer = () => {
 const renderPlayComposer = () => {
   const targetIndex = experienceComposer.target === "new" ? null : Number(experienceComposer.target);
   const isNewMemory = experienceComposer.target === "new";
-  elements.playExperienceForm.hidden = !experienceComposer.open;
-  elements.playExperienceFormTitle.textContent = isNewMemory ? "Add memory" : `Add experience to Memory ${targetIndex + 1}`;
+  elements.playExperienceForm.hidden = activeModal !== "memory" || !experienceComposer.open;
   elements.playExperienceSubmit.textContent = isNewMemory ? "Add memory" : "Add experience";
   if (isNewMemory) {
     elements.playMemoryHint.textContent = `This will create a new memory (${character.memories.length}/${MAX_MEMORIES}).`;
@@ -621,7 +613,7 @@ const renderPlayMemoryList = () => {
     const actions = document.createElement("div");
     actions.className = "record-actions";
     if (!memory.lost && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
-      actions.append(createButton("+", "icon-button", () => {
+      actions.append(createButton("Add experience", "ghost-button small-button", () => {
         openExperienceComposer(String(memoryIndex));
         render();
       }));
@@ -732,7 +724,7 @@ const renderTraitList = (listElement, items, kind) => {
         });
     const editButton = createButton("Edit", "ghost-button small-button", () => {
       editingTrait = { kind, index };
-      openForms[kind] = true;
+      activeModal = kind;
       collapsedCards.delete(`${kind}s`.replace("characterss", "characters"));
       render();
     });
@@ -753,7 +745,7 @@ const renderTraitList = (listElement, items, kind) => {
 
 const renderFormState = (kind, item) => {
   if (kind === "skill") {
-    elements.playSkillForm.hidden = !(openForms.skill || editingTrait?.kind === "skill");
+    elements.playSkillForm.hidden = activeModal !== "skill";
     elements.playSkillTitle.textContent = item ? "Edit skill" : "Add skill";
     elements.playSkillSubmit.textContent = item ? "Save skill" : "Add skill";
     elements.playSkillName.value = item?.name ?? "";
@@ -761,7 +753,7 @@ const renderFormState = (kind, item) => {
   }
 
   if (kind === "resource") {
-    elements.playResourceForm.hidden = !(openForms.resource || editingTrait?.kind === "resource");
+    elements.playResourceForm.hidden = activeModal !== "resource";
     elements.playResourceTitle.textContent = item ? "Edit resource" : "Add resource";
     elements.playResourceSubmit.textContent = item ? "Save resource" : "Add resource";
     elements.playResourceName.value = item?.name ?? "";
@@ -769,7 +761,7 @@ const renderFormState = (kind, item) => {
   }
 
   if (kind === "character") {
-    elements.playCharacterForm.hidden = !(openForms.character || editingTrait?.kind === "character");
+    elements.playCharacterForm.hidden = activeModal !== "character";
     elements.playCharacterTitle.textContent = item ? "Edit character" : "Add character";
     elements.playCharacterSubmit.textContent = item ? "Save character" : "Add character";
     elements.playCharacterName.value = item?.name ?? "";
@@ -778,7 +770,29 @@ const renderFormState = (kind, item) => {
   }
 };
 
+const syncActiveModal = () => {
+  elements.playTraitModal.hidden = activeModal === null;
+  if (activeModal === "memory") {
+    elements.playModalTitle.textContent = experienceComposer.target === "new"
+      ? "Add memory"
+      : `Add experience to Memory ${Number(experienceComposer.target) + 1}`;
+    return;
+  }
+  if (activeModal === "skill") {
+    elements.playModalTitle.textContent = editingTrait?.kind === "skill" ? "Edit skill" : "Add skill";
+    return;
+  }
+  if (activeModal === "resource") {
+    elements.playModalTitle.textContent = editingTrait?.kind === "resource" ? "Edit resource" : "Add resource";
+    return;
+  }
+  if (activeModal === "character") {
+    elements.playModalTitle.textContent = editingTrait?.kind === "character" ? "Edit character" : "Add character";
+  }
+};
+
 const renderPlayLists = () => {
+  syncActiveModal();
   elements.playNameHeading.textContent = character.name || "Unnamed Vampire";
   syncSelectedTraits(pendingExperienceTraitIds);
   renderPlayMemoryList();
@@ -1315,6 +1329,7 @@ elements.addMemoryButton.addEventListener("click", (event) => {
   event.stopPropagation();
   if (character.memories.length >= MAX_MEMORIES) return;
   collapsedCards.delete("memories");
+  activeModal = "memory";
   openExperienceComposer("new");
   render();
 });
@@ -1326,18 +1341,20 @@ elements.playExperienceForm.addEventListener("submit", (event) => {
   if (!didSave) return;
   markDirty();
   closeExperienceComposer();
+  activeModal = null;
   render();
 });
 
 elements.playExperienceCancel.addEventListener("click", (event) => {
   event.stopPropagation();
   closeExperienceComposer();
+  activeModal = null;
   render();
 });
 
 const openTraitForm = (kind) => {
   collapsedCards.delete(kind === "character" ? "characters" : `${kind}s`);
-  openForms[kind] = true;
+  activeModal = kind;
   editingTrait = null;
   render();
 };
@@ -1362,7 +1379,7 @@ elements.playSkillForm.addEventListener("submit", (event) => {
     : character.addSkill(elements.playSkillName.value, elements.playSkillDescription.value);
   if (!didSave) return;
   markDirty();
-  openForms.skill = false;
+  activeModal = null;
   editingTrait = null;
   elements.playSkillForm.reset();
   render();
@@ -1374,7 +1391,7 @@ elements.playResourceForm.addEventListener("submit", (event) => {
     : character.addResource(elements.playResourceName.value, elements.playResourceDescription.value);
   if (!didSave) return;
   markDirty();
-  openForms.resource = false;
+  activeModal = null;
   editingTrait = null;
   elements.playResourceForm.reset();
   render();
@@ -1386,7 +1403,7 @@ elements.playCharacterForm.addEventListener("submit", (event) => {
     : character.addCharacter(elements.playCharacterName.value, elements.playCharacterDescription.value, elements.playCharacterType.value);
   if (!didSave) return;
   markDirty();
-  openForms.character = false;
+  activeModal = null;
   editingTrait = null;
   elements.playCharacterForm.reset();
   render();
@@ -1394,23 +1411,42 @@ elements.playCharacterForm.addEventListener("submit", (event) => {
 
 elements.playSkillCancel.addEventListener("click", (event) => {
   event.stopPropagation();
-  openForms.skill = false;
+  activeModal = null;
   editingTrait = editingTrait?.kind === "skill" ? null : editingTrait;
   elements.playSkillForm.reset();
   render();
 });
 elements.playResourceCancel.addEventListener("click", (event) => {
   event.stopPropagation();
-  openForms.resource = false;
+  activeModal = null;
   editingTrait = editingTrait?.kind === "resource" ? null : editingTrait;
   elements.playResourceForm.reset();
   render();
 });
 elements.playCharacterCancel.addEventListener("click", (event) => {
   event.stopPropagation();
-  openForms.character = false;
+  activeModal = null;
   editingTrait = editingTrait?.kind === "character" ? null : editingTrait;
   elements.playCharacterForm.reset();
+  render();
+});
+
+document.querySelectorAll("[data-modal-close]").forEach((target) => {
+  target.addEventListener("click", () => {
+    activeModal = null;
+    closeExperienceComposer();
+    editingTrait = null;
+    resetPlayForms();
+    render();
+  });
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape" || activeModal === null) return;
+  activeModal = null;
+  closeExperienceComposer();
+  editingTrait = null;
+  resetPlayForms();
   render();
 });
 

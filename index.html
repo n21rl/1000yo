@@ -176,22 +176,10 @@
                 <h2>Memories & experiences</h2>
                 <span class="card-toggle-indicator" aria-hidden="true">▾</span>
               </div>
-              <button type="button" class="icon-button" id="add-memory-button">+</button>
             </div>
             <div data-card-content>
-              <form id="play-experience-form" class="stack inline-form compact-form" hidden>
-                <h3 id="play-experience-form-title">Add memory</h3>
-                <p id="play-memory-hint" class="supporting"></p>
-                <label for="play-experience-text">Current experience</label>
-                <textarea id="play-experience-text" rows="3" placeholder="Write a single evocative sentence for the current prompt."></textarea>
-                <div id="play-selected-traits" class="record-tags"></div>
-                <div class="form-actions">
-                  <button type="submit" id="play-experience-submit">Save</button>
-                  <button type="button" class="ghost-button" id="play-experience-cancel">Cancel</button>
-                </div>
-              </form>
-
               <ul id="play-memory-list" class="record-list"></ul>
+              <button type="button" id="add-memory-button" class="add-card-button">Add memory</button>
             </div>
           </article>
 
@@ -201,26 +189,10 @@
                 <h2>Characters</h2>
                 <span class="card-toggle-indicator" aria-hidden="true">▸</span>
               </div>
-              <button type="button" class="icon-button" id="add-character-button">+</button>
             </div>
             <div data-card-content hidden>
-              <form id="play-character-form" class="stack inline-form compact-form" hidden>
-                <h3 id="play-character-form-title">Add character</h3>
-                <label for="play-character-name">Name</label>
-                <input id="play-character-name" placeholder="Name the character" />
-                <label for="play-character-description">Description</label>
-                <textarea id="play-character-description" rows="2" placeholder="Describe their relationship to the vampire"></textarea>
-                <label for="play-character-type">Type</label>
-                <select id="play-character-type">
-                  <option value="mortal">Mortal</option>
-                  <option value="immortal">Immortal</option>
-                </select>
-                <div class="form-actions">
-                  <button type="submit" id="play-character-submit">Add character</button>
-                  <button type="button" class="ghost-button" id="play-character-cancel">Cancel</button>
-                </div>
-              </form>
               <ul id="play-character-list" class="record-list"></ul>
+              <button type="button" id="add-character-button" class="add-card-button">Add character</button>
             </div>
           </article>
 
@@ -230,21 +202,10 @@
                 <h2>Skills</h2>
                 <span class="card-toggle-indicator" aria-hidden="true">▸</span>
               </div>
-              <button type="button" class="icon-button" id="add-skill-button">+</button>
             </div>
             <div data-card-content hidden>
-              <form id="play-skill-form" class="stack inline-form compact-form" hidden>
-                <h3 id="play-skill-form-title">Add skill</h3>
-                <label for="play-skill-name">Skill</label>
-                <input id="play-skill-name" placeholder="Record a skill" />
-                <label for="play-skill-description">Description</label>
-                <textarea id="play-skill-description" rows="2" placeholder="What does this skill mean in play?"></textarea>
-                <div class="form-actions">
-                  <button type="submit" id="play-skill-submit">Add skill</button>
-                  <button type="button" class="ghost-button" id="play-skill-cancel">Cancel</button>
-                </div>
-              </form>
               <ul id="play-skill-list" class="record-list"></ul>
+              <button type="button" id="add-skill-button" class="add-card-button">Add skill</button>
             </div>
           </article>
 
@@ -254,21 +215,10 @@
                 <h2>Resources</h2>
                 <span class="card-toggle-indicator" aria-hidden="true">▸</span>
               </div>
-              <button type="button" class="icon-button" id="add-resource-button">+</button>
             </div>
             <div data-card-content hidden>
-              <form id="play-resource-form" class="stack inline-form compact-form" hidden>
-                <h3 id="play-resource-form-title">Add resource</h3>
-                <label for="play-resource-name">Resource</label>
-                <input id="play-resource-name" placeholder="Record a resource" />
-                <label for="play-resource-description">Description</label>
-                <textarea id="play-resource-description" rows="2" placeholder="Why does this resource matter?"></textarea>
-                <div class="form-actions">
-                  <button type="submit" id="play-resource-submit">Add resource</button>
-                  <button type="button" class="ghost-button" id="play-resource-cancel">Cancel</button>
-                </div>
-              </form>
               <ul id="play-resource-list" class="record-list"></ul>
+              <button type="button" id="add-resource-button" class="add-card-button">Add resource</button>
             </div>
           </article>
 
@@ -286,6 +236,68 @@
         </section>
       </section>
     </main>
+
+    <div id="play-trait-modal" class="modal-shell" hidden>
+      <div class="modal-backdrop" data-modal-close></div>
+      <section class="modal-card card" role="dialog" aria-modal="true" aria-labelledby="play-modal-title">
+        <div class="modal-header">
+          <h3 id="play-modal-title">Add item</h3>
+        </div>
+
+        <form id="play-experience-form" class="stack compact-form modal-form" hidden>
+          <h3 id="play-experience-form-title" class="modal-form-title">Add memory</h3>
+          <p id="play-memory-hint" class="supporting"></p>
+          <label for="play-experience-text">Current experience</label>
+          <textarea id="play-experience-text" rows="3" placeholder="Write a single evocative sentence for the current prompt."></textarea>
+          <div id="play-selected-traits" class="record-tags"></div>
+          <div class="form-actions">
+            <button type="submit" id="play-experience-submit">Save</button>
+            <button type="button" class="ghost-button" id="play-experience-cancel">Cancel</button>
+          </div>
+        </form>
+
+        <form id="play-character-form" class="stack compact-form modal-form" hidden>
+          <h3 id="play-character-form-title" class="modal-form-title">Add character</h3>
+          <label for="play-character-name">Name</label>
+          <input id="play-character-name" placeholder="Name the character" />
+          <label for="play-character-description">Description</label>
+          <textarea id="play-character-description" rows="2" placeholder="Describe their relationship to the vampire"></textarea>
+          <label for="play-character-type">Type</label>
+          <select id="play-character-type">
+            <option value="mortal">Mortal</option>
+            <option value="immortal">Immortal</option>
+          </select>
+          <div class="form-actions">
+            <button type="submit" id="play-character-submit">Add character</button>
+            <button type="button" class="ghost-button" id="play-character-cancel">Cancel</button>
+          </div>
+        </form>
+
+        <form id="play-skill-form" class="stack compact-form modal-form" hidden>
+          <h3 id="play-skill-form-title" class="modal-form-title">Add skill</h3>
+          <label for="play-skill-name">Skill</label>
+          <input id="play-skill-name" placeholder="Record a skill" />
+          <label for="play-skill-description">Description</label>
+          <textarea id="play-skill-description" rows="2" placeholder="What does this skill mean in play?"></textarea>
+          <div class="form-actions">
+            <button type="submit" id="play-skill-submit">Add skill</button>
+            <button type="button" class="ghost-button" id="play-skill-cancel">Cancel</button>
+          </div>
+        </form>
+
+        <form id="play-resource-form" class="stack compact-form modal-form" hidden>
+          <h3 id="play-resource-form-title" class="modal-form-title">Add resource</h3>
+          <label for="play-resource-name">Resource</label>
+          <input id="play-resource-name" placeholder="Record a resource" />
+          <label for="play-resource-description">Description</label>
+          <textarea id="play-resource-description" rows="2" placeholder="Why does this resource matter?"></textarea>
+          <div class="form-actions">
+            <button type="submit" id="play-resource-submit">Add resource</button>
+            <button type="button" class="ghost-button" id="play-resource-cancel">Cancel</button>
+          </div>
+        </form>
+      </section>
+    </div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

@@ -142,16 +142,25 @@ h2 {
 }
 
 .card-toggle-indicator {
-  display: inline-block;
+  display: inline-flex;
   flex: 0 0 auto;
-  width: 0.9rem;
+  width: 0.85rem;
+  height: 0.85rem;
   color: #bda88c;
-  font-size: 0.95rem;
-  line-height: 1;
-  font-weight: 700;
+  align-items: center;
+  justify-content: center;
   transform: rotate(90deg);
   transform-origin: center;
   transition: transform 140ms ease;
+}
+
+.card-toggle-indicator::before {
+  content: "";
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: currentColor;
+  clip-path: polygon(24% 16%, 24% 84%, 82% 50%);
 }
 
 .card-toggle-indicator.is-collapsed {

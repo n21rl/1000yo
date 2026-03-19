@@ -5,7 +5,7 @@ const STORAGE_KEY = "1000yo.vampires";
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
 const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
 const MIN_MEMORY_TRAITS = 2;
-const COLLAPSIBLE_SECTIONS = ["prompt", "memories", "characters", "skills", "resources", "marks"];
+const COLLAPSIBLE_SECTIONS = ["memories", "characters", "skills", "resources", "marks"];
 
 let character = new Character();
 let currentStep = 0;
@@ -1024,7 +1024,7 @@ const renderCollapsibleCards = () => {
     const key = card.dataset.cardKey;
     const content = card.querySelector("[data-card-content]");
     const indicator = card.querySelector(".card-toggle-indicator");
-    const collapsed = collapsedCards.has(key);
+    const collapsed = key === "prompt" ? false : collapsedCards.has(key);
     if (content) content.hidden = collapsed;
     if (indicator) indicator.classList.toggle("is-collapsed", collapsed);
   });
@@ -1455,7 +1455,7 @@ document.querySelectorAll("[data-card-key]").forEach((card) => {
     const interactive = event.target.closest("button, input, textarea, select, label");
     if (interactive && !interactive.hasAttribute("data-card-toggle")) return;
     const key = card.dataset.cardKey;
-    if (!key) return;
+    if (!key || key === "prompt") return;
     if (collapsedCards.has(key)) collapsedCards.delete(key);
     else collapsedCards.add(key);
     renderCollapsibleCards();
@@ -1469,7 +1469,7 @@ const initialize = () => {
     void handleRouteChange();
   });
   COLLAPSIBLE_SECTIONS.forEach((key) => {
-    if (!collapsedCards.has(key) && key !== "prompt" && key !== "memories") collapsedCards.add(key);
+    if (!collapsedCards.has(key) && key !== "memories") collapsedCards.add(key);
   });
   void handleRouteChange();
 };

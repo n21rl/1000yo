@@ -97,9 +97,19 @@ h2 {
   align-items: start;
 }
 
-.prompt-card,
-.play-card[data-card-key="memories"] {
+.prompt-card {
   grid-column: 1 / -1;
+}
+
+.prompt-card {
+  position: sticky;
+  top: 0.8rem;
+  z-index: 2;
+}
+
+.play-traits-column {
+  display: grid;
+  gap: 0.85rem;
 }
 
 .wizard-header,
@@ -131,6 +141,14 @@ h2 {
 
 .section-heading:hover {
   background: rgba(255, 255, 255, 0.03);
+}
+
+.play-static-heading {
+  cursor: default;
+}
+
+.play-static-heading:hover {
+  background: transparent;
 }
 
 .card-title-row {
@@ -486,8 +504,13 @@ button:disabled {
   }
 
   .play-grid,
-  .trait-groups {
+  .trait-groups,
+  .play-traits-column {
     grid-template-columns: 1fr;
+  }
+
+  .prompt-card {
+    position: static;
   }
 
   .ghost-button,

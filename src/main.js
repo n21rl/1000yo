@@ -294,35 +294,32 @@ const getTraitGroups = () => [
   {
     title: "Mortals",
     options: character.characters
-      .map((entry, index) => ({ entry, index }))
-      .filter(({ entry }) => entry.type === "mortal")
-      .map(({ entry, index }) => ({ id: `character-${index}`, label: entry.name, value: `Mortal: ${entry.name}` })),
+      .filter((entry) => entry.type === "mortal")
+      .map((entry) => ({ id: entry.id, label: entry.name, value: `Mortal: ${entry.name}` })),
   },
   {
     title: "Immortals",
     options: character.characters
-      .map((entry, index) => ({ entry, index }))
-      .filter(({ entry }) => entry.type === "immortal")
-      .map(({ entry, index }) => ({ id: `character-${index}`, label: entry.name, value: `Immortal: ${entry.name}` })),
+      .filter((entry) => entry.type === "immortal")
+      .map((entry) => ({ id: entry.id, label: entry.name, value: `Immortal: ${entry.name}` })),
   },
   {
     title: "Skills",
-    options: character.skills.map((item, index) => ({ id: `skill-${index}`, label: item.name, value: `Skill: ${item.name}` })),
+    options: character.skills.map((item) => ({ id: item.id, label: item.name, value: `Skill: ${item.name}` })),
   },
   {
     title: "Resources",
-    options: character.resources.map((item, index) => ({ id: `resource-${index}`, label: item.name, value: `Resource: ${item.name}` })),
+    options: character.resources.map((item) => ({ id: item.id, label: item.name, value: `Resource: ${item.name}` })),
   },
   {
     title: "Marks",
-    options: character.marks.map((item, index) => ({ id: `mark-${index}`, label: item.name, value: `Mark: ${item.name}` })),
+    options: character.marks.map((item) => ({ id: item.id, label: item.name, value: `Mark: ${item.name}` })),
   },
 ];
 
-const getSelectedTraitLabels = (selectedIds) => {
-  const optionsById = new Map(getTraitGroups().flatMap((group) => group.options).map((option) => [option.id, option.value]));
-  return [...selectedIds].map((id) => optionsById.get(id)).filter(Boolean);
-};
+const getSelectedTraitLabels = (selectedIds) => [...selectedIds]
+  .map((id) => character.getTraitLabel(id))
+  .filter(Boolean);
 
 const syncSelectedTraits = (selectedIds) => {
   const availableIds = new Set(getTraitGroups().flatMap((group) => group.options).map((option) => option.id));
@@ -506,7 +503,7 @@ const getMemoryRecords = (startIndex, endIndexExclusive) => character.memories
     index,
     title: `Memory ${index + 1}`,
     text: memory.experiences.map((experience) => experience.text).join(" "),
-    tags: [...new Set(memory.experiences.flatMap((experience) => experience.traits))],
+    tags: [...new Set(memory.experiences.flatMap((experience) => experience.traitIds.map((traitId) => character.getTraitLabel(traitId)).filter(Boolean)))],
   }));
 
 const renderMemoryList = (listElement, startIndex, endIndexExclusive) => {
@@ -566,7 +563,8 @@ const closeExperienceComposer = () => {
 };
 
 const renderPlayComposer = () => {
-  const targetIndex = experienceComposer.target === "new" ? null : Number(experienceComposer.target);
+  const targetMemoryId = experienceComposer.target === "new" ? null : experienceComposer.target;
+  const targetIndex = targetMemoryId === null ? null : character.memories.findIndex((memory) => memory.id === targetMemoryId);
   const isNewMemory = experienceComposer.target === "new";
   elements.playExperienceForm.hidden = activeModal !== "memory" || !experienceComposer.open;
   elements.playExperienceSubmit.textContent = isNewMemory ? "Add memory" : "Add experience";
@@ -613,7 +611,7 @@ const renderPlayMemoryList = () => {
     actions.className = "record-actions";
     if (!memory.lost && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
       actions.append(createButton("Add experience", "ghost-button small-button", () => {
-        openExperienceComposer(String(memoryIndex));
+        openExperienceComposer(memory.id);
         render();
       }));
     }
@@ -625,7 +623,7 @@ const renderPlayMemoryList = () => {
       }),
       createButton("Remove", "ghost-button small-button", () => {
         character.removeMemory(memoryIndex);
-        if (experienceComposer.target === String(memoryIndex)) closeExperienceComposer();
+        if (experienceComposer.target === memory.id) closeExperienceComposer();
         markDirty();
         render();
       }),
@@ -645,7 +643,7 @@ const renderTraitList = (listElement, items, kind) => {
 
   items.forEach((item, index) => {
     const entry = document.createElement("li");
-    const traitId = `${kind}-${index}`;
+    const traitId = item.id;
     const selectedForExperience = pendingExperienceTraitIds.has(traitId);
     entry.className = item.lost ? "record lost" : "record";
     if (selectedForExperience) entry.classList.add("tag-target-active");
@@ -772,9 +770,12 @@ const renderFormState = (kind, item) => {
 const syncActiveModal = () => {
   elements.playTraitModal.hidden = activeModal === null;
   if (activeModal === "memory") {
+    const memoryIndex = experienceComposer.target === "new"
+      ? null
+      : character.memories.findIndex((memory) => memory.id === experienceComposer.target);
     elements.playModalTitle.textContent = experienceComposer.target === "new"
       ? "Add memory"
-      : `Add experience to Memory ${Number(experienceComposer.target) + 1}`;
+      : `Add experience to Memory ${memoryIndex + 1}`;
     return;
   }
   if (activeModal === "skill") {
@@ -805,8 +806,9 @@ const renderPlayLists = () => {
     "No marks available.",
   );
 
-  [...elements.playMarkList.querySelectorAll(".record")].forEach((entry, index) => {
-    const traitId = `mark-${index}`;
+  character.marks.forEach((item, index) => {
+    const entry = elements.playMarkList.children[index];
+    const traitId = item.id;
     if (pendingExperienceTraitIds.has(traitId)) entry.classList.add("tag-target-active");
     entry.addEventListener("click", () => togglePendingTrait(traitId));
   });
@@ -1335,8 +1337,8 @@ elements.addMemoryButton.addEventListener("click", (event) => {
 
 elements.playExperienceForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  const memoryIndex = experienceComposer.target === "new" ? null : Number(experienceComposer.target);
-  const didSave = character.addMemory(elements.playExperienceText.value, getSelectedTraitLabels(pendingExperienceTraitIds), memoryIndex);
+  const memoryId = experienceComposer.target === "new" ? null : experienceComposer.target;
+  const didSave = character.addMemory(elements.playExperienceText.value, [...pendingExperienceTraitIds], memoryId);
   if (!didSave) return;
   markDirty();
   closeExperienceComposer();

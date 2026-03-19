@@ -34,32 +34,32 @@ let experienceComposer = { open: false, target: "new" };
 let activeModal = null;
 const collapsedCards = new Set(["characters", "skills", "resources", "marks"]);
 const sampleMortals = [
-  ["Yvette", "A mortal sibling who still writes to me."],
-  ["Tomas", "A steward who knows too much."],
-  ["Lucien", "A former lover who still trusts me."],
+  ["Mortal 1", "Description 1"],
+  ["Mortal 2", "Description 2"],
+  ["Mortal 3", "Description 3"],
 ];
 const sampleSkills = [
-  ["Falconry", "Learned in the service of a minor lord."],
-  ["Swordplay", "Refined during years of border war."],
-  ["Court Etiquette", "Useful whenever I need to appear harmless."],
+  ["Skill 1", "Description 1"],
+  ["Skill 2", "Description 2"],
+  ["Skill 3", "Description 3"],
 ];
 const sampleResources = [
-  ["Family Signet", "Proof of a claim nobody else believes."],
-  ["Black Mare", "A reliable horse for night journeys."],
-  ["Hidden Letters", "Correspondence that can ruin a household."],
+  ["Resource 1", "Description 1"],
+  ["Resource 2", "Description 2"],
+  ["Resource 3", "Description 3"],
 ];
 const sampleLaterMemories = [
-  "I crossed the winter sea with trusted company and learned which promises survive hunger.",
-  "My finest weapon bought me safety, but only because an old ally chose my side.",
-  "I abandoned a refuge to protect the people tied to my mortal name.",
+  "Experience 2",
+  "Experience 3",
+  "Experience 4",
 ];
-const testIdentityMemory = "I was born to a fading noble house and learned early that affection is transactional.";
-const testImmortal = ["Baron Severin", "The immortal who dragged me into unlife."];
+const testIdentityMemory = "Experience 1";
+const testImmortal = ["Immortal 1", "Description 1"];
 const testMark = [
-  "My shadow lags a heartbeat behind me.",
-  "It is most visible in torchlight and unsettles the faithful.",
+  "Mark 1",
+  "Description 1",
 ];
-const testCurseMemory = "I pursued Baron Severin onto the chapel roof and rose again after the mortal blow.";
+const testCurseMemory = "Experience 5";
 
 const promptState = {
   deck: [],
@@ -100,7 +100,6 @@ const elements = {
   stepProgress: document.querySelector("#step-progress"),
   stepPanels: [...document.querySelectorAll("[data-step-panel]")],
   backButton: document.querySelector("#back-button"),
-  autofillButton: document.querySelector("#autofill-button"),
   nextButton: document.querySelector("#next-button"),
   saveConfirmation: document.querySelector("#save-confirmation"),
   mortalForm: document.querySelector("#mortal-form"),
@@ -181,18 +180,53 @@ const SCREEN_TITLES = {
   play: "Play",
 };
 
+const getUpdatedAtScore = (record) => {
+  const timestamp = Date.parse(record?.updatedAt);
+  return Number.isFinite(timestamp) ? timestamp : -1;
+};
+
+const sanitizeStoredVampires = (records) => {
+  const source = Array.isArray(records) ? records : [];
+  const normalizedRecords = [];
+  const winnerByKey = new Map();
+
+  source.forEach((record, sourceIndex) => {
+    if (!record || typeof record !== "object") return;
+    const data = record.data && typeof record.data === "object" ? record.data : {};
+    const cleanedName = cleanText(data?.name);
+    const routeId = getVampireRouteId(cleanedName);
+    const normalizedId = routeId || cleanText(record.id) || `unnamed-${sourceIndex + 1}`;
+    const normalizedRecord = {
+      ...record,
+      id: normalizedId,
+      data: {
+        ...data,
+        name: cleanedName,
+      },
+    };
+    const key = routeId ? `name:${routeId}` : `id:${normalizedId}`;
+    const score = getUpdatedAtScore(normalizedRecord);
+    const index = normalizedRecords.push(normalizedRecord) - 1;
+    const winner = winnerByKey.get(key);
+    if (!winner || score >= winner.score) winnerByKey.set(key, { index, score });
+  });
+
+  const winnerIndexes = new Set([...winnerByKey.values()].map((entry) => entry.index));
+  return normalizedRecords.filter((_, index) => winnerIndexes.has(index));
+};
+
 const getStoredVampires = () => {
   try {
     const rawValue = safeLocalStorage.getItem(STORAGE_KEY);
     const parsed = rawValue ? JSON.parse(rawValue) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    return sanitizeStoredVampires(parsed);
   } catch (error) {
     console.error(error);
     return [];
   }
 };
 
-const saveStoredVampires = (vampires) => safeLocalStorage.setItem(STORAGE_KEY, JSON.stringify(vampires));
+const saveStoredVampires = (vampires) => safeLocalStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizeStoredVampires(vampires)));
 
 const findStoredVampireByNormalizedName = (name, excludingId = "") => {
   const normalizedName = normalizeCharacterName(name);
@@ -301,9 +335,33 @@ const createTestVampireRecord = () => {
   };
 };
 
+const hasLegacyNarrativeTestDefaults = (record) => {
+  const serialized = JSON.stringify(record?.data ?? {});
+  return (
+    serialized.includes("Yvette")
+    || serialized.includes("Baron Severin")
+    || serialized.includes("I was born to a fading noble house")
+    || serialized.includes("My shadow lags a heartbeat behind me.")
+  );
+};
+
 const ensureTestVampireRecord = () => {
   const vampires = getStoredVampires();
-  if (vampires.some((entry) => entry.id === TEST_VAMPIRE_ID)) return;
+  const existingTestIndex = vampires.findIndex((entry) => entry.id === TEST_VAMPIRE_ID);
+  if (existingTestIndex >= 0) {
+    const existing = vampires[existingTestIndex];
+    if (hasLegacyNarrativeTestDefaults(existing)) {
+      const template = createTestVampireRecord();
+      vampires[existingTestIndex] = {
+        ...existing,
+        id: TEST_VAMPIRE_ID,
+        isComplete: template.isComplete,
+        data: template.data,
+      };
+      saveStoredVampires(vampires);
+    }
+    return;
+  }
   const existingTestNameIndex = vampires.findIndex((entry) => normalizeCharacterName(entry.data?.name) === normalizeCharacterName(TEST_VAMPIRE_NAME));
   if (existingTestNameIndex >= 0) {
     const existing = vampires[existingTestNameIndex];
@@ -320,15 +378,6 @@ const ensureTestVampireRecord = () => {
   }
   vampires.unshift(createTestVampireRecord());
   saveStoredVampires(vampires);
-};
-
-const startTestVampire = async () => {
-  ensureTestVampireRecord();
-  const testVampire = getStoredVampires().find((entry) => entry.id === TEST_VAMPIRE_ID);
-  if (!testVampire) return;
-  loadCharacter(testVampire);
-  resetCreationForms();
-  await startPlay(true);
 };
 
 const persistCurrentCharacter = () => {
@@ -551,7 +600,7 @@ const renderTraitSelector = (container, selectedIds) => {
 const renderRecords = (listElement, records, removeItem = null, emptyMessage = "No entries yet.") => {
   listElement.innerHTML = "";
   if (!records.length) {
-    listElement.append(createEmptyRecord(emptyMessage));
+    if (emptyMessage) listElement.append(createEmptyRecord(emptyMessage));
     return;
   }
 
@@ -668,7 +717,7 @@ const getMemoryRecords = (startIndex, endIndexExclusive) => character.memories
   }));
 
 const renderMemoryList = (listElement, startIndex, endIndexExclusive) => {
-  renderRecords(listElement, getMemoryRecords(startIndex, endIndexExclusive), (index) => character.removeMemory(index), "No memories yet.");
+  renderRecords(listElement, getMemoryRecords(startIndex, endIndexExclusive), (index) => character.removeMemory(index), null);
 };
 
 const renderCharacterList = (listElement, type) => {
@@ -676,12 +725,12 @@ const renderCharacterList = (listElement, type) => {
     .map((entry, index) => ({ index, entry }))
     .filter(({ entry }) => entry.type === type)
     .map(({ index, entry }) => ({ index, title: entry.name, text: entry.description }));
-  renderRecords(listElement, records, (index) => character.removeCharacter(index), "No characters yet.");
+  renderRecords(listElement, records, (index) => character.removeCharacter(index), null);
 };
 
 const renderDetailList = (listElement, items, removeItem) => {
   const records = items.map((item, index) => ({ index, title: item.name, text: item.description }));
-  renderRecords(listElement, records, removeItem);
+  renderRecords(listElement, records, removeItem, null);
 };
 
 const togglePendingTrait = (traitId) => {
@@ -1378,9 +1427,6 @@ elements.backButton.addEventListener("click", () => {
   currentStep = Math.max(0, currentStep - 1);
   renderStep();
 });
-elements.autofillButton.addEventListener("click", () => {
-  void startTestVampire();
-});
 elements.nextButton.addEventListener("click", () => {
   if (currentStep === 0) {
     if (!saveIdentityStep()) return;
@@ -1563,6 +1609,7 @@ document.querySelectorAll("[data-card-key]").forEach((card) => {
 });
 
 const initialize = () => {
+  saveStoredVampires(getStoredVampires());
   ensureTestVampireRecord();
   const vampires = getStoredVampires();
   selectedVampireId = vampires[0]?.id ?? "";

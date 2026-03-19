@@ -137,14 +137,25 @@ h2 {
   align-items: center;
 }
 
+.card-title-row h2 {
+  margin-bottom: 0;
+}
+
 .card-toggle-indicator {
   display: inline-block;
+  flex: 0 0 auto;
   width: 0.9rem;
   color: #bda88c;
   font-size: 0.95rem;
   line-height: 1;
   font-weight: 700;
-  transform: translateY(-0.04rem);
+  transform: rotate(90deg);
+  transform-origin: center;
+  transition: transform 140ms ease;
+}
+
+.card-toggle-indicator.is-collapsed {
+  transform: rotate(0deg);
 }
 
 .wizard-title {

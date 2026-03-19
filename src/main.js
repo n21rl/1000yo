@@ -348,11 +348,14 @@ const createEmptyRecord = (message) => {
   return item;
 };
 
-const createButton = (label, className, handler) => {
+const createButton = (label, className, handler, options = {}) => {
   const button = document.createElement("button");
   button.type = "button";
   button.className = className;
-  button.textContent = label;
+  button.textContent = options.symbol ?? label;
+  button.title = options.title ?? label;
+  button.setAttribute("aria-label", options.ariaLabel ?? label);
+  if (options.pressed !== undefined) button.setAttribute("aria-pressed", String(Boolean(options.pressed)));
   button.addEventListener("click", (event) => {
     event.stopPropagation();
     handler();
@@ -610,22 +613,31 @@ const renderPlayMemoryList = () => {
     const actions = document.createElement("div");
     actions.className = "record-actions";
     if (!memory.lost && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
-      actions.append(createButton("Add experience", "ghost-button small-button", () => {
+      actions.append(createButton("Add experience", "ghost-button small-button symbolic-button", () => {
         openExperienceComposer(memory.id);
         render();
+      }, {
+        symbol: "+",
+        title: "Add experience",
       }));
     }
     actions.append(
-      createButton(memory.lost ? "Restore" : "Strike out", "ghost-button small-button", () => {
+      createButton(memory.lost ? "Restore memory" : "Strike out memory", "ghost-button small-button symbolic-button", () => {
         character.setMemoryLost(memoryIndex, !memory.lost);
         markDirty();
         render();
+      }, {
+        symbol: memory.lost ? "↺" : "∕",
+        title: memory.lost ? "Restore memory" : "Strike out memory",
       }),
-      createButton("Remove", "ghost-button small-button", () => {
+      createButton("Delete memory", "ghost-button small-button symbolic-button", () => {
         character.removeMemory(memoryIndex);
         if (experienceComposer.target === memory.id) closeExperienceComposer();
         markDirty();
         render();
+      }, {
+        symbol: "✕",
+        title: "Delete memory",
       }),
     );
 
@@ -686,52 +698,82 @@ const renderTraitList = (listElement, items, kind) => {
     const actions = document.createElement("div");
     actions.className = "record-actions";
     const toggleUsed = kind === "character"
-      ? createButton(item.used ? "Unuse" : "Use", "ghost-button small-button", () => {
+      ? createButton(item.used ? "Uncheck character" : "Check character", "ghost-button small-button symbolic-button", () => {
         character.setCharacterUsed(index, !item.used);
         markDirty();
         render();
+      }, {
+        symbol: item.used ? "☑" : "☐",
+        title: item.used ? "Uncheck character" : "Check character",
+        pressed: item.used,
       })
       : kind === "skill"
-        ? createButton(item.used ? "Uncheck" : "Use", "ghost-button small-button", () => {
+        ? createButton(item.used ? "Uncheck skill" : "Check skill", "ghost-button small-button symbolic-button", () => {
           character.setSkillUsed(index, !item.used);
           markDirty();
           render();
+        }, {
+          symbol: item.used ? "☑" : "☐",
+          title: item.used ? "Uncheck skill" : "Check skill",
+          pressed: item.used,
         })
-        : createButton(item.used ? "Unuse" : "Use", "ghost-button small-button", () => {
+        : createButton(item.used ? "Uncheck resource" : "Check resource", "ghost-button small-button symbolic-button", () => {
           character.setResourceUsed(index, !item.used);
           markDirty();
           render();
+        }, {
+          symbol: item.used ? "☑" : "☐",
+          title: item.used ? "Uncheck resource" : "Check resource",
+          pressed: item.used,
         });
     const toggleLost = kind === "character"
-      ? createButton(item.lost ? "Revive" : "Kill", "ghost-button small-button", () => {
+      ? createButton(item.lost ? "Restore character" : "Strike out character", "ghost-button small-button symbolic-button", () => {
         character.setCharacterLost(index, !item.lost);
         markDirty();
         render();
+      }, {
+        symbol: item.lost ? "↺" : "∕",
+        title: item.lost ? "Restore character" : "Strike out character",
+        pressed: item.lost,
       })
       : kind === "skill"
-        ? createButton(item.lost ? "Restore" : "Strike out", "ghost-button small-button", () => {
+        ? createButton(item.lost ? "Restore skill" : "Strike out skill", "ghost-button small-button symbolic-button", () => {
           character.setSkillLost(index, !item.lost);
           markDirty();
           render();
+        }, {
+          symbol: item.lost ? "↺" : "∕",
+          title: item.lost ? "Restore skill" : "Strike out skill",
+          pressed: item.lost,
         })
-        : createButton(item.lost ? "Restore" : "Strike out", "ghost-button small-button", () => {
+        : createButton(item.lost ? "Restore resource" : "Strike out resource", "ghost-button small-button symbolic-button", () => {
           character.setResourceLost(index, !item.lost);
           markDirty();
           render();
+        }, {
+          symbol: item.lost ? "↺" : "∕",
+          title: item.lost ? "Restore resource" : "Strike out resource",
+          pressed: item.lost,
         });
-    const editButton = createButton("Edit", "ghost-button small-button", () => {
+    const editButton = createButton(`Edit ${kind}`, "ghost-button small-button symbolic-button", () => {
       editingTrait = { kind, index };
       activeModal = kind;
       collapsedCards.delete(`${kind}s`.replace("characterss", "characters"));
       render();
+    }, {
+      symbol: "✎",
+      title: `Edit ${kind}`,
     });
-    const removeButton = createButton("Remove", "ghost-button small-button", () => {
+    const removeButton = createButton(`Delete ${kind}`, "ghost-button small-button symbolic-button", () => {
       if (kind === "character") character.removeCharacter(index);
       if (kind === "skill") character.removeSkill(index);
       if (kind === "resource") character.removeResource(index);
       pendingExperienceTraitIds.delete(traitId);
       markDirty();
       render();
+    }, {
+      symbol: "✕",
+      title: `Delete ${kind}`,
     });
 
     actions.append(toggleUsed, toggleLost, editButton, removeButton);

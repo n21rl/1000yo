@@ -472,7 +472,10 @@ const renderMenu = () => {
 
     const actions = document.createElement("div");
     actions.className = "menu-record-actions";
-    const deleteButton = createButton("×", "ghost-button menu-delete-button", () => {
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "menu-delete-control";
+    deleteButton.addEventListener("click", () => {
       const displayName = vampire.data?.name || "this vampire";
       if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
       const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id);

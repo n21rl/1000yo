@@ -5,7 +5,6 @@ const STORAGE_KEY = "1000yo.vampires";
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
 const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
 const MIN_MEMORY_TRAITS = 2;
-const COLLAPSIBLE_SECTIONS = ["memories", "characters", "skills", "resources", "marks"];
 
 let character = new Character();
 let currentStep = 0;
@@ -18,7 +17,7 @@ const pendingExperienceTraitIds = new Set();
 let editingTrait = null;
 let experienceComposer = { open: false, target: "new" };
 let activeModal = null;
-const collapsedCards = new Set(["characters", "skills", "resources", "marks"]);
+const collapsedCards = new Set();
 const sampleMortals = [
   ["Yvette", "A mortal sibling who still writes to me."],
   ["Tomas", "A steward who knows too much."],
@@ -1467,9 +1466,6 @@ const initialize = () => {
   selectedVampireId = vampires[0]?.id ?? "";
   window.addEventListener("hashchange", () => {
     void handleRouteChange();
-  });
-  COLLAPSIBLE_SECTIONS.forEach((key) => {
-    if (!collapsedCards.has(key) && key !== "memories") collapsedCards.add(key);
   });
   void handleRouteChange();
 };

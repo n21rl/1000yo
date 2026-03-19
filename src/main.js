@@ -1,3 +1,4 @@
+import { restoreCampaignState, serializeCampaignState } from "./campaign-state.js";
 import { Character, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
 
 const STORAGE_KEY = "1000yo.vampires";
@@ -76,7 +77,6 @@ const elements = {
   creationScreen: document.querySelector("#creation-screen"),
   playScreen: document.querySelector("#play-screen"),
   vampireList: document.querySelector("#vampire-list"),
-  menuEmptyState: document.querySelector("#menu-empty-state"),
   newVampireButton: document.querySelector("#new-vampire-button"),
   nameInput: document.querySelector("#name"),
   identityMemoryInput: document.querySelector("#memory-identity"),
@@ -189,6 +189,7 @@ const createStoredRecord = () => ({
   updatedAt: new Date().toISOString(),
   isComplete: character.isReadyForPromptOne(),
   data: serializeCharacter(),
+  campaign: serializeCampaignState(promptState),
 });
 
 const persistCurrentCharacter = () => {
@@ -219,6 +220,9 @@ const loadCharacter = (storedCharacter) => {
   currentStep = 0;
   selectedLaterTraitIds.clear();
   selectedCurseTraitIds.clear();
+  const restoredCampaign = restoreCampaignState(storedCharacter?.campaign);
+  promptState.currentPrompt = restoredCampaign.currentPrompt;
+  promptState.visits = restoredCampaign.visits;
   resetPlayState();
 };
 
@@ -289,12 +293,6 @@ const startNewVampire = () => {
 const markDirty = () => {
   hasSavedSetup = false;
   persistCurrentCharacter();
-};
-
-const formatTimestamp = (isoString) => {
-  if (!isoString) return "Unsaved";
-  const value = new Date(isoString);
-  return Number.isNaN(value.getTime()) ? "Unsaved" : value.toLocaleString();
 };
 
 const getTraitGroups = () => [
@@ -453,7 +451,7 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
 const renderMenu = () => {
   const vampires = getStoredVampires();
   elements.vampireList.innerHTML = "";
-  elements.menuEmptyState.hidden = vampires.length > 0;
+  elements.vampireList.hidden = vampires.length === 0;
 
   for (const vampire of vampires) {
     const item = document.createElement("li");
@@ -465,19 +463,16 @@ const renderMenu = () => {
     body.addEventListener("click", () => {
       loadCharacter(vampire);
       resetCreationForms();
-      resetPromptState();
       void startPlay(true);
     });
 
     const title = document.createElement("strong");
     title.textContent = vampire.data?.name || "Unnamed Vampire";
-    const text = document.createElement("p");
-    text.textContent = `Updated ${formatTimestamp(vampire.updatedAt)}`;
-    body.append(title, text);
+    body.append(title);
 
     const actions = document.createElement("div");
     actions.className = "menu-record-actions";
-    const deleteButton = createButton("Delete", "ghost-button menu-delete-button", () => {
+    const deleteButton = createButton("×", "ghost-button menu-delete-button", () => {
       const displayName = vampire.data?.name || "this vampire";
       if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
       const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id);
@@ -486,6 +481,7 @@ const renderMenu = () => {
       setScreen("menu", { updateRoute: true });
       render();
     });
+    deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
 
     actions.append(deleteButton);
     item.append(body, actions);
@@ -917,6 +913,7 @@ const loadPromptDeck = async () => {
     if (promptState.deck.length) {
       promptState.currentPrompt = clampPromptIndex(promptState.currentPrompt);
       if (!promptState.visits.has(promptState.currentPrompt)) promptState.visits.set(promptState.currentPrompt, 1);
+      persistCurrentCharacter();
     }
     render();
   }
@@ -934,6 +931,7 @@ const startPlay = async (skipCreationGate = false) => {
   if (!promptState.visits.size) {
     promptState.currentPrompt = 1;
     promptState.visits.set(1, 1);
+    persistCurrentCharacter();
   }
   render();
   await loadPromptDeck();
@@ -1051,7 +1049,6 @@ const handleRouteChange = async () => {
   }
   loadCharacter(storedCharacter);
   resetCreationForms();
-  resetPromptState();
   await startPlay(true);
 };
 
@@ -1295,6 +1292,7 @@ elements.promptButton.addEventListener("click", () => {
   const delta = rollDie(10) - rollDie(6);
   const target = clampPromptIndex(promptState.currentPrompt + delta);
   moveToNextAvailablePrompt(target);
+  persistCurrentCharacter();
   renderPromptPanel();
 });
 

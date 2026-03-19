@@ -150,7 +150,7 @@ h2 {
   line-height: 1;
   font-weight: 700;
   transform: rotate(90deg);
-  transform-origin: left bottom;
+  transform-origin: center;
   transition: transform 140ms ease;
 }
 
@@ -334,8 +334,7 @@ button:disabled {
 }
 
 .tag-target-active {
-  border-color: #c9a370;
-  box-shadow: 0 0 0 1px rgba(201, 163, 112, 0.4);
+  box-shadow: none;
 }
 
 .lost .record-body,

@@ -456,15 +456,26 @@ const renderMenu = () => {
   for (const vampire of vampires) {
     const item = document.createElement("li");
     item.className = "record vampire-record";
+    item.tabIndex = 0;
+    item.role = "button";
 
-    const body = document.createElement("button");
-    body.type = "button";
-    body.className = "vampire-option";
-    body.addEventListener("click", () => {
+    const openVampire = () => {
       loadCharacter(vampire);
       resetCreationForms();
       void startPlay(true);
+    };
+
+    item.addEventListener("click", () => {
+      openVampire();
     });
+    item.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      event.preventDefault();
+      openVampire();
+    });
+
+    const body = document.createElement("div");
+    body.className = "vampire-option";
 
     const title = document.createElement("strong");
     title.textContent = vampire.data?.name || "Unnamed Vampire";
@@ -475,7 +486,8 @@ const renderMenu = () => {
     const deleteButton = document.createElement("button");
     deleteButton.type = "button";
     deleteButton.className = "menu-delete-control";
-    deleteButton.addEventListener("click", () => {
+    deleteButton.addEventListener("click", (event) => {
+      event.stopPropagation();
       const displayName = vampire.data?.name || "this vampire";
       if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
       const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id);

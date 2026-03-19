@@ -377,6 +377,12 @@ button:disabled {
 .vampire-record {
   align-items: center;
   gap: 0.5rem;
+  cursor: pointer;
+}
+
+.vampire-record:focus-visible {
+  outline: 2px solid #c9a370;
+  outline-offset: 2px;
 }
 
 .vampire-option {
@@ -390,6 +396,11 @@ button:disabled {
 
 .vampire-option strong {
   display: block;
+}
+
+.vampire-record:hover .vampire-option strong,
+.vampire-record:focus-visible .vampire-option strong {
+  color: #fff5e2;
 }
 
 .menu-record-actions {

@@ -150,7 +150,7 @@ h2 {
   line-height: 1;
   font-weight: 700;
   transform: rotate(90deg);
-  transform-origin: center;
+  transform-origin: left bottom;
   transition: transform 140ms ease;
 }
 
@@ -467,9 +467,14 @@ button:disabled {
   .record,
   .wizard-nav,
   .form-actions,
-  .record-actions,
-  .card-title-row {
+  .record-actions {
     flex-direction: column;
+  }
+
+  .card-title-row {
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
   }
 
   .play-grid,

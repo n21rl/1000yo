@@ -30,11 +30,11 @@ select {
 .app {
   max-width: 76rem;
   margin: 0 auto;
-  padding: 2rem 1rem 4rem;
+  padding: 1.25rem 0.9rem 2.5rem;
 }
 
 .hero {
-  padding: 1rem 0 0.5rem;
+  padding: 0.5rem 0 0.35rem;
 }
 
 h1,
@@ -71,7 +71,7 @@ h2 {
   background: rgba(42, 27, 27, 0.92);
   border: 1px solid #5a3f38;
   border-radius: 1rem;
-  padding: 1rem;
+  padding: 0.85rem;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
   backdrop-filter: blur(4px);
 }
@@ -83,7 +83,7 @@ h2 {
 .play-layout,
 .stack > * + * {
   display: grid;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .play-titlebar {
@@ -93,7 +93,7 @@ h2 {
 .play-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(18rem, 1fr));
-  gap: 1rem;
+  gap: 0.85rem;
   align-items: start;
 }
 
@@ -279,14 +279,14 @@ button:disabled {
 .record-list,
 .experience-list {
   list-style: none;
-  margin: 1rem 0 0;
+  margin: 0.75rem 0 0;
   padding: 0;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.55rem;
 }
 
 .record {
-  padding: 0.9rem 1rem;
+  padding: 0.7rem 0.8rem;
   border: 1px solid rgba(158, 122, 106, 0.25);
   border-radius: 0.85rem;
   background: rgba(20, 14, 14, 0.48);
@@ -341,13 +341,13 @@ button:disabled {
 }
 
 .inline-form {
-  margin-bottom: 1rem;
+  margin-bottom: 0.8rem;
 }
 
 .compact-form {
   border: 1px solid rgba(158, 122, 106, 0.25);
   border-radius: 0.85rem;
-  padding: 0.9rem;
+  padding: 0.8rem;
   background: rgba(20, 14, 14, 0.35);
 }
 
@@ -362,7 +362,7 @@ button:disabled {
 }
 
 .save-confirmation {
-  margin: 1rem 0 0;
+  margin: 0.8rem 0 0;
   padding: 0.85rem 1rem;
   border: 1px solid #5f8f69;
   border-radius: 0.85rem;
@@ -371,15 +371,18 @@ button:disabled {
 }
 
 .menu-screen {
-  max-width: 64rem;
-}
-
-.menu-screen > * + * {
-  margin-top: 1rem;
+  max-width: 28rem;
 }
 
 .vampire-record {
   align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.vampire-record:focus-visible {
+  outline: 2px solid #c9a370;
+  outline-offset: 2px;
 }
 
 .vampire-option {
@@ -393,12 +396,11 @@ button:disabled {
 
 .vampire-option strong {
   display: block;
-  margin-bottom: 0.3rem;
 }
 
-.vampire-option p {
-  margin: 0;
-  color: #d9cbb4;
+.vampire-record:hover .vampire-option strong,
+.vampire-record:focus-visible .vampire-option strong {
+  color: #fff5e2;
 }
 
 .menu-record-actions {
@@ -406,12 +408,45 @@ button:disabled {
   align-items: center;
 }
 
-.menu-delete-button {
-  min-width: 7rem;
+.menu-delete-control {
+  position: relative;
+  width: 1.25rem;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #d9cbb4;
+  opacity: 0.78;
+}
+
+.menu-delete-control::before,
+.menu-delete-control::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0.8rem;
+  height: 1px;
+  background: currentColor;
+  transform-origin: center;
+}
+
+.menu-delete-control::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.menu-delete-control::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.menu-delete-control:hover {
+  opacity: 1;
+  filter: none;
 }
 
 .menu-new-button {
-  max-width: 18rem;
+  max-width: 12rem;
 }
 
 @media (max-width: 720px) {

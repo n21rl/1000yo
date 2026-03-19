@@ -1,23 +1,27 @@
 import { restoreCampaignState, serializeCampaignState } from "./campaign-state.js";
+import { elements, totalSteps } from "./dom.js";
 import { Character, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
-
-const STORAGE_KEY = "1000yo.vampires";
-const LEGACY_VAMPIRE_ROUTE_PREFIX = "1000yo.";
-const TEST_VAMPIRE_NAME = "Test Vampire";
-const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
-const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
-const normalizeCharacterName = (value = "") => cleanText(value)
-  .normalize("NFKD")
-  .replace(/[\u0300-\u036f]/g, "")
-  .toLowerCase()
-  .replace(/['’]/g, "")
-  .replace(/[^a-z0-9]+/g, "-")
-  .replace(/^-+|-+$/g, "");
-const getVampireRouteId = (name = "") => {
-  const normalizedName = normalizeCharacterName(name);
-  return normalizedName;
-};
-const TEST_VAMPIRE_ID = getVampireRouteId(TEST_VAMPIRE_NAME);
+import {
+  clampPromptIndex,
+  getPromptEntry,
+  loadPromptDeck,
+  moveToNextAvailablePrompt,
+  rollDie,
+} from "./prompts.js";
+import {
+  TEST_VAMPIRE_ID,
+  cleanText,
+  createStoredRecord,
+  ensureTestVampireRecord,
+  findStoredVampireByRouteId,
+  getStoredVampires,
+  getVampireRouteId,
+  isDuplicateVampireName,
+  normalizeCharacterName,
+  parseRouteId,
+  saveStoredVampires,
+} from "./storage.js";
+import { createButton, createEmptyRecord, renderRecords } from "./ui-helpers.js";
 const MIN_MEMORY_TRAITS = 2;
 const COLLAPSIBLE_SECTIONS = ["memories", "characters", "skills", "resources", "marks"];
 
@@ -33,34 +37,6 @@ let editingTrait = null;
 let experienceComposer = { open: false, target: "new" };
 let activeModal = null;
 const collapsedCards = new Set(["characters", "skills", "resources", "marks"]);
-const sampleMortals = [
-  ["Mortal 1", "Description 1"],
-  ["Mortal 2", "Description 2"],
-  ["Mortal 3", "Description 3"],
-];
-const sampleSkills = [
-  ["Skill 1", "Description 1"],
-  ["Skill 2", "Description 2"],
-  ["Skill 3", "Description 3"],
-];
-const sampleResources = [
-  ["Resource 1", "Description 1"],
-  ["Resource 2", "Description 2"],
-  ["Resource 3", "Description 3"],
-];
-const sampleLaterMemories = [
-  "Experience 2",
-  "Experience 3",
-  "Experience 4",
-];
-const testIdentityMemory = "Experience 1";
-const testImmortal = ["Immortal 1", "Description 1"];
-const testMark = [
-  "Mark 1",
-  "Description 1",
-];
-const testCurseMemory = "Experience 5";
-
 const promptState = {
   deck: [],
   isLoading: false,
@@ -69,201 +45,11 @@ const promptState = {
   visits: new Map(),
 };
 
-const safeLocalStorage = {
-  getItem(key) {
-    try {
-      return window.localStorage.getItem(key);
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
-  },
-  setItem(key, value) {
-    try {
-      window.localStorage.setItem(key, value);
-      return true;
-    } catch (error) {
-      console.error(error);
-      return false;
-    }
-  },
-};
-
-const elements = {
-  menuScreen: document.querySelector("#menu-screen"),
-  creationScreen: document.querySelector("#creation-screen"),
-  playScreen: document.querySelector("#play-screen"),
-  vampireList: document.querySelector("#vampire-list"),
-  newVampireButton: document.querySelector("#new-vampire-button"),
-  nameInput: document.querySelector("#name"),
-  identityMemoryInput: document.querySelector("#memory-identity"),
-  stepProgress: document.querySelector("#step-progress"),
-  stepPanels: [...document.querySelectorAll("[data-step-panel]")],
-  backButton: document.querySelector("#back-button"),
-  nextButton: document.querySelector("#next-button"),
-  saveConfirmation: document.querySelector("#save-confirmation"),
-  mortalForm: document.querySelector("#mortal-form"),
-  mortalName: document.querySelector("#mortal-name"),
-  mortalDescription: document.querySelector("#mortal-description"),
-  mortalList: document.querySelector("#mortal-list"),
-  skillForm: document.querySelector("#skill-form"),
-  skillName: document.querySelector("#skill-name"),
-  skillDescription: document.querySelector("#skill-description"),
-  skillList: document.querySelector("#skill-list"),
-  resourceForm: document.querySelector("#resource-form"),
-  resourceName: document.querySelector("#resource-name"),
-  resourceDescription: document.querySelector("#resource-description"),
-  resourceList: document.querySelector("#resource-list"),
-  memoryFormLater: document.querySelector("#memory-form-later"),
-  memoryLater: document.querySelector("#memory-later"),
-  memoryTraitsLater: document.querySelector("#memory-traits-later"),
-  laterMemoryList: document.querySelector("#later-memory-list"),
-  immortalForm: document.querySelector("#immortal-form"),
-  immortalName: document.querySelector("#immortal-name"),
-  immortalDescription: document.querySelector("#immortal-description"),
-  immortalList: document.querySelector("#immortal-list"),
-  markForm: document.querySelector("#mark-form"),
-  markInput: document.querySelector("#mark-input"),
-  markDescription: document.querySelector("#mark-description"),
-  markList: document.querySelector("#mark-list"),
-  memoryFormCurse: document.querySelector("#memory-form-curse"),
-  memoryCurse: document.querySelector("#memory-curse"),
-  memoryTraitsCurse: document.querySelector("#memory-traits-curse"),
-  curseMemoryList: document.querySelector("#curse-memory-list"),
-  identityMemoryList: document.querySelector("#identity-memory-list"),
-  playNameHeading: document.querySelector("#play-name-heading"),
-  playMemoryList: document.querySelector("#play-memory-list"),
-  playCharacterList: document.querySelector("#play-character-list"),
-  playSkillList: document.querySelector("#play-skill-list"),
-  playResourceList: document.querySelector("#play-resource-list"),
-  playMarkList: document.querySelector("#play-mark-list"),
-  promptButton: document.querySelector("#next-prompt-button"),
-  promptText: document.querySelector("#prompt-text"),
-  addMemoryButton: document.querySelector("#add-memory-button"),
-  playExperienceForm: document.querySelector("#play-experience-form"),
-  playExperienceFormTitle: document.querySelector("#play-experience-form-title"),
-  playExperienceText: document.querySelector("#play-experience-text"),
-  playSelectedTraits: document.querySelector("#play-selected-traits"),
-  playExperienceSubmit: document.querySelector("#play-experience-submit"),
-  playExperienceCancel: document.querySelector("#play-experience-cancel"),
-  playMemoryHint: document.querySelector("#play-memory-hint"),
-  addSkillButton: document.querySelector("#add-skill-button"),
-  playSkillForm: document.querySelector("#play-skill-form"),
-  playSkillTitle: document.querySelector("#play-skill-form-title"),
-  playSkillName: document.querySelector("#play-skill-name"),
-  playSkillDescription: document.querySelector("#play-skill-description"),
-  playSkillSubmit: document.querySelector("#play-skill-submit"),
-  playSkillCancel: document.querySelector("#play-skill-cancel"),
-  addResourceButton: document.querySelector("#add-resource-button"),
-  playResourceForm: document.querySelector("#play-resource-form"),
-  playResourceTitle: document.querySelector("#play-resource-form-title"),
-  playResourceName: document.querySelector("#play-resource-name"),
-  playResourceDescription: document.querySelector("#play-resource-description"),
-  playResourceSubmit: document.querySelector("#play-resource-submit"),
-  playResourceCancel: document.querySelector("#play-resource-cancel"),
-  addCharacterButton: document.querySelector("#add-character-button"),
-  playCharacterForm: document.querySelector("#play-character-form"),
-  playCharacterTitle: document.querySelector("#play-character-form-title"),
-  playCharacterName: document.querySelector("#play-character-name"),
-  playCharacterDescription: document.querySelector("#play-character-description"),
-  playCharacterType: document.querySelector("#play-character-type"),
-  playCharacterSubmit: document.querySelector("#play-character-submit"),
-  playCharacterCancel: document.querySelector("#play-character-cancel"),
-  playTraitModal: document.querySelector("#play-trait-modal"),
-  playModalTitle: document.querySelector("#play-modal-title"),
-};
-
-const totalSteps = elements.stepPanels.length;
 const SCREEN_TITLES = {
   menu: "Start Menu",
   creation: "Vampire Creation",
   play: "Play",
 };
-
-const getUpdatedAtScore = (record) => {
-  const timestamp = Date.parse(record?.updatedAt);
-  return Number.isFinite(timestamp) ? timestamp : -1;
-};
-
-const sanitizeStoredVampires = (records) => {
-  const source = Array.isArray(records) ? records : [];
-  const normalizedRecords = [];
-  const winnerByKey = new Map();
-
-  source.forEach((record, sourceIndex) => {
-    if (!record || typeof record !== "object") return;
-    const data = record.data && typeof record.data === "object" ? record.data : {};
-    const cleanedName = cleanText(data?.name);
-    const routeId = getVampireRouteId(cleanedName);
-    const normalizedId = routeId || cleanText(record.id) || `unnamed-${sourceIndex + 1}`;
-    const normalizedRecord = {
-      ...record,
-      id: normalizedId,
-      data: {
-        ...data,
-        name: cleanedName,
-      },
-    };
-    const key = routeId ? `name:${routeId}` : `id:${normalizedId}`;
-    const score = getUpdatedAtScore(normalizedRecord);
-    const index = normalizedRecords.push(normalizedRecord) - 1;
-    const winner = winnerByKey.get(key);
-    if (!winner || score >= winner.score) winnerByKey.set(key, { index, score });
-  });
-
-  const winnerIndexes = new Set([...winnerByKey.values()].map((entry) => entry.index));
-  return normalizedRecords.filter((_, index) => winnerIndexes.has(index));
-};
-
-const getStoredVampires = () => {
-  try {
-    const rawValue = safeLocalStorage.getItem(STORAGE_KEY);
-    const parsed = rawValue ? JSON.parse(rawValue) : [];
-    return sanitizeStoredVampires(parsed);
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-};
-
-const saveStoredVampires = (vampires) => safeLocalStorage.setItem(STORAGE_KEY, JSON.stringify(sanitizeStoredVampires(vampires)));
-
-const findStoredVampireByNormalizedName = (name, excludingId = "") => {
-  const normalizedName = normalizeCharacterName(name);
-  if (!normalizedName) return null;
-  return getStoredVampires().find((entry) => {
-    if (entry.id === excludingId) return false;
-    return normalizeCharacterName(entry.data?.name) === normalizedName;
-  }) ?? null;
-};
-
-const parseRouteId = (routeId = "") => {
-  let decoded = "";
-  try {
-    decoded = cleanText(decodeURIComponent(routeId));
-  } catch (error) {
-    decoded = cleanText(routeId);
-  }
-  if (!decoded) return "";
-  if (decoded.startsWith(LEGACY_VAMPIRE_ROUTE_PREFIX)) {
-    return decoded.slice(LEGACY_VAMPIRE_ROUTE_PREFIX.length);
-  }
-  return decoded;
-};
-
-const findStoredVampireByRouteId = (routeId = "") => {
-  const parsedRouteId = parseRouteId(routeId);
-  if (!parsedRouteId) return null;
-  const vampires = getStoredVampires();
-  return vampires.find((entry) => entry.id === routeId)
-    ?? vampires.find((entry) => entry.id === parsedRouteId)
-    ?? vampires.find((entry) => normalizeCharacterName(entry.data?.name) === normalizeCharacterName(parsedRouteId))
-    ?? null;
-};
-
-const isDuplicateVampireName = (name, excludingId = "") => Boolean(
-  findStoredVampireByNormalizedName(name, excludingId),
-);
 
 const syncNameValidity = (name, excludingId = selectedVampireId) => {
   const cleanedName = cleanText(name);
@@ -277,107 +63,6 @@ const syncNameValidity = (name, excludingId = selectedVampireId) => {
   }
   elements.nameInput.setCustomValidity("");
   return true;
-};
-
-const serializeCharacter = (targetCharacter = character) => ({
-  name: targetCharacter.name,
-  memories: targetCharacter.memories,
-  skills: targetCharacter.skills,
-  resources: targetCharacter.resources,
-  characters: targetCharacter.characters,
-  marks: targetCharacter.marks,
-});
-
-const createStoredRecord = () => ({
-  id: selectedVampireId || crypto.randomUUID(),
-  updatedAt: new Date().toISOString(),
-  isComplete: character.isReadyForPromptOne(),
-  data: serializeCharacter(),
-  campaign: serializeCampaignState(promptState),
-});
-
-const createTestVampireCharacter = () => {
-  const testCharacter = new Character(TEST_VAMPIRE_NAME);
-  testCharacter.addMemory(testIdentityMemory);
-
-  sampleMortals.forEach(([name, description]) => {
-    testCharacter.addCharacter(name, description, "mortal");
-  });
-  sampleSkills.forEach(([name, description]) => {
-    testCharacter.addSkill(name, description);
-  });
-  sampleResources.forEach(([name, description]) => {
-    testCharacter.addResource(name, description);
-  });
-  sampleLaterMemories.forEach((memoryText, index) => {
-    const mortalName = sampleMortals[index % sampleMortals.length]?.[0] ?? "Mortal";
-    const skillName = sampleSkills[index % sampleSkills.length]?.[0] ?? "Skill";
-    testCharacter.addMemory(memoryText, [`Mortal: ${mortalName}`, `Skill: ${skillName}`]);
-  });
-
-  testCharacter.addCharacter(testImmortal[0], testImmortal[1], "immortal");
-  testCharacter.addMark(testMark[0], testMark[1]);
-  testCharacter.addMemory(testCurseMemory, [`Immortal: ${testImmortal[0]}`, `Mark: ${testMark[0]}`]);
-  return testCharacter;
-};
-
-const createTestVampireRecord = () => {
-  const testCharacter = createTestVampireCharacter();
-  return {
-    id: TEST_VAMPIRE_ID,
-    updatedAt: new Date().toISOString(),
-    isComplete: testCharacter.isReadyForPromptOne(),
-    data: serializeCharacter(testCharacter),
-    campaign: serializeCampaignState({
-      currentPrompt: 1,
-      visits: new Map([[1, 1]]),
-    }),
-  };
-};
-
-const hasLegacyNarrativeTestDefaults = (record) => {
-  const serialized = JSON.stringify(record?.data ?? {});
-  return (
-    serialized.includes("Yvette")
-    || serialized.includes("Baron Severin")
-    || serialized.includes("I was born to a fading noble house")
-    || serialized.includes("My shadow lags a heartbeat behind me.")
-  );
-};
-
-const ensureTestVampireRecord = () => {
-  const vampires = getStoredVampires();
-  const existingTestIndex = vampires.findIndex((entry) => entry.id === TEST_VAMPIRE_ID);
-  if (existingTestIndex >= 0) {
-    const existing = vampires[existingTestIndex];
-    if (hasLegacyNarrativeTestDefaults(existing)) {
-      const template = createTestVampireRecord();
-      vampires[existingTestIndex] = {
-        ...existing,
-        id: TEST_VAMPIRE_ID,
-        isComplete: template.isComplete,
-        data: template.data,
-      };
-      saveStoredVampires(vampires);
-    }
-    return;
-  }
-  const existingTestNameIndex = vampires.findIndex((entry) => normalizeCharacterName(entry.data?.name) === normalizeCharacterName(TEST_VAMPIRE_NAME));
-  if (existingTestNameIndex >= 0) {
-    const existing = vampires[existingTestNameIndex];
-    vampires[existingTestNameIndex] = {
-      ...existing,
-      id: TEST_VAMPIRE_ID,
-      data: {
-        ...(existing?.data ?? {}),
-        name: cleanText(existing?.data?.name) || TEST_VAMPIRE_NAME,
-      },
-    };
-    saveStoredVampires(vampires);
-    return;
-  }
-  vampires.unshift(createTestVampireRecord());
-  saveStoredVampires(vampires);
 };
 
 const persistCurrentCharacter = () => {
@@ -395,7 +80,12 @@ const persistCurrentCharacter = () => {
   }
 
   selectedVampireId = nextId || previousId || crypto.randomUUID();
-  const record = createStoredRecord();
+  const record = createStoredRecord({
+    selectedVampireId,
+    character,
+    serializeCampaignState,
+    promptState,
+  });
   const existingIndex = vampires.findIndex((entry) => entry.id === record.id);
 
   if (existingIndex >= 0) vampires.splice(existingIndex, 1, record);
@@ -542,31 +232,6 @@ const syncSelectedTraits = (selectedIds) => {
   }
 };
 
-const createEmptyRecord = (message) => {
-  const item = document.createElement("li");
-  item.className = "record record-empty";
-  const body = document.createElement("div");
-  body.className = "record-body";
-  const text = document.createElement("p");
-  text.className = "supporting";
-  text.textContent = message;
-  body.append(text);
-  item.append(body);
-  return item;
-};
-
-const createButton = (label, className, handler) => {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = className;
-  button.textContent = label;
-  button.addEventListener("click", (event) => {
-    event.stopPropagation();
-    handler();
-  });
-  return button;
-};
-
 const renderTraitSelector = (container, selectedIds) => {
   container.innerHTML = "";
 
@@ -597,58 +262,8 @@ const renderTraitSelector = (container, selectedIds) => {
   }
 };
 
-const renderRecords = (listElement, records, removeItem = null, emptyMessage = "No entries yet.") => {
-  listElement.innerHTML = "";
-  if (!records.length) {
-    if (emptyMessage) listElement.append(createEmptyRecord(emptyMessage));
-    return;
-  }
-
-  for (const record of records) {
-    const item = document.createElement("li");
-    item.className = "record";
-    const body = document.createElement("div");
-    body.className = "record-body";
-
-    if (record.title) {
-      const title = document.createElement("strong");
-      title.textContent = record.title;
-      body.append(title);
-    }
-    if (record.text) {
-      const text = document.createElement("p");
-      text.textContent = record.text;
-      body.append(text);
-    }
-    if (record.tags?.length) {
-      const tags = document.createElement("div");
-      tags.className = "record-tags";
-      record.tags.forEach((tagText) => {
-        const tag = document.createElement("span");
-        tag.className = "record-tag";
-        tag.textContent = tagText;
-        tags.append(tag);
-      });
-      body.append(tags);
-    }
-
-    if (removeItem) {
-      const removeButton = createButton("Remove", "ghost-button", () => {
-        removeItem(record.index);
-        markDirty();
-        render();
-      });
-      item.append(body, removeButton);
-    } else {
-      item.append(body);
-    }
-
-    listElement.append(item);
-  }
-};
-
 const renderMenu = () => {
-  ensureTestVampireRecord();
+  ensureTestVampireRecord({ Character, serializeCampaignState });
   const vampires = getStoredVampires();
   elements.vampireList.innerHTML = "";
   elements.vampireList.hidden = vampires.length === 0;
@@ -717,7 +332,16 @@ const getMemoryRecords = (startIndex, endIndexExclusive) => character.memories
   }));
 
 const renderMemoryList = (listElement, startIndex, endIndexExclusive) => {
-  renderRecords(listElement, getMemoryRecords(startIndex, endIndexExclusive), (index) => character.removeMemory(index), null);
+  renderRecords({
+    listElement,
+    records: getMemoryRecords(startIndex, endIndexExclusive),
+    removeItem: (index) => character.removeMemory(index),
+    emptyMessage: null,
+    onAfterRemove: () => {
+      markDirty();
+      render();
+    },
+  });
 };
 
 const renderCharacterList = (listElement, type) => {
@@ -725,12 +349,30 @@ const renderCharacterList = (listElement, type) => {
     .map((entry, index) => ({ index, entry }))
     .filter(({ entry }) => entry.type === type)
     .map(({ index, entry }) => ({ index, title: entry.name, text: entry.description }));
-  renderRecords(listElement, records, (index) => character.removeCharacter(index), null);
+  renderRecords({
+    listElement,
+    records,
+    removeItem: (index) => character.removeCharacter(index),
+    emptyMessage: null,
+    onAfterRemove: () => {
+      markDirty();
+      render();
+    },
+  });
 };
 
 const renderDetailList = (listElement, items, removeItem) => {
   const records = items.map((item, index) => ({ index, title: item.name, text: item.description }));
-  renderRecords(listElement, records, removeItem, null);
+  renderRecords({
+    listElement,
+    records,
+    removeItem,
+    emptyMessage: null,
+    onAfterRemove: () => {
+      markDirty();
+      render();
+    },
+  });
 };
 
 const togglePendingTrait = (traitId) => {
@@ -1004,12 +646,11 @@ const renderPlayLists = () => {
   renderTraitList(elements.playSkillList, character.skills, "skill");
   renderTraitList(elements.playResourceList, character.resources, "resource");
   renderTraitList(elements.playCharacterList, character.characters, "character");
-  renderRecords(
-    elements.playMarkList,
-    character.marks.map((item, index) => ({ title: item.name, text: item.description, index })),
-    null,
-    "No marks available.",
-  );
+  renderRecords({
+    listElement: elements.playMarkList,
+    records: character.marks.map((item, index) => ({ title: item.name, text: item.description, index })),
+    emptyMessage: "No marks available.",
+  });
 
   [...elements.playMarkList.querySelectorAll(".record")].forEach((entry, index) => {
     const traitId = `mark-${index}`;
@@ -1020,89 +661,6 @@ const renderPlayLists = () => {
   renderFormState("skill", editingTrait?.kind === "skill" ? character.skills[editingTrait.index] : null);
   renderFormState("resource", editingTrait?.kind === "resource" ? character.resources[editingTrait.index] : null);
   renderFormState("character", editingTrait?.kind === "character" ? character.characters[editingTrait.index] : null);
-};
-
-const parseCsv = (csvText = "") => {
-  const rows = [];
-  let row = [];
-  let field = "";
-  let inQuotes = false;
-  const source = String(csvText).replace(/^\uFEFF/, "");
-
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index];
-    if (inQuotes) {
-      if (char === '"') {
-        if (source[index + 1] === '"') {
-          field += '"';
-          index += 1;
-        } else inQuotes = false;
-      } else field += char;
-      continue;
-    }
-    if (char === '"') {
-      inQuotes = true;
-      continue;
-    }
-    if (char === ',') {
-      row.push(field);
-      field = "";
-      continue;
-    }
-    if (char === "\n") {
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = "";
-      continue;
-    }
-    if (char === "\r") continue;
-    field += char;
-  }
-
-  row.push(field);
-  rows.push(row);
-  return rows.filter((candidate) => candidate.some((value) => cleanText(value)));
-};
-
-const parsePromptDeck = (csvText) => {
-  const rows = parseCsv(csvText);
-  if (!rows.length) return [];
-  const [firstRow, ...remainingRows] = rows;
-  const hasHeader = firstRow.slice(0, 3).map((value) => cleanPromptText(value).toLowerCase()).join("|") === "a|b|c";
-  const dataRows = hasHeader ? remainingRows : rows;
-  return dataRows
-    .map((row) => ({ a: cleanPromptText(row[0] ?? ""), b: cleanPromptText(row[1] ?? ""), c: cleanPromptText(row[2] ?? "") }))
-    .filter((prompt) => Boolean(prompt.a || prompt.b || prompt.c));
-};
-
-const getPromptEntry = (prompt, visitCount) => {
-  if (!prompt) return "";
-  if (visitCount === 1) return prompt.a;
-  if (visitCount === 2) return prompt.b;
-  if (visitCount === 3) return prompt.c;
-  return "";
-};
-
-const hasPromptEntryForVisit = (prompt, visitCount) => Boolean(getPromptEntry(prompt, visitCount));
-const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
-const clampPromptIndex = (index) => (!promptState.deck.length ? 1 : Math.max(1, Math.min(index, promptState.deck.length)));
-
-const moveToNextAvailablePrompt = (targetIndex) => {
-  if (!promptState.deck.length) return { prompt: 1, visit: 0 };
-  let nextIndex = clampPromptIndex(targetIndex);
-  while (nextIndex <= promptState.deck.length) {
-    const prompt = promptState.deck[nextIndex - 1];
-    const visitCount = (promptState.visits.get(nextIndex) ?? 0) + 1;
-    if (hasPromptEntryForVisit(prompt, visitCount)) {
-      promptState.visits.set(nextIndex, visitCount);
-      promptState.currentPrompt = nextIndex;
-      return { prompt: nextIndex, visit: visitCount };
-    }
-    promptState.visits.set(nextIndex, visitCount);
-    nextIndex += 1;
-  }
-  return { prompt: promptState.currentPrompt, visit: promptState.visits.get(promptState.currentPrompt) ?? 1 };
 };
 
 const renderPromptPanel = () => {
@@ -1127,31 +685,6 @@ const renderPromptPanel = () => {
   elements.promptText.textContent = getPromptEntry(currentPrompt, visitCount) || "No remaining prompt entry at this position.";
 };
 
-const loadPromptDeck = async () => {
-  if (promptState.deck.length || promptState.isLoading) return;
-  promptState.isLoading = true;
-  promptState.loadError = "";
-  renderPromptPanel();
-  try {
-    const response = await fetch("/refs/prompts.csv");
-    if (!response.ok) throw new Error(`Could not load prompts (${response.status}).`);
-    const csvText = await response.text();
-    promptState.deck = parsePromptDeck(csvText);
-    if (!promptState.deck.length) promptState.loadError = "No prompts were found in refs/prompts.csv.";
-  } catch (error) {
-    promptState.loadError = "Unable to load prompt data from refs/prompts.csv.";
-    console.error(error);
-  } finally {
-    promptState.isLoading = false;
-    if (promptState.deck.length) {
-      promptState.currentPrompt = clampPromptIndex(promptState.currentPrompt);
-      if (!promptState.visits.has(promptState.currentPrompt)) promptState.visits.set(promptState.currentPrompt, 1);
-      persistCurrentCharacter();
-    }
-    render();
-  }
-};
-
 const startPlay = async (skipCreationGate = false) => {
   if (!skipCreationGate && !character.isReadyForPromptOne()) {
     setScreen("creation", { updateRoute: true });
@@ -1167,7 +700,18 @@ const startPlay = async (skipCreationGate = false) => {
     persistCurrentCharacter();
   }
   render();
-  await loadPromptDeck();
+  await loadPromptDeck({
+    promptState,
+    onLoading: renderPromptPanel,
+    onLoaded: () => {
+      if (promptState.deck.length) {
+        promptState.currentPrompt = clampPromptIndex(promptState.currentPrompt, promptState.deck.length);
+        if (!promptState.visits.has(promptState.currentPrompt)) promptState.visits.set(promptState.currentPrompt, 1);
+        persistCurrentCharacter();
+      }
+      render();
+    },
+  });
 };
 
 const stepRequirements = [
@@ -1465,8 +1009,8 @@ elements.nextButton.addEventListener("click", () => {
 elements.promptButton.addEventListener("click", () => {
   if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
   const delta = rollDie(10) - rollDie(6);
-  const target = clampPromptIndex(promptState.currentPrompt + delta);
-  moveToNextAvailablePrompt(target);
+  const target = clampPromptIndex(promptState.currentPrompt + delta, promptState.deck.length);
+  moveToNextAvailablePrompt(promptState, target);
   persistCurrentCharacter();
   renderPromptPanel();
 });
@@ -1610,7 +1154,7 @@ document.querySelectorAll("[data-card-key]").forEach((card) => {
 
 const initialize = () => {
   saveStoredVampires(getStoredVampires());
-  ensureTestVampireRecord();
+  ensureTestVampireRecord({ Character, serializeCampaignState });
   const vampires = getStoredVampires();
   selectedVampireId = vampires[0]?.id ?? "";
   window.addEventListener("hashchange", () => {

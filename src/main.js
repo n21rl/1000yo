@@ -19,7 +19,7 @@ const getVampireRouteId = (name = "") => {
 };
 const TEST_VAMPIRE_ID = getVampireRouteId(TEST_VAMPIRE_NAME);
 const MIN_MEMORY_TRAITS = 2;
-const COLLAPSIBLE_SECTIONS = ["prompt", "memories", "characters", "skills", "resources", "marks"];
+const COLLAPSIBLE_SECTIONS = ["memories", "characters", "skills", "resources", "marks"];
 
 let character = new Character();
 let currentStep = 0;
@@ -806,7 +806,6 @@ const renderTraitList = (listElement, items, kind) => {
     const traitId = `${kind}-${index}`;
     const selectedForExperience = pendingExperienceTraitIds.has(traitId);
     entry.className = item.lost ? "record lost" : "record";
-    if (selectedForExperience) entry.classList.add("tag-target-active");
 
     const body = document.createElement("button");
     body.type = "button";
@@ -965,7 +964,6 @@ const renderPlayLists = () => {
 
   [...elements.playMarkList.querySelectorAll(".record")].forEach((entry, index) => {
     const traitId = `mark-${index}`;
-    if (pendingExperienceTraitIds.has(traitId)) entry.classList.add("tag-target-active");
     entry.addEventListener("click", () => togglePendingTrait(traitId));
   });
 
@@ -1187,7 +1185,7 @@ const renderCollapsibleCards = () => {
     const key = card.dataset.cardKey;
     const content = card.querySelector("[data-card-content]");
     const indicator = card.querySelector(".card-toggle-indicator");
-    const collapsed = collapsedCards.has(key);
+    const collapsed = key === "prompt" ? false : collapsedCards.has(key);
     if (content) content.hidden = collapsed;
     if (indicator) indicator.classList.toggle("is-collapsed", collapsed);
   });
@@ -1557,7 +1555,7 @@ document.querySelectorAll("[data-card-key]").forEach((card) => {
     const interactive = event.target.closest("button, input, textarea, select, label");
     if (interactive && !interactive.hasAttribute("data-card-toggle")) return;
     const key = card.dataset.cardKey;
-    if (!key) return;
+    if (!key || key === "prompt") return;
     if (collapsedCards.has(key)) collapsedCards.delete(key);
     else collapsedCards.add(key);
     renderCollapsibleCards();
@@ -1572,7 +1570,7 @@ const initialize = () => {
     void handleRouteChange();
   });
   COLLAPSIBLE_SECTIONS.forEach((key) => {
-    if (!collapsedCards.has(key) && key !== "prompt" && key !== "memories") collapsedCards.add(key);
+    if (!collapsedCards.has(key) && key !== "memories") collapsedCards.add(key);
   });
   void handleRouteChange();
 };

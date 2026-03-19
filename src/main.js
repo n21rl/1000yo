@@ -5,7 +5,7 @@ const STORAGE_KEY = "1000yo.vampires";
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
 const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
 const MIN_MEMORY_TRAITS = 2;
-const COLLAPSIBLE_SECTIONS = ["prompt", "memories", "characters", "skills", "resources", "marks"];
+const COLLAPSIBLE_SECTIONS = ["memories", "characters", "skills", "resources", "marks"];
 
 let character = new Character();
 let currentStep = 0;
@@ -18,7 +18,7 @@ const pendingExperienceTraitIds = new Set();
 let editingTrait = null;
 let experienceComposer = { open: false, target: "new" };
 let activeModal = null;
-const collapsedCards = new Set(["characters", "skills", "resources", "marks"]);
+const collapsedCards = new Set();
 const sampleMortals = [
   ["Yvette", "A mortal sibling who still writes to me."],
   ["Tomas", "A steward who knows too much."],
@@ -649,7 +649,6 @@ const renderTraitList = (listElement, items, kind) => {
     const traitId = `${kind}-${index}`;
     const selectedForExperience = pendingExperienceTraitIds.has(traitId);
     entry.className = item.lost ? "record lost" : "record";
-    if (selectedForExperience) entry.classList.add("tag-target-active");
 
     const body = document.createElement("button");
     body.type = "button";
@@ -808,7 +807,6 @@ const renderPlayLists = () => {
 
   [...elements.playMarkList.querySelectorAll(".record")].forEach((entry, index) => {
     const traitId = `mark-${index}`;
-    if (pendingExperienceTraitIds.has(traitId)) entry.classList.add("tag-target-active");
     entry.addEventListener("click", () => togglePendingTrait(traitId));
   });
 
@@ -1024,7 +1022,7 @@ const renderCollapsibleCards = () => {
     const key = card.dataset.cardKey;
     const content = card.querySelector("[data-card-content]");
     const indicator = card.querySelector(".card-toggle-indicator");
-    const collapsed = collapsedCards.has(key);
+    const collapsed = key === "prompt" ? false : collapsedCards.has(key);
     if (content) content.hidden = collapsed;
     if (indicator) indicator.classList.toggle("is-collapsed", collapsed);
   });
@@ -1455,7 +1453,7 @@ document.querySelectorAll("[data-card-key]").forEach((card) => {
     const interactive = event.target.closest("button, input, textarea, select, label");
     if (interactive && !interactive.hasAttribute("data-card-toggle")) return;
     const key = card.dataset.cardKey;
-    if (!key) return;
+    if (!key || key === "prompt") return;
     if (collapsedCards.has(key)) collapsedCards.delete(key);
     else collapsedCards.add(key);
     renderCollapsibleCards();
@@ -1467,9 +1465,6 @@ const initialize = () => {
   selectedVampireId = vampires[0]?.id ?? "";
   window.addEventListener("hashchange", () => {
     void handleRouteChange();
-  });
-  COLLAPSIBLE_SECTIONS.forEach((key) => {
-    if (!collapsedCards.has(key) && key !== "prompt" && key !== "memories") collapsedCards.add(key);
   });
   void handleRouteChange();
 };

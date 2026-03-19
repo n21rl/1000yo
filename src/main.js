@@ -2,8 +2,22 @@ import { restoreCampaignState, serializeCampaignState } from "./campaign-state.j
 import { Character, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
 
 const STORAGE_KEY = "1000yo.vampires";
+const LEGACY_VAMPIRE_ROUTE_PREFIX = "1000yo.";
+const TEST_VAMPIRE_NAME = "Test Vampire";
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
 const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
+const normalizeCharacterName = (value = "") => cleanText(value)
+  .normalize("NFKD")
+  .replace(/[\u0300-\u036f]/g, "")
+  .toLowerCase()
+  .replace(/['’]/g, "")
+  .replace(/[^a-z0-9]+/g, "-")
+  .replace(/^-+|-+$/g, "");
+const getVampireRouteId = (name = "") => {
+  const normalizedName = normalizeCharacterName(name);
+  return normalizedName;
+};
+const TEST_VAMPIRE_ID = getVampireRouteId(TEST_VAMPIRE_NAME);
 const MIN_MEMORY_TRAITS = 2;
 const COLLAPSIBLE_SECTIONS = ["prompt", "memories", "characters", "skills", "resources", "marks"];
 
@@ -39,6 +53,13 @@ const sampleLaterMemories = [
   "My finest weapon bought me safety, but only because an old ally chose my side.",
   "I abandoned a refuge to protect the people tied to my mortal name.",
 ];
+const testIdentityMemory = "I was born to a fading noble house and learned early that affection is transactional.";
+const testImmortal = ["Baron Severin", "The immortal who dragged me into unlife."];
+const testMark = [
+  "My shadow lags a heartbeat behind me.",
+  "It is most visible in torchlight and unsettles the faithful.",
+];
+const testCurseMemory = "I pursued Baron Severin onto the chapel roof and rose again after the mortal blow.";
 
 const promptState = {
   deck: [],
@@ -173,13 +194,64 @@ const getStoredVampires = () => {
 
 const saveStoredVampires = (vampires) => safeLocalStorage.setItem(STORAGE_KEY, JSON.stringify(vampires));
 
-const serializeCharacter = () => ({
-  name: character.name,
-  memories: character.memories,
-  skills: character.skills,
-  resources: character.resources,
-  characters: character.characters,
-  marks: character.marks,
+const findStoredVampireByNormalizedName = (name, excludingId = "") => {
+  const normalizedName = normalizeCharacterName(name);
+  if (!normalizedName) return null;
+  return getStoredVampires().find((entry) => {
+    if (entry.id === excludingId) return false;
+    return normalizeCharacterName(entry.data?.name) === normalizedName;
+  }) ?? null;
+};
+
+const parseRouteId = (routeId = "") => {
+  let decoded = "";
+  try {
+    decoded = cleanText(decodeURIComponent(routeId));
+  } catch (error) {
+    decoded = cleanText(routeId);
+  }
+  if (!decoded) return "";
+  if (decoded.startsWith(LEGACY_VAMPIRE_ROUTE_PREFIX)) {
+    return decoded.slice(LEGACY_VAMPIRE_ROUTE_PREFIX.length);
+  }
+  return decoded;
+};
+
+const findStoredVampireByRouteId = (routeId = "") => {
+  const parsedRouteId = parseRouteId(routeId);
+  if (!parsedRouteId) return null;
+  const vampires = getStoredVampires();
+  return vampires.find((entry) => entry.id === routeId)
+    ?? vampires.find((entry) => entry.id === parsedRouteId)
+    ?? vampires.find((entry) => normalizeCharacterName(entry.data?.name) === normalizeCharacterName(parsedRouteId))
+    ?? null;
+};
+
+const isDuplicateVampireName = (name, excludingId = "") => Boolean(
+  findStoredVampireByNormalizedName(name, excludingId),
+);
+
+const syncNameValidity = (name, excludingId = selectedVampireId) => {
+  const cleanedName = cleanText(name);
+  if (!cleanedName) {
+    elements.nameInput.setCustomValidity("Name is required.");
+    return false;
+  }
+  if (isDuplicateVampireName(cleanedName, excludingId)) {
+    elements.nameInput.setCustomValidity(`A character named "${cleanedName}" already exists.`);
+    return false;
+  }
+  elements.nameInput.setCustomValidity("");
+  return true;
+};
+
+const serializeCharacter = (targetCharacter = character) => ({
+  name: targetCharacter.name,
+  memories: targetCharacter.memories,
+  skills: targetCharacter.skills,
+  resources: targetCharacter.resources,
+  characters: targetCharacter.characters,
+  marks: targetCharacter.marks,
 });
 
 const createStoredRecord = () => ({
@@ -190,16 +262,102 @@ const createStoredRecord = () => ({
   campaign: serializeCampaignState(promptState),
 });
 
-const persistCurrentCharacter = () => {
-  selectedVampireId = selectedVampireId || crypto.randomUUID();
+const createTestVampireCharacter = () => {
+  const testCharacter = new Character(TEST_VAMPIRE_NAME);
+  testCharacter.addMemory(testIdentityMemory);
+
+  sampleMortals.forEach(([name, description]) => {
+    testCharacter.addCharacter(name, description, "mortal");
+  });
+  sampleSkills.forEach(([name, description]) => {
+    testCharacter.addSkill(name, description);
+  });
+  sampleResources.forEach(([name, description]) => {
+    testCharacter.addResource(name, description);
+  });
+  sampleLaterMemories.forEach((memoryText, index) => {
+    const mortalName = sampleMortals[index % sampleMortals.length]?.[0] ?? "Mortal";
+    const skillName = sampleSkills[index % sampleSkills.length]?.[0] ?? "Skill";
+    testCharacter.addMemory(memoryText, [`Mortal: ${mortalName}`, `Skill: ${skillName}`]);
+  });
+
+  testCharacter.addCharacter(testImmortal[0], testImmortal[1], "immortal");
+  testCharacter.addMark(testMark[0], testMark[1]);
+  testCharacter.addMemory(testCurseMemory, [`Immortal: ${testImmortal[0]}`, `Mark: ${testMark[0]}`]);
+  return testCharacter;
+};
+
+const createTestVampireRecord = () => {
+  const testCharacter = createTestVampireCharacter();
+  return {
+    id: TEST_VAMPIRE_ID,
+    updatedAt: new Date().toISOString(),
+    isComplete: testCharacter.isReadyForPromptOne(),
+    data: serializeCharacter(testCharacter),
+    campaign: serializeCampaignState({
+      currentPrompt: 1,
+      visits: new Map([[1, 1]]),
+    }),
+  };
+};
+
+const ensureTestVampireRecord = () => {
   const vampires = getStoredVampires();
+  if (vampires.some((entry) => entry.id === TEST_VAMPIRE_ID)) return;
+  const existingTestNameIndex = vampires.findIndex((entry) => normalizeCharacterName(entry.data?.name) === normalizeCharacterName(TEST_VAMPIRE_NAME));
+  if (existingTestNameIndex >= 0) {
+    const existing = vampires[existingTestNameIndex];
+    vampires[existingTestNameIndex] = {
+      ...existing,
+      id: TEST_VAMPIRE_ID,
+      data: {
+        ...(existing?.data ?? {}),
+        name: cleanText(existing?.data?.name) || TEST_VAMPIRE_NAME,
+      },
+    };
+    saveStoredVampires(vampires);
+    return;
+  }
+  vampires.unshift(createTestVampireRecord());
+  saveStoredVampires(vampires);
+};
+
+const startTestVampire = async () => {
+  ensureTestVampireRecord();
+  const testVampire = getStoredVampires().find((entry) => entry.id === TEST_VAMPIRE_ID);
+  if (!testVampire) return;
+  loadCharacter(testVampire);
+  resetCreationForms();
+  await startPlay(true);
+};
+
+const persistCurrentCharacter = () => {
+  const vampires = getStoredVampires();
+  const previousId = selectedVampireId;
+  const cleanedName = cleanText(character.name);
+  const nextId = getVampireRouteId(cleanedName);
+
+  if (cleanedName) {
+    const duplicate = vampires.find((entry) => {
+      if (entry.id === previousId) return false;
+      return normalizeCharacterName(entry.data?.name) === normalizeCharacterName(cleanedName);
+    });
+    if (duplicate) return false;
+  }
+
+  selectedVampireId = nextId || previousId || crypto.randomUUID();
   const record = createStoredRecord();
   const existingIndex = vampires.findIndex((entry) => entry.id === record.id);
 
   if (existingIndex >= 0) vampires.splice(existingIndex, 1, record);
   else vampires.push(record);
+  if (previousId && previousId !== record.id) {
+    const staleIndex = vampires.findIndex((entry) => entry.id === previousId);
+    if (staleIndex >= 0) vampires.splice(staleIndex, 1);
+  }
 
   saveStoredVampires(vampires);
+  return true;
 };
 
 const resetPlayState = () => {
@@ -246,7 +404,10 @@ const resetPromptState = () => {
 
 const getRouteForScreen = (screen) => {
   if (screen === "creation") return "#/create";
-  if (screen === "play" && selectedVampireId) return `#/play/${selectedVampireId}`;
+  if (screen === "play" && selectedVampireId) {
+    const routeId = parseRouteId(selectedVampireId) || selectedVampireId;
+    return `#/play/${encodeURIComponent(routeId)}`;
+  }
   return "#/menu";
 };
 
@@ -288,7 +449,7 @@ const startNewVampire = () => {
 
 const markDirty = () => {
   hasSavedSetup = false;
-  persistCurrentCharacter();
+  return persistCurrentCharacter();
 };
 
 const getTraitGroups = () => [
@@ -329,13 +490,6 @@ const syncSelectedTraits = (selectedIds) => {
   const availableIds = new Set(getTraitGroups().flatMap((group) => group.options).map((option) => option.id));
   for (const id of [...selectedIds]) {
     if (!availableIds.has(id)) selectedIds.delete(id);
-  }
-};
-
-const selectAutofillTraits = (selectedIds) => {
-  selectedIds.clear();
-  for (const option of getTraitGroups().flatMap((group) => group.options).slice(0, MIN_MEMORY_TRAITS)) {
-    selectedIds.add(option.id);
   }
 };
 
@@ -445,6 +599,7 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
 };
 
 const renderMenu = () => {
+  ensureTestVampireRecord();
   const vampires = getStoredVampires();
   elements.vampireList.innerHTML = "";
   elements.vampireList.hidden = vampires.length === 0;
@@ -479,22 +634,24 @@ const renderMenu = () => {
 
     const actions = document.createElement("div");
     actions.className = "menu-record-actions";
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "menu-delete-control";
-    deleteButton.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const displayName = vampire.data?.name || "this vampire";
-      if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
-      const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id);
-      saveStoredVampires(remaining);
-      if (selectedVampireId === vampire.id) selectedVampireId = "";
-      setScreen("menu", { updateRoute: true });
-      render();
-    });
-    deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
+    if (vampire.id !== TEST_VAMPIRE_ID) {
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "menu-delete-control";
+      deleteButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const displayName = vampire.data?.name || "this vampire";
+        if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
+        const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id);
+        saveStoredVampires(remaining);
+        if (selectedVampireId === vampire.id) selectedVampireId = "";
+        setScreen("menu", { updateRoute: true });
+        render();
+      });
+      deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
+      actions.append(deleteButton);
+    }
 
-    actions.append(deleteButton);
     item.append(body, actions);
     elements.vampireList.append(item);
   }
@@ -977,8 +1134,13 @@ const stepRequirements = [
   () => character.memories.length >= 5,
 ];
 
+const hasValidUniqueName = () => {
+  const cleanedName = cleanText(elements.nameInput.value || character.name);
+  return Boolean(cleanedName) && !isDuplicateVampireName(cleanedName, selectedVampireId);
+};
+
 const stepCanAdvance = [
-  () => true,
+  () => hasValidUniqueName(),
   () => stepRequirements[1](),
   () => stepRequirements[2](),
   () => stepRequirements[3](),
@@ -1005,6 +1167,7 @@ const renderCreation = () => {
   syncSelectedTraits(selectedLaterTraitIds);
   syncSelectedTraits(selectedCurseTraitIds);
   elements.nameInput.value = character.name;
+  syncNameValidity(elements.nameInput.value, selectedVampireId);
   renderMemoryList(elements.identityMemoryList, 0, 1);
   renderCharacterList(elements.mortalList, "mortal");
   renderDetailList(elements.skillList, character.skills, (index) => character.removeSkill(index));
@@ -1070,7 +1233,7 @@ const handleRouteChange = async () => {
     render();
     return;
   }
-  const storedCharacter = getStoredVampires().find((entry) => entry.id === vampireId);
+  const storedCharacter = findStoredVampireByRouteId(vampireId);
   if (!storedCharacter) {
     setScreen("menu", { updateRoute: true, replaceRoute: true });
     render();
@@ -1082,13 +1245,19 @@ const handleRouteChange = async () => {
 };
 
 const saveIdentityStep = () => {
-  markDirty();
+  if (!syncNameValidity(elements.nameInput.value, selectedVampireId)) {
+    elements.nameInput.reportValidity();
+    return false;
+  }
   character.rename(elements.nameInput.value);
   if (character.memories.length === 0) {
     if (!character.addMemory(elements.identityMemoryInput.value)) return false;
     elements.identityMemoryInput.value = "";
   }
-  persistCurrentCharacter();
+  if (!markDirty()) {
+    elements.nameInput.reportValidity();
+    return false;
+  }
   return isStepComplete(0);
 };
 
@@ -1122,80 +1291,11 @@ const saveCurseMemoryStep = () => {
   return didSave;
 };
 
-const autofillCurrentStep = () => {
-  markDirty();
-  if (currentStep === 0) {
-    if (!cleanText(elements.nameInput.value)) {
-      elements.nameInput.value = "Test Vampire";
-      character.rename(elements.nameInput.value);
-    }
-    if (!cleanText(elements.identityMemoryInput.value) && character.memories.length === 0) {
-      elements.identityMemoryInput.value = "I was born to a fading noble house and learned early that affection is transactional.";
-    }
-    renderStep();
-    return;
-  }
-  if (currentStep === 1) {
-    while (character.mortalCount < 3) {
-      const [name, description] = sampleMortals[character.mortalCount] ?? [`Mortal ${character.mortalCount + 1}`, "A mortal tied to my earliest years."];
-      character.addCharacter(name, description, "mortal");
-    }
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 2) {
-    while (character.skills.length < 3) {
-      const [name, description] = sampleSkills[character.skills.length] ?? [`Skill ${character.skills.length + 1}`, "A practiced talent from mortal life."];
-      character.addSkill(name, description);
-    }
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 3) {
-    while (character.resources.length < 3) {
-      const [name, description] = sampleResources[character.resources.length] ?? [`Resource ${character.resources.length + 1}`, "A useful possession I can still rely on."];
-      character.addResource(name, description);
-    }
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 4) {
-    while (character.memories.length < 4) {
-      const sampleIndex = character.memories.length - 1;
-      selectAutofillTraits(selectedLaterTraitIds);
-      character.addMemory(sampleLaterMemories[sampleIndex] ?? `Another memory ${character.memories.length + 1}.`, getSelectedTraitLabels(selectedLaterTraitIds));
-    }
-    selectedLaterTraitIds.clear();
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 5) {
-    if (!cleanText(elements.immortalName.value) && character.immortalCount === 0) elements.immortalName.value = "Baron Severin";
-    if (!cleanText(elements.immortalDescription.value) && character.immortalCount === 0) elements.immortalDescription.value = "The immortal who dragged me into unlife.";
-    renderStep();
-    return;
-  }
-  if (currentStep === 6) {
-    if (!cleanText(elements.markInput.value) && character.marks.length === 0) elements.markInput.value = "My shadow lags a heartbeat behind me.";
-    if (!cleanText(elements.markDescription.value) && character.marks.length === 0) elements.markDescription.value = "It is most visible in torchlight and unsettles the faithful.";
-    renderStep();
-    return;
-  }
-  if (currentStep === 7) {
-    if (!cleanText(elements.memoryCurse.value) && character.memories.length === 4) elements.memoryCurse.value = "I pursued Baron Severin onto the chapel roof and rose again after the mortal blow.";
-    if (selectedCurseTraitIds.size < MIN_MEMORY_TRAITS) selectAutofillTraits(selectedCurseTraitIds);
-    render();
-  }
-};
-
 elements.newVampireButton.addEventListener("click", () => startNewVampire());
 elements.nameInput.addEventListener("input", () => {
-  markDirty();
   character.rename(elements.nameInput.value);
+  if (syncNameValidity(elements.nameInput.value, selectedVampireId)) markDirty();
+  else hasSavedSetup = false;
   renderStep();
 });
 elements.identityMemoryInput.addEventListener("input", () => {
@@ -1280,7 +1380,9 @@ elements.backButton.addEventListener("click", () => {
   currentStep = Math.max(0, currentStep - 1);
   renderStep();
 });
-elements.autofillButton.addEventListener("click", () => autofillCurrentStep());
+elements.autofillButton.addEventListener("click", () => {
+  void startTestVampire();
+});
 elements.nextButton.addEventListener("click", () => {
   if (currentStep === 0) {
     if (!saveIdentityStep()) return;
@@ -1463,6 +1565,7 @@ document.querySelectorAll("[data-card-key]").forEach((card) => {
 });
 
 const initialize = () => {
+  ensureTestVampireRecord();
   const vampires = getStoredVampires();
   selectedVampireId = vampires[0]?.id ?? "";
   window.addEventListener("hashchange", () => {

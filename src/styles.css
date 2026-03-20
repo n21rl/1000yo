@@ -395,6 +395,7 @@ button:disabled {
   gap: 0.25rem;
   align-items: center;
   flex-shrink: 0;
+  flex-wrap: nowrap;
 }
 
 .play-card .record-tags {
@@ -538,8 +539,7 @@ button:disabled {
   .section-heading,
   .record,
   .wizard-nav,
-  .form-actions,
-  .record-actions {
+  .form-actions {
     flex-direction: column;
   }
 
@@ -559,9 +559,14 @@ button:disabled {
     position: static;
   }
 
-  .ghost-button,
-  .small-button {
+  .ghost-button:not(.symbolic-button),
+  .small-button:not(.symbolic-button) {
     width: 100%;
+  }
+
+  .play-card .record-actions {
+    width: auto;
+    justify-content: flex-end;
   }
 }
 

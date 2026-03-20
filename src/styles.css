@@ -374,7 +374,8 @@ button:disabled {
 .record-check-slot {
   display: flex;
   justify-content: center;
-  padding-top: 0.02rem;
+  align-items: flex-start;
+  padding-top: 0.14rem;
 }
 
 .record-trait-content {

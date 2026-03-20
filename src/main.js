@@ -112,6 +112,9 @@ const elements = {
   identityMemoryList: document.querySelector("#identity-memory-list"),
   playNameHeading: document.querySelector("#play-name-heading"),
   playMemoryList: document.querySelector("#play-memory-list"),
+  lostMemoriesCard: document.querySelector("#lost-memories-card"),
+  lostMemoriesToggle: document.querySelector("#lost-memories-toggle"),
+  playLostMemoryList: document.querySelector("#play-lost-memory-list"),
   playCharacterList: document.querySelector("#play-character-list"),
   playSkillList: document.querySelector("#play-skill-list"),
   playResourceList: document.querySelector("#play-resource-list"),
@@ -363,6 +366,21 @@ const createButton = (label, className, handler, options = {}) => {
   return button;
 };
 
+const createInlineIconButton = (label, symbol, className, handler, { pressed = false } = {}) => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.textContent = symbol;
+  button.title = label;
+  button.setAttribute("aria-label", label);
+  button.setAttribute("aria-pressed", String(Boolean(pressed)));
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    handler();
+  });
+  return button;
+};
+
 const renderTraitSelector = (container, selectedIds) => {
   container.innerHTML = "";
 
@@ -533,12 +551,7 @@ const togglePendingTrait = (traitId) => {
   renderPlayLists();
 };
 
-const formatStatusTags = (item, kind) => {
-  const tags = [];
-  if (item.used) tags.push("Used");
-  if (item.lost) tags.push(kind === "character" ? "Dead" : "Lost");
-  return tags;
-};
+const formatStatusTags = () => [];
 
 const renderSelectedTraitPills = () => {
   elements.playSelectedTraits.innerHTML = "";
@@ -582,58 +595,86 @@ const renderPlayComposer = () => {
   renderSelectedTraitPills();
 };
 
-const renderPlayMemoryList = () => {
-  elements.playMemoryList.innerHTML = "";
-  if (!character.memories.length) {
-    elements.playMemoryList.append(createEmptyRecord("No memories yet."));
-    return;
+const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
+  const item = document.createElement("li");
+  item.className = lost ? "record play-memory lost" : "record play-memory";
+
+  const body = document.createElement("div");
+  body.className = "record-body";
+
+  const titleRow = document.createElement("div");
+  titleRow.className = "record-title-row";
+  const title = document.createElement("strong");
+  title.textContent = `Memory ${memoryIndex + 1}`;
+  titleRow.append(title);
+
+  titleRow.append(createInlineIconButton(
+    lost ? "Restore memory" : "Strike out memory",
+    "✕",
+    "record-inline-button record-strike-toggle",
+    () => {
+      character.setMemoryLost(memoryIndex, !memory.lost);
+      markDirty();
+      render();
+    },
+    { pressed: lost },
+  ));
+
+  const spacer = document.createElement("span");
+  spacer.className = "record-title-spacer";
+  titleRow.append(spacer);
+
+  if (!lost && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
+    titleRow.append(createInlineIconButton("Add experience", "+", "record-inline-button record-add-toggle", () => {
+      openExperienceComposer(memory.id);
+      render();
+    }));
   }
 
-  character.memories.forEach((memory, memoryIndex) => {
-    const item = document.createElement("li");
-    item.className = memory.lost ? "record play-memory lost" : "record play-memory";
+  body.append(titleRow);
 
-    const body = document.createElement("div");
-    body.className = "record-body";
-    const title = document.createElement("strong");
-    title.textContent = `Memory ${memoryIndex + 1}`;
-    body.append(title);
+  const experienceList = document.createElement("ol");
+  experienceList.className = "experience-list";
+  memory.experiences.forEach((experience) => {
+    const experienceItem = document.createElement("li");
+    const text = document.createElement("p");
+    text.textContent = experience.text;
+    experienceItem.append(text);
+    experienceList.append(experienceItem);
+  });
+  body.append(experienceList);
 
-    const experienceList = document.createElement("ol");
-    experienceList.className = "experience-list";
-    memory.experiences.forEach((experience) => {
-      const experienceItem = document.createElement("li");
-      const text = document.createElement("p");
-      text.textContent = experience.text;
-      experienceItem.append(text);
-      experienceList.append(experienceItem);
+  item.append(body);
+  return item;
+};
+
+const renderPlayMemoryList = () => {
+  elements.playMemoryList.innerHTML = "";
+  elements.playLostMemoryList.innerHTML = "";
+
+  const activeMemories = character.memories
+    .map((memory, index) => ({ memory, index }))
+    .filter(({ memory }) => !memory.lost);
+  const lostMemories = character.memories
+    .map((memory, index) => ({ memory, index }))
+    .filter(({ memory }) => memory.lost);
+
+  if (!activeMemories.length) {
+    elements.playMemoryList.append(createEmptyRecord("No active memories."));
+  } else {
+    activeMemories.forEach(({ memory, index }) => {
+      elements.playMemoryList.append(renderMemoryRecord({ memory, memoryIndex: index }));
     });
-    body.append(experienceList);
+  }
 
-    const actions = document.createElement("div");
-    actions.className = "record-actions";
-    if (!memory.lost && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
-      actions.append(createButton("Add experience", "ghost-button small-button symbolic-button", () => {
-        openExperienceComposer(memory.id);
-        render();
-      }, {
-        symbol: "+",
-        title: "Add experience",
-      }));
-    }
-    actions.append(
-      createButton(memory.lost ? "Restore memory" : "Strike out memory", "ghost-button small-button symbolic-button", () => {
-        character.setMemoryLost(memoryIndex, !memory.lost);
-        markDirty();
-        render();
-      }, {
-        symbol: memory.lost ? "↺" : "∕",
-        title: memory.lost ? "Restore memory" : "Strike out memory",
-      }),
-    );
+  const lostMemoriesCollapsed = collapsedCards.has("lost-memories");
+  elements.lostMemoriesCard.hidden = lostMemories.length === 0;
+  elements.lostMemoriesToggle.setAttribute("aria-expanded", String(!lostMemoriesCollapsed));
+  elements.lostMemoriesToggle.querySelector(".card-toggle-indicator")?.classList.toggle("is-collapsed", lostMemoriesCollapsed);
+  elements.playLostMemoryList.hidden = lostMemoriesCollapsed;
 
-    item.append(body, actions);
-    elements.playMemoryList.append(item);
+  lostMemories.forEach(({ memory, index }) => {
+    elements.playLostMemoryList.append(renderMemoryRecord({ memory, memoryIndex: index, lost: true }));
   });
 };
 
@@ -648,22 +689,65 @@ const renderTraitList = (listElement, items, kind) => {
     const entry = document.createElement("li");
     const traitId = item.id;
     const selectedForExperience = pendingExperienceTraitIds.has(traitId);
-    entry.className = item.lost ? "record lost" : "record";
+    entry.className = ["record", item.used ? "used" : "", item.lost ? "lost" : ""].filter(Boolean).join(" ");
     if (selectedForExperience) entry.classList.add("tag-target-active");
 
-    const body = document.createElement("button");
-    body.type = "button";
+    const body = document.createElement("div");
     body.className = "record-select";
-    body.addEventListener("click", (event) => {
-      event.stopPropagation();
+    body.tabIndex = 0;
+    body.role = "button";
+    const toggleTagSelection = () => {
       togglePendingTrait(traitId);
+    };
+    body.addEventListener("click", (event) => {
+      if (event.target.closest(".record-inline-button")) return;
+      toggleTagSelection();
+    });
+    body.addEventListener("keydown", (event) => {
+      if (event.key !== "Enter" && event.key !== " ") return;
+      if (event.target.closest(".record-inline-button")) return;
+      event.preventDefault();
+      toggleTagSelection();
     });
 
     const bodyInner = document.createElement("div");
     bodyInner.className = "record-body";
+    const titleRow = document.createElement("div");
+    titleRow.className = "record-title-row";
+
+    titleRow.append(createInlineIconButton(
+      item.used ? `Uncheck ${kind}` : `Check ${kind}`,
+      item.used ? "☑" : "☐",
+      "record-inline-button record-check-toggle",
+      () => {
+        if (kind === "character") character.setCharacterUsed(index, !item.used);
+        if (kind === "skill") character.setSkillUsed(index, !item.used);
+        if (kind === "resource") character.setResourceUsed(index, !item.used);
+        markDirty();
+        render();
+      },
+      { pressed: item.used },
+    ));
+
     const title = document.createElement("strong");
     title.textContent = item.name;
-    bodyInner.append(title);
+    titleRow.append(title);
+
+    titleRow.append(createInlineIconButton(
+      item.lost ? `Restore ${kind}` : `Strike out ${kind}`,
+      "✕",
+      "record-inline-button record-strike-toggle",
+      () => {
+        if (kind === "character") character.setCharacterLost(index, !item.lost);
+        if (kind === "skill") character.setSkillLost(index, !item.lost);
+        if (kind === "resource") character.setResourceLost(index, !item.lost);
+        markDirty();
+        render();
+      },
+      { pressed: item.lost },
+    ));
+
+    bodyInner.append(titleRow);
     if (item.description) {
       const text = document.createElement("p");
       text.textContent = item.description;
@@ -686,69 +770,7 @@ const renderTraitList = (listElement, items, kind) => {
     }
     body.append(bodyInner);
 
-    const actions = document.createElement("div");
-    actions.className = "record-actions";
-    const toggleUsed = kind === "character"
-      ? createButton(item.used ? "Uncheck character" : "Check character", "ghost-button small-button symbolic-button", () => {
-        character.setCharacterUsed(index, !item.used);
-        markDirty();
-        render();
-      }, {
-        symbol: item.used ? "☑" : "☐",
-        title: item.used ? "Uncheck character" : "Check character",
-        pressed: item.used,
-      })
-      : kind === "skill"
-        ? createButton(item.used ? "Uncheck skill" : "Check skill", "ghost-button small-button symbolic-button", () => {
-          character.setSkillUsed(index, !item.used);
-          markDirty();
-          render();
-        }, {
-          symbol: item.used ? "☑" : "☐",
-          title: item.used ? "Uncheck skill" : "Check skill",
-          pressed: item.used,
-        })
-        : createButton(item.used ? "Uncheck resource" : "Check resource", "ghost-button small-button symbolic-button", () => {
-          character.setResourceUsed(index, !item.used);
-          markDirty();
-          render();
-        }, {
-          symbol: item.used ? "☑" : "☐",
-          title: item.used ? "Uncheck resource" : "Check resource",
-          pressed: item.used,
-        });
-    const toggleLost = kind === "character"
-      ? createButton(item.lost ? "Restore character" : "Strike out character", "ghost-button small-button symbolic-button", () => {
-        character.setCharacterLost(index, !item.lost);
-        markDirty();
-        render();
-      }, {
-        symbol: item.lost ? "↺" : "∕",
-        title: item.lost ? "Restore character" : "Strike out character",
-        pressed: item.lost,
-      })
-      : kind === "skill"
-        ? createButton(item.lost ? "Restore skill" : "Strike out skill", "ghost-button small-button symbolic-button", () => {
-          character.setSkillLost(index, !item.lost);
-          markDirty();
-          render();
-        }, {
-          symbol: item.lost ? "↺" : "∕",
-          title: item.lost ? "Restore skill" : "Strike out skill",
-          pressed: item.lost,
-        })
-        : createButton(item.lost ? "Restore resource" : "Strike out resource", "ghost-button small-button symbolic-button", () => {
-          character.setResourceLost(index, !item.lost);
-          markDirty();
-          render();
-        }, {
-          symbol: item.lost ? "↺" : "∕",
-          title: item.lost ? "Restore resource" : "Strike out resource",
-          pressed: item.lost,
-        });
-
-    actions.append(toggleUsed, toggleLost);
-    entry.append(body, actions);
+    entry.append(body);
     listElement.append(entry);
   });
 };
@@ -1346,6 +1368,12 @@ elements.addMemoryButton.addEventListener("click", (event) => {
   activeModal = "memory";
   openExperienceComposer("new");
   render();
+});
+
+elements.lostMemoriesToggle.addEventListener("click", () => {
+  if (collapsedCards.has("lost-memories")) collapsedCards.delete("lost-memories");
+  else collapsedCards.add("lost-memories");
+  renderPlayLists();
 });
 
 elements.playExperienceForm.addEventListener("submit", (event) => {

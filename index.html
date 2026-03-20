@@ -178,6 +178,21 @@
             </div>
             <div data-card-content>
               <ul id="play-memory-list" class="record-list"></ul>
+              <section id="lost-memories-card" class="subcard" hidden>
+                <button
+                  type="button"
+                  id="lost-memories-toggle"
+                  class="subcard-header"
+                  aria-expanded="false"
+                  aria-controls="play-lost-memory-list"
+                >
+                  <span class="card-title-row">
+                    <strong>Lost memories</strong>
+                    <span class="card-toggle-indicator" aria-hidden="true"></span>
+                  </span>
+                </button>
+                <ul id="play-lost-memory-list" class="record-list" hidden></ul>
+              </section>
               <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory">＋</button>
             </div>
           </article>

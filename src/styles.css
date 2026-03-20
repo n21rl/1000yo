@@ -355,6 +355,7 @@ button:disabled {
   background: transparent;
   padding: 0;
   text-align: left;
+  width: 100%;
 }
 
 .record-body {
@@ -362,9 +363,23 @@ button:disabled {
   flex: 1;
 }
 
+.record-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.record-title-spacer {
+  flex: 1;
+}
+
 .record-body strong {
   display: block;
   margin-bottom: 0.15rem;
+}
+
+.record-title-row strong {
+  margin-bottom: 0;
 }
 
 .record-body p,
@@ -376,14 +391,13 @@ button:disabled {
   justify-content: flex-start;
 }
 
-.record-actions,
 .form-actions {
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
 .play-card .record {
-  align-items: center;
+  align-items: flex-start;
   gap: 0.45rem;
 }
 
@@ -391,12 +405,6 @@ button:disabled {
   padding-right: 0.25rem;
 }
 
-.play-card .record-actions {
-  gap: 0.25rem;
-  align-items: center;
-  flex-shrink: 0;
-  flex-wrap: nowrap;
-}
 
 .play-card .record-tags {
   gap: 0.3rem;
@@ -407,19 +415,79 @@ button:disabled {
   font-size: 0.8rem;
 }
 
-.tag-target-active {
-  box-shadow: none;
+
+.record-inline-button {
+  width: auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #bda88c;
+  line-height: 1;
+  flex: 0 0 auto;
 }
 
-.lost .record-body,
-.play-memory.lost .record-body {
-  opacity: 0.75;
+.record-inline-button:hover {
+  filter: none;
+  color: #fff5e2;
+}
+
+.record-inline-button[aria-pressed="true"] {
+  color: #efe0c0;
+}
+
+.record-check-toggle {
+  font-size: 0.95rem;
+}
+
+.record-add-toggle,
+.record-strike-toggle {
+  width: 1rem;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.used {
+  opacity: 0.58;
+}
+
+.tag-target-active {
+  box-shadow: none;
+  border-color: rgba(201, 163, 112, 0.55);
+  background: rgba(123, 46, 45, 0.18);
+}
+
+.lost {
+  opacity: 0.58;
 }
 
 .lost .record-body strong,
+.lost .record-body p,
 .play-memory.lost .record-body strong,
+.play-memory.lost .record-body p,
 .play-memory.lost .experience-list {
   text-decoration: line-through;
+}
+
+
+.subcard {
+  margin-top: 0.65rem;
+  border: 1px solid rgba(158, 122, 106, 0.2);
+  border-radius: 0.65rem;
+  background: rgba(20, 14, 14, 0.22);
+}
+
+.subcard-header {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  padding: 0.55rem 0.65rem;
+  text-align: left;
+}
+
+.subcard-header .card-title-row {
+  justify-content: space-between;
+  width: 100%;
 }
 
 .inline-form {
@@ -564,10 +632,6 @@ button:disabled {
     width: 100%;
   }
 
-  .play-card .record-actions {
-    width: auto;
-    justify-content: flex-end;
-  }
 }
 
 

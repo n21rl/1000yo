@@ -717,57 +717,61 @@ const renderTraitList = (listElement, items, kind) => {
     const titleRow = document.createElement("div");
     titleRow.className = "record-title-row";
 
-    titleRow.append(createInlineIconButton(
-      item.used ? `Uncheck ${kind}` : `Check ${kind}`,
-      item.used ? "☑" : "☐",
-      "record-inline-button record-check-toggle",
-      () => {
-        const nextUsed = !item.used;
-        if (kind === "character") {
-          character.setCharacterUsed(index, nextUsed);
-          if (nextUsed) character.setCharacterLost(index, false);
-        }
-        if (kind === "skill") {
-          character.setSkillUsed(index, nextUsed);
-          if (nextUsed) character.setSkillLost(index, false);
-        }
-        if (kind === "resource") {
-          character.setResourceUsed(index, nextUsed);
-          if (nextUsed) character.setResourceLost(index, false);
-        }
-        markDirty();
-        render();
-      },
-      { pressed: item.used },
-    ));
+    if (!item.lost) {
+      titleRow.append(createInlineIconButton(
+        item.used ? `Uncheck ${kind}` : `Check ${kind}`,
+        item.used ? "☑" : "☐",
+        "record-inline-button record-check-toggle",
+        () => {
+          const nextUsed = !item.used;
+          if (kind === "character") {
+            character.setCharacterUsed(index, nextUsed);
+            if (nextUsed) character.setCharacterLost(index, false);
+          }
+          if (kind === "skill") {
+            character.setSkillUsed(index, nextUsed);
+            if (nextUsed) character.setSkillLost(index, false);
+          }
+          if (kind === "resource") {
+            character.setResourceUsed(index, nextUsed);
+            if (nextUsed) character.setResourceLost(index, false);
+          }
+          markDirty();
+          render();
+        },
+        { pressed: item.used },
+      ));
+    }
 
     const title = document.createElement("strong");
     title.textContent = item.name;
     titleRow.append(title);
 
-    titleRow.append(createInlineIconButton(
-      item.lost ? `Restore ${kind}` : `Strike out ${kind}`,
-      "✕",
-      "record-inline-button record-strike-toggle",
-      () => {
-        const nextLost = !item.lost;
-        if (kind === "character") {
-          character.setCharacterLost(index, nextLost);
-          if (nextLost) character.setCharacterUsed(index, false);
-        }
-        if (kind === "skill") {
-          character.setSkillLost(index, nextLost);
-          if (nextLost) character.setSkillUsed(index, false);
-        }
-        if (kind === "resource") {
-          character.setResourceLost(index, nextLost);
-          if (nextLost) character.setResourceUsed(index, false);
-        }
-        markDirty();
-        render();
-      },
-      { pressed: item.lost },
-    ));
+    if (!item.used) {
+      titleRow.append(createInlineIconButton(
+        item.lost ? `Restore ${kind}` : `Strike out ${kind}`,
+        "✕",
+        "record-inline-button record-strike-toggle",
+        () => {
+          const nextLost = !item.lost;
+          if (kind === "character") {
+            character.setCharacterLost(index, nextLost);
+            if (nextLost) character.setCharacterUsed(index, false);
+          }
+          if (kind === "skill") {
+            character.setSkillLost(index, nextLost);
+            if (nextLost) character.setSkillUsed(index, false);
+          }
+          if (kind === "resource") {
+            character.setResourceLost(index, nextLost);
+            if (nextLost) character.setResourceUsed(index, false);
+          }
+          markDirty();
+          render();
+        },
+        { pressed: item.lost },
+      ));
+    }
 
     bodyInner.append(titleRow);
     if (item.description) {

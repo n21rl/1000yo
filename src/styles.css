@@ -643,6 +643,7 @@ button:disabled {
 
 .add-card-button {
   margin-top: 0.55rem;
+  margin-left: auto;
   width: auto;
   min-width: 2.1rem;
   padding: 0;

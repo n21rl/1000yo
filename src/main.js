@@ -801,8 +801,10 @@ const renderTraitList = (listElement, items, kind) => {
         tag.textContent = label;
         tagWrap.append(tag);
       });
-      bodyInner.append(tagWrap);
+      contentColumn.append(tagWrap);
     }
+
+    bodyInner.append(checkSlot, contentColumn);
     body.append(bodyInner);
 
     entry.append(body);

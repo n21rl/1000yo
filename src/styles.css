@@ -375,7 +375,7 @@ button:disabled {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding-top: 0.14rem;
+  padding-top: 0.22rem;
 }
 
 .record-trait-content {
@@ -391,7 +391,8 @@ button:disabled {
 
 .record-title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 0.35rem;
 }
 
@@ -403,6 +404,7 @@ button:disabled {
 
 .record-title-row strong {
   margin-bottom: 0;
+  flex: 1;
 }
 
 .record-body p,

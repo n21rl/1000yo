@@ -620,17 +620,6 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
     { pressed: lost },
   ));
 
-  const spacer = document.createElement("span");
-  spacer.className = "record-title-spacer";
-  titleRow.append(spacer);
-
-  if (!lost && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
-    titleRow.append(createInlineIconButton("Add experience", "+", "record-inline-button record-add-toggle", () => {
-      openExperienceComposer(memory.id);
-      render();
-    }));
-  }
-
   body.append(titleRow);
 
   const experienceList = document.createElement("ol");
@@ -645,6 +634,19 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   body.append(experienceList);
 
   item.append(body);
+
+  if (!lost && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
+    const footer = document.createElement("div");
+    footer.className = "record-footer-actions";
+    footer.append(createButton("Add experience", "add-card-button memory-add-button", () => {
+      openExperienceComposer(memory.id);
+      render();
+    }, {
+      symbol: "＋",
+      title: "Add experience",
+    }));
+    item.append(footer);
+  }
   return item;
 };
 
@@ -720,9 +722,19 @@ const renderTraitList = (listElement, items, kind) => {
       item.used ? "☑" : "☐",
       "record-inline-button record-check-toggle",
       () => {
-        if (kind === "character") character.setCharacterUsed(index, !item.used);
-        if (kind === "skill") character.setSkillUsed(index, !item.used);
-        if (kind === "resource") character.setResourceUsed(index, !item.used);
+        const nextUsed = !item.used;
+        if (kind === "character") {
+          character.setCharacterUsed(index, nextUsed);
+          if (nextUsed) character.setCharacterLost(index, false);
+        }
+        if (kind === "skill") {
+          character.setSkillUsed(index, nextUsed);
+          if (nextUsed) character.setSkillLost(index, false);
+        }
+        if (kind === "resource") {
+          character.setResourceUsed(index, nextUsed);
+          if (nextUsed) character.setResourceLost(index, false);
+        }
         markDirty();
         render();
       },
@@ -738,9 +750,19 @@ const renderTraitList = (listElement, items, kind) => {
       "✕",
       "record-inline-button record-strike-toggle",
       () => {
-        if (kind === "character") character.setCharacterLost(index, !item.lost);
-        if (kind === "skill") character.setSkillLost(index, !item.lost);
-        if (kind === "resource") character.setResourceLost(index, !item.lost);
+        const nextLost = !item.lost;
+        if (kind === "character") {
+          character.setCharacterLost(index, nextLost);
+          if (nextLost) character.setCharacterUsed(index, false);
+        }
+        if (kind === "skill") {
+          character.setSkillLost(index, nextLost);
+          if (nextLost) character.setSkillUsed(index, false);
+        }
+        if (kind === "resource") {
+          character.setResourceLost(index, nextLost);
+          if (nextLost) character.setResourceUsed(index, false);
+        }
         markDirty();
         render();
       },

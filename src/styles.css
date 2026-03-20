@@ -369,9 +369,6 @@ button:disabled {
   gap: 0.35rem;
 }
 
-.record-title-spacer {
-  flex: 1;
-}
 
 .record-body strong {
   display: block;
@@ -440,7 +437,6 @@ button:disabled {
   font-size: 0.95rem;
 }
 
-.record-add-toggle,
 .record-strike-toggle {
   width: 1rem;
   text-align: center;
@@ -488,6 +484,16 @@ button:disabled {
 .subcard-header .card-title-row {
   justify-content: space-between;
   width: 100%;
+}
+
+.record-footer-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.35rem;
+}
+
+.memory-add-button {
+  margin-top: 0;
 }
 
 .inline-form {

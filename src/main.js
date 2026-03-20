@@ -713,12 +713,12 @@ const renderTraitList = (listElement, items, kind) => {
     });
 
     const bodyInner = document.createElement("div");
-    bodyInner.className = "record-body";
-    const titleRow = document.createElement("div");
-    titleRow.className = "record-title-row";
+    bodyInner.className = "record-body record-trait-layout";
 
+    const checkSlot = document.createElement("div");
+    checkSlot.className = "record-check-slot";
     if (!item.lost) {
-      titleRow.append(createInlineIconButton(
+      checkSlot.append(createInlineIconButton(
         item.used ? `Uncheck ${kind}` : `Check ${kind}`,
         item.used ? "☑" : "☐",
         "record-inline-button record-check-toggle",
@@ -741,7 +741,16 @@ const renderTraitList = (listElement, items, kind) => {
         },
         { pressed: item.used },
       ));
+    } else {
+      const checkPlaceholder = document.createElement("span");
+      checkPlaceholder.className = "record-inline-placeholder record-check-toggle";
+      checkSlot.append(checkPlaceholder);
     }
+
+    const contentColumn = document.createElement("div");
+    contentColumn.className = "record-trait-content";
+    const titleRow = document.createElement("div");
+    titleRow.className = "record-title-row";
 
     const title = document.createElement("strong");
     title.textContent = item.name;
@@ -773,11 +782,11 @@ const renderTraitList = (listElement, items, kind) => {
       ));
     }
 
-    bodyInner.append(titleRow);
+    contentColumn.append(titleRow);
     if (item.description) {
       const text = document.createElement("p");
       text.textContent = item.description;
-      bodyInner.append(text);
+      contentColumn.append(text);
     }
 
     const tags = formatStatusTags(item, kind);

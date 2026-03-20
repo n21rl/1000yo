@@ -363,6 +363,31 @@ button:disabled {
   flex: 1;
 }
 
+
+.record-trait-layout {
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  gap: 0.4rem;
+  align-items: start;
+}
+
+.record-check-slot {
+  display: flex;
+  justify-content: center;
+  padding-top: 0.02rem;
+}
+
+.record-trait-content {
+  min-width: 0;
+}
+
+.record-inline-placeholder {
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  visibility: hidden;
+}
+
 .record-title-row {
   display: flex;
   align-items: center;

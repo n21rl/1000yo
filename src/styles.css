@@ -737,3 +737,12 @@ button:disabled {
 .modal-form-title {
   display: none;
 }
+.modal-message {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(158, 122, 106, 0.35);
+  border-radius: 0.9rem;
+  background: rgba(38, 22, 22, 0.72);
+  color: #f3e3c4;
+}
+

@@ -1,5 +1,6 @@
 import { restoreCampaignState, serializeCampaignState } from "./campaign-state.js";
 import { Character, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
+import { getAddExperienceLimitMessage, getAddMemoryLimitMessage } from "./play-memory-guidance.js";
 
 const STORAGE_KEY = "1000yo.vampires";
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
@@ -17,6 +18,7 @@ const pendingExperienceTraitIds = new Set();
 let editingTrait = null;
 let experienceComposer = { open: false, target: "new" };
 let activeModal = null;
+let modalMessage = "";
 const collapsedCards = new Set();
 const sampleMortals = [
   ["Yvette", "A mortal sibling who still writes to me."],
@@ -153,6 +155,9 @@ const elements = {
   playCharacterCancel: document.querySelector("#play-character-cancel"),
   playTraitModal: document.querySelector("#play-trait-modal"),
   playModalTitle: document.querySelector("#play-modal-title"),
+  playModalMessage: document.querySelector("#play-modal-message"),
+  playModalMessageText: document.querySelector("#play-modal-message-text"),
+  playModalMessageClose: document.querySelector("#play-modal-message-close"),
 };
 
 const totalSteps = elements.stepPanels.length;
@@ -209,6 +214,7 @@ const resetPlayState = () => {
   editingTrait = null;
   experienceComposer = { open: false, target: "new" };
   activeModal = null;
+  modalMessage = "";
 };
 
 const loadCharacter = (storedCharacter) => {
@@ -565,13 +571,21 @@ const renderSelectedTraitPills = () => {
   });
 };
 
+const showModalMessage = (title, message) => {
+  activeModal = "message";
+  modalMessage = message;
+  elements.playModalTitle.textContent = title;
+};
+
 const openExperienceComposer = (target = "new") => {
+  modalMessage = "";
   activeModal = "memory";
   experienceComposer = { open: true, target };
   elements.playExperienceForm.hidden = false;
 };
 
 const closeExperienceComposer = () => {
+  modalMessage = "";
   experienceComposer = { open: false, target: "new" };
   pendingExperienceTraitIds.clear();
   elements.playExperienceForm.reset();
@@ -583,6 +597,8 @@ const renderPlayComposer = () => {
   const targetIndex = targetMemoryId === null ? null : character.memories.findIndex((memory) => memory.id === targetMemoryId);
   const isNewMemory = experienceComposer.target === "new";
   elements.playExperienceForm.hidden = activeModal !== "memory" || !experienceComposer.open;
+  elements.playModalMessage.hidden = activeModal !== "message" || !modalMessage;
+  elements.playModalMessageText.textContent = modalMessage;
   elements.playExperienceSubmit.textContent = isNewMemory ? "Add memory" : "Add experience";
   if (isNewMemory) {
     elements.playMemoryHint.textContent = `This will create a new memory (${character.memories.length}/${MAX_MEMORIES}).`;
@@ -635,11 +651,14 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
 
   item.append(body);
 
-  if (!lost && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
+  if (!lost) {
     const footer = document.createElement("div");
     footer.className = "record-footer-actions";
     footer.append(createButton("Add experience", "add-card-button memory-add-button", () => {
-      openExperienceComposer(memory.id);
+      const blockedMessage = getAddExperienceLimitMessage(memory.experiences.length, MAX_EXPERIENCES_PER_MEMORY);
+      if (blockedMessage) {
+        showModalMessage(`Memory ${memoryIndex + 1} is full`, blockedMessage);
+      } else openExperienceComposer(memory.id);
       render();
     }, {
       symbol: "＋",
@@ -841,6 +860,7 @@ const renderFormState = (kind, item) => {
 
 const syncActiveModal = () => {
   elements.playTraitModal.hidden = activeModal === null;
+  if (activeModal === "message") return;
   if (activeModal === "memory") {
     const memoryIndex = experienceComposer.target === "new"
       ? null
@@ -1400,9 +1420,13 @@ elements.promptButton.addEventListener("click", () => {
 
 elements.addMemoryButton.addEventListener("click", (event) => {
   event.stopPropagation();
-  if (character.memories.length >= MAX_MEMORIES) return;
+  const blockedMessage = getAddMemoryLimitMessage(character.memories.length, MAX_MEMORIES);
+  if (blockedMessage) {
+    showModalMessage("No room for a new memory", blockedMessage);
+    render();
+    return;
+  }
   collapsedCards.delete("memories");
-  activeModal = "memory";
   openExperienceComposer("new");
   render();
 });
@@ -1417,10 +1441,25 @@ elements.playExperienceForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const memoryId = experienceComposer.target === "new" ? null : experienceComposer.target;
   const didSave = character.addMemory(elements.playExperienceText.value, [...pendingExperienceTraitIds], memoryId);
-  if (!didSave) return;
+  if (!didSave) {
+    const targetMemory = memoryId === null ? null : character.memories.find((memory) => memory.id === memoryId);
+    const blockedMessage = memoryId === null
+      ? getAddMemoryLimitMessage(character.memories.length, MAX_MEMORIES)
+      : getAddExperienceLimitMessage(targetMemory?.experiences.length ?? MAX_EXPERIENCES_PER_MEMORY, MAX_EXPERIENCES_PER_MEMORY);
+    if (blockedMessage) showModalMessage(memoryId === null ? "No room for a new memory" : "This memory is full", blockedMessage);
+    render();
+    return;
+  }
   markDirty();
   closeExperienceComposer();
   activeModal = null;
+  render();
+});
+
+elements.playModalMessageClose?.addEventListener("click", (event) => {
+  event.stopPropagation();
+  activeModal = null;
+  modalMessage = "";
   render();
 });
 
@@ -1456,7 +1495,15 @@ elements.playSkillForm.addEventListener("submit", (event) => {
   const didSave = editingTrait?.kind === "skill"
     ? character.updateSkill(editingTrait.index, elements.playSkillName.value, elements.playSkillDescription.value)
     : character.addSkill(elements.playSkillName.value, elements.playSkillDescription.value);
-  if (!didSave) return;
+  if (!didSave) {
+    const targetMemory = memoryId === null ? null : character.memories.find((memory) => memory.id === memoryId);
+    const blockedMessage = memoryId === null
+      ? getAddMemoryLimitMessage(character.memories.length, MAX_MEMORIES)
+      : getAddExperienceLimitMessage(targetMemory?.experiences.length ?? MAX_EXPERIENCES_PER_MEMORY, MAX_EXPERIENCES_PER_MEMORY);
+    if (blockedMessage) showModalMessage(memoryId === null ? "No room for a new memory" : "This memory is full", blockedMessage);
+    render();
+    return;
+  }
   markDirty();
   activeModal = null;
   editingTrait = null;
@@ -1468,7 +1515,15 @@ elements.playResourceForm.addEventListener("submit", (event) => {
   const didSave = editingTrait?.kind === "resource"
     ? character.updateResource(editingTrait.index, elements.playResourceName.value, elements.playResourceDescription.value)
     : character.addResource(elements.playResourceName.value, elements.playResourceDescription.value);
-  if (!didSave) return;
+  if (!didSave) {
+    const targetMemory = memoryId === null ? null : character.memories.find((memory) => memory.id === memoryId);
+    const blockedMessage = memoryId === null
+      ? getAddMemoryLimitMessage(character.memories.length, MAX_MEMORIES)
+      : getAddExperienceLimitMessage(targetMemory?.experiences.length ?? MAX_EXPERIENCES_PER_MEMORY, MAX_EXPERIENCES_PER_MEMORY);
+    if (blockedMessage) showModalMessage(memoryId === null ? "No room for a new memory" : "This memory is full", blockedMessage);
+    render();
+    return;
+  }
   markDirty();
   activeModal = null;
   editingTrait = null;
@@ -1480,7 +1535,15 @@ elements.playCharacterForm.addEventListener("submit", (event) => {
   const didSave = editingTrait?.kind === "character"
     ? character.updateCharacter(editingTrait.index, elements.playCharacterName.value, elements.playCharacterDescription.value, elements.playCharacterType.value)
     : character.addCharacter(elements.playCharacterName.value, elements.playCharacterDescription.value, elements.playCharacterType.value);
-  if (!didSave) return;
+  if (!didSave) {
+    const targetMemory = memoryId === null ? null : character.memories.find((memory) => memory.id === memoryId);
+    const blockedMessage = memoryId === null
+      ? getAddMemoryLimitMessage(character.memories.length, MAX_MEMORIES)
+      : getAddExperienceLimitMessage(targetMemory?.experiences.length ?? MAX_EXPERIENCES_PER_MEMORY, MAX_EXPERIENCES_PER_MEMORY);
+    if (blockedMessage) showModalMessage(memoryId === null ? "No room for a new memory" : "This memory is full", blockedMessage);
+    render();
+    return;
+  }
   markDirty();
   activeModal = null;
   editingTrait = null;

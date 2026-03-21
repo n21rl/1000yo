@@ -178,7 +178,22 @@
             </div>
             <div data-card-content>
               <ul id="play-memory-list" class="record-list"></ul>
-              <button type="button" id="add-memory-button" class="add-card-button">Add memory</button>
+              <section id="lost-memories-card" class="subcard" hidden>
+                <button
+                  type="button"
+                  id="lost-memories-toggle"
+                  class="subcard-header"
+                  aria-expanded="false"
+                  aria-controls="play-lost-memory-list"
+                >
+                  <span class="card-title-row">
+                    <strong>Lost memories</strong>
+                    <span class="card-toggle-indicator" aria-hidden="true"></span>
+                  </span>
+                </button>
+                <ul id="play-lost-memory-list" class="record-list" hidden></ul>
+              </section>
+              <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory">＋</button>
             </div>
           </article>
 
@@ -192,7 +207,7 @@
               </div>
               <div data-card-content hidden>
                 <ul id="play-character-list" class="record-list"></ul>
-                <button type="button" id="add-character-button" class="add-card-button">Add character</button>
+                <button type="button" id="add-character-button" class="add-card-button" title="Add character" aria-label="Add character">＋</button>
               </div>
             </article>
 
@@ -205,7 +220,7 @@
               </div>
               <div data-card-content hidden>
                 <ul id="play-skill-list" class="record-list"></ul>
-                <button type="button" id="add-skill-button" class="add-card-button">Add skill</button>
+                <button type="button" id="add-skill-button" class="add-card-button" title="Add skill" aria-label="Add skill">＋</button>
               </div>
             </article>
 
@@ -218,7 +233,7 @@
               </div>
               <div data-card-content hidden>
                 <ul id="play-resource-list" class="record-list"></ul>
-                <button type="button" id="add-resource-button" class="add-card-button">Add resource</button>
+                <button type="button" id="add-resource-button" class="add-card-button" title="Add resource" aria-label="Add resource">＋</button>
               </div>
             </article>
 

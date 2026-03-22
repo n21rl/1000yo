@@ -178,22 +178,7 @@
             </div>
             <div data-card-content>
               <ul id="play-memory-list" class="record-list"></ul>
-              <section id="lost-memories-card" class="subcard" hidden>
-                <button
-                  type="button"
-                  id="lost-memories-toggle"
-                  class="subcard-header"
-                  aria-expanded="false"
-                  aria-controls="play-lost-memory-list"
-                >
-                  <span class="card-title-row">
-                    <strong>Lost memories</strong>
-                    <span class="card-toggle-indicator" aria-hidden="true"></span>
-                  </span>
-                </button>
-                <ul id="play-lost-memory-list" class="record-list" hidden></ul>
-              </section>
-              <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory">＋</button>
+              <button type="button" id="add-memory-button" class="add-card-button">Add memory</button>
             </div>
           </article>
 
@@ -322,17 +307,6 @@
           <div class="form-actions">
             <button type="submit" id="play-resource-submit">Add resource</button>
             <button type="button" class="ghost-button" id="play-resource-cancel">Cancel</button>
-          </div>
-        </form>
-
-        <form id="play-diary-form" class="stack compact-form modal-form" hidden>
-          <h3 class="modal-form-title">Create Diary</h3>
-          <p class="supporting">Describe the Diary that will hold this Memory. Once moved, the Memory can no longer gain new Experiences.</p>
-          <label for="play-diary-description">Diary description</label>
-          <textarea id="play-diary-description" rows="2" placeholder="A sturdy, leather-bound book."></textarea>
-          <div class="form-actions">
-            <button type="submit" id="play-diary-submit">Create Diary and Move Memory</button>
-            <button type="button" class="ghost-button" id="play-diary-cancel">Cancel</button>
           </div>
         </form>
       </section>

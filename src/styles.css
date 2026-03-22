@@ -440,10 +440,23 @@ button:disabled {
 }
 
 .play-memory .record-body {
-  padding-right: 0.25rem;
   display: flex;
   flex-direction: column;
   min-height: 100%;
+}
+
+.play-memory .record-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  min-height: 0;
+  padding-right: 0;
+}
+
+.play-memory .record-title-row .record-strike-toggle {
+  position: static;
+  flex: 0 0 auto;
 }
 
 
@@ -543,7 +556,8 @@ button:disabled {
   align-items: center;
   width: 100%;
   gap: 0.45rem;
-  margin-top: 0.35rem;
+  margin-top: auto;
+  padding-top: 0.35rem;
 }
 
 .memory-add-button {
@@ -568,24 +582,13 @@ button:disabled {
 }
 
 .experience-list {
-  list-style: none;
-  padding-left: 0;
+  list-style: square;
+  list-style-position: outside;
+  padding-left: 1.2rem;
 }
 
 .experience-list li {
-  display: grid;
-  grid-template-columns: 0.55rem minmax(0, 1fr);
-  gap: 0.45rem;
-  align-items: start;
-}
-
-.experience-list li::before {
-  content: "";
-  width: 0.38rem;
-  height: 0.38rem;
-  margin-top: 0.38rem;
-  border-radius: 0.08rem;
-  background: currentColor;
+  display: list-item;
 }
 
 .save-confirmation {

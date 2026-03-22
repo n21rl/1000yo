@@ -682,6 +682,9 @@ button:disabled {
   background: rgba(20, 14, 14, 0.45);
   color: #efe0c0;
   text-align: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .add-card-button {

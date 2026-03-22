@@ -20,6 +20,8 @@ test("Character tracks memories as collections of experiences with stable trait 
         },
       ],
       lost: false,
+      storedInDiary: false,
+      lostReason: "",
     },
   ]);
 });
@@ -66,6 +68,59 @@ test("Character appends experiences to existing memories up to three each", () =
     "Second",
     "Third",
   ]);
+});
+
+test("Character creates a diary on first move and freezes diary memories", () => {
+  const character = new Character("Aster");
+  assert.equal(character.addMemory("First"), true);
+
+  const memoryId = character.memories[0].id;
+  assert.equal(character.moveMemoryToDiary(memoryId, "A cracked vellum journal."), true);
+
+  assert.equal(character.resources.length, 1);
+  assert.equal(character.resources[0].name, "Diary");
+  assert.equal(character.resources[0].description, "A cracked vellum journal.");
+  assert.deepEqual(character.diary?.memoryIds, [memoryId]);
+  assert.equal(character.diaryMemories.map((memory) => memory.id).includes(memoryId), true);
+  assert.equal(character.activeMemories.length, 0);
+  assert.equal(character.addMemory("Second", [], memoryId), false);
+});
+
+test("Character marks diary memories lost when the diary resource is lost", () => {
+  const character = new Character("Aster");
+  assert.equal(character.addMemory("First"), true);
+  assert.equal(character.moveMemoryToDiary(character.memories[0].id, "A steel filing case."), true);
+
+  assert.equal(character.setResourceLost(0, true), true);
+  assert.equal(character.diary, null);
+  assert.equal(character.memories[0].lost, true);
+  assert.equal(character.memories[0].lostReason, "diary");
+});
+
+test("Character restores diary state from persisted data", () => {
+  const character = Character.from({
+    resources: [{
+      id: "resource-diary",
+      name: "Diary",
+      description: "A coded notebook.",
+      used: false,
+      lost: false,
+    }],
+    memories: [{
+      id: "memory-a",
+      experiences: [{ text: "I carved my story into wax.", traitIds: [] }],
+      storedInDiary: true,
+      lost: false,
+    }],
+    diary: {
+      resourceId: "resource-diary",
+      memoryIds: ["memory-a"],
+    },
+  });
+
+  assert.equal(character.diaryResource?.id, "resource-diary");
+  assert.equal(character.diaryMemories[0]?.id, "memory-a");
+  assert.equal(character.activeMemories.length, 0);
 });
 
 test("Character counts mortal and immortal setup characters separately", () => {

@@ -1,5 +1,5 @@
 import { restoreCampaignState, serializeCampaignState } from "./campaign-state.js";
-import { Character, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
+import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
 
 const STORAGE_KEY = "1000yo.vampires";
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
@@ -16,6 +16,7 @@ const selectedCurseTraitIds = new Set();
 const pendingExperienceTraitIds = new Set();
 let editingTrait = null;
 let experienceComposer = { open: false, target: "new" };
+let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
 const sampleMortals = [
@@ -112,6 +113,9 @@ const elements = {
   identityMemoryList: document.querySelector("#identity-memory-list"),
   playNameHeading: document.querySelector("#play-name-heading"),
   playMemoryList: document.querySelector("#play-memory-list"),
+  diaryCard: document.querySelector("#diary-card"),
+  diaryDescription: document.querySelector("#diary-description"),
+  diaryMemoryList: document.querySelector("#diary-memory-list"),
   lostMemoriesCard: document.querySelector("#lost-memories-card"),
   lostMemoriesToggle: document.querySelector("#lost-memories-toggle"),
   playLostMemoryList: document.querySelector("#play-lost-memory-list"),
@@ -143,6 +147,10 @@ const elements = {
   playResourceDescription: document.querySelector("#play-resource-description"),
   playResourceSubmit: document.querySelector("#play-resource-submit"),
   playResourceCancel: document.querySelector("#play-resource-cancel"),
+  playDiaryForm: document.querySelector("#play-diary-form"),
+  playDiaryDescription: document.querySelector("#play-diary-description"),
+  playDiarySubmit: document.querySelector("#play-diary-submit"),
+  playDiaryCancel: document.querySelector("#play-diary-cancel"),
   addCharacterButton: document.querySelector("#add-character-button"),
   playCharacterForm: document.querySelector("#play-character-form"),
   playCharacterTitle: document.querySelector("#play-character-form-title"),
@@ -182,6 +190,7 @@ const serializeCharacter = () => ({
   resources: character.resources,
   characters: character.characters,
   marks: character.marks,
+  diary: character.diary,
 });
 
 const createStoredRecord = () => ({
@@ -209,6 +218,7 @@ const resetPlayState = () => {
   editingTrait = null;
   experienceComposer = { open: false, target: "new" };
   activeModal = null;
+  pendingDiaryMemoryId = "";
 };
 
 const loadCharacter = (storedCharacter) => {
@@ -238,6 +248,7 @@ const resetPlayForms = () => {
   elements.playExperienceForm.reset();
   elements.playSkillForm.reset();
   elements.playResourceForm.reset();
+  elements.playDiaryForm.reset();
   elements.playCharacterForm.reset();
 };
 
@@ -553,6 +564,12 @@ const togglePendingTrait = (traitId) => {
 
 const formatStatusTags = () => [];
 
+const getLostMemoryTags = (memory) => {
+  if (memory.lostReason === "diary") return ["Lost with Diary"];
+  if (memory.lost) return ["Lost from Mind"];
+  return [];
+};
+
 const renderSelectedTraitPills = () => {
   elements.playSelectedTraits.innerHTML = "";
   const labels = getSelectedTraitLabels(pendingExperienceTraitIds);
@@ -633,9 +650,22 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   });
   body.append(experienceList);
 
+  const memoryTags = lost ? getLostMemoryTags(memory) : (memory.storedInDiary ? ["In Diary"] : []);
+  if (memoryTags.length) {
+    const tags = document.createElement("div");
+    tags.className = "record-tags";
+    memoryTags.forEach((label) => {
+      const tag = document.createElement("span");
+      tag.className = "record-tag";
+      tag.textContent = label;
+      tags.append(tag);
+    });
+    body.append(tags);
+  }
+
   item.append(body);
 
-  if (!lost && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
+  if (!lost && !memory.storedInDiary && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
     const footer = document.createElement("div");
     footer.className = "record-footer-actions";
     footer.append(createButton("Add experience", "add-card-button memory-add-button", () => {
@@ -645,9 +675,46 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
       symbol: "＋",
       title: "Add experience",
     }));
+    if (character.diaryMemories.length < MAX_DIARY_MEMORIES) {
+      footer.append(createButton("Move to Diary", "add-card-button memory-add-button", () => {
+        if (!window.confirm("Move this Memory to the Diary? This cannot be undone. The Memory can no longer gain new Experiences.")) return;
+        if (character.diaryResource) {
+          if (!character.moveMemoryToDiary(memory.id)) return;
+          markDirty();
+          render();
+          return;
+        }
+        pendingDiaryMemoryId = memory.id;
+        activeModal = "diary";
+        render();
+      }, {
+        symbol: "↓",
+        title: "Move to Diary",
+      }));
+    }
     item.append(footer);
   }
   return item;
+};
+
+const renderDiaryCard = () => {
+  const diaryResource = character.diaryResource;
+  elements.diaryCard.hidden = !diaryResource;
+  elements.diaryDescription.textContent = diaryResource?.description
+    ? `${diaryResource.description} (${character.diaryMemories.length}/${MAX_DIARY_MEMORIES})`
+    : `Diary (${character.diaryMemories.length}/${MAX_DIARY_MEMORIES})`;
+  elements.diaryMemoryList.innerHTML = "";
+
+  if (!diaryResource) return;
+  if (!character.diaryMemories.length) {
+    elements.diaryMemoryList.append(createEmptyRecord("No memories are stored in the Diary."));
+    return;
+  }
+
+  character.diaryMemories.forEach((memory) => {
+    const memoryIndex = character.memories.findIndex((entry) => entry.id === memory.id);
+    elements.diaryMemoryList.append(renderMemoryRecord({ memory, memoryIndex }));
+  });
 };
 
 const renderPlayMemoryList = () => {
@@ -656,7 +723,7 @@ const renderPlayMemoryList = () => {
 
   const activeMemories = character.memories
     .map((memory, index) => ({ memory, index }))
-    .filter(({ memory }) => !memory.lost);
+    .filter(({ memory }) => !memory.lost && !memory.storedInDiary);
   const lostMemories = character.memories
     .map((memory, index) => ({ memory, index }))
     .filter(({ memory }) => memory.lost);
@@ -678,6 +745,7 @@ const renderPlayMemoryList = () => {
   lostMemories.forEach(({ memory, index }) => {
     elements.playLostMemoryList.append(renderMemoryRecord({ memory, memoryIndex: index, lost: true }));
   });
+  renderDiaryCard();
 };
 
 const renderTraitList = (listElement, items, kind) => {
@@ -829,6 +897,10 @@ const renderFormState = (kind, item) => {
     elements.playResourceDescription.value = item?.description ?? "";
   }
 
+  if (kind === "diary") {
+    elements.playDiaryForm.hidden = activeModal !== "diary";
+  }
+
   if (kind === "character") {
     elements.playCharacterForm.hidden = activeModal !== "character";
     elements.playCharacterTitle.textContent = item ? "Edit character" : "Add character";
@@ -856,6 +928,10 @@ const syncActiveModal = () => {
   }
   if (activeModal === "resource") {
     elements.playModalTitle.textContent = editingTrait?.kind === "resource" ? "Edit resource" : "Add resource";
+    return;
+  }
+  if (activeModal === "diary") {
+    elements.playModalTitle.textContent = "Create Diary";
     return;
   }
   if (activeModal === "character") {
@@ -888,6 +964,7 @@ const renderPlayLists = () => {
   renderPlayComposer();
   renderFormState("skill", editingTrait?.kind === "skill" ? character.skills[editingTrait.index] : null);
   renderFormState("resource", editingTrait?.kind === "resource" ? character.resources[editingTrait.index] : null);
+  renderFormState("diary");
   renderFormState("character", editingTrait?.kind === "character" ? character.characters[editingTrait.index] : null);
 };
 
@@ -1475,6 +1552,17 @@ elements.playResourceForm.addEventListener("submit", (event) => {
   elements.playResourceForm.reset();
   render();
 });
+elements.playDiaryForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!pendingDiaryMemoryId) return;
+  const didSave = character.moveMemoryToDiary(pendingDiaryMemoryId, elements.playDiaryDescription.value);
+  if (!didSave) return;
+  markDirty();
+  activeModal = null;
+  pendingDiaryMemoryId = "";
+  elements.playDiaryForm.reset();
+  render();
+});
 elements.playCharacterForm.addEventListener("submit", (event) => {
   event.preventDefault();
   const didSave = editingTrait?.kind === "character"
@@ -1509,12 +1597,20 @@ elements.playCharacterCancel.addEventListener("click", (event) => {
   elements.playCharacterForm.reset();
   render();
 });
+elements.playDiaryCancel.addEventListener("click", (event) => {
+  event.stopPropagation();
+  activeModal = null;
+  pendingDiaryMemoryId = "";
+  elements.playDiaryForm.reset();
+  render();
+});
 
 document.querySelectorAll("[data-modal-close]").forEach((target) => {
   target.addEventListener("click", () => {
     activeModal = null;
     closeExperienceComposer();
     editingTrait = null;
+    pendingDiaryMemoryId = "";
     resetPlayForms();
     render();
   });
@@ -1525,6 +1621,7 @@ document.addEventListener("keydown", (event) => {
   activeModal = null;
   closeExperienceComposer();
   editingTrait = null;
+  pendingDiaryMemoryId = "";
   resetPlayForms();
   render();
 });

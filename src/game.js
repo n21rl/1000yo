@@ -1,5 +1,6 @@
 const MAX_MEMORIES = 5;
 const MAX_EXPERIENCES_PER_MEMORY = 3;
+const MAX_DIARY_MEMORIES = 4;
 const CHARACTER_TYPES = new Set(["mortal", "immortal"]);
 
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
@@ -53,7 +54,23 @@ const createMemory = (memory = {}, traitLookup = new Map()) => {
     id: cleanText(memory?.id) || createId("memory"),
     experiences: experiences.slice(0, MAX_EXPERIENCES_PER_MEMORY),
     lost: Boolean(memory?.lost),
+    storedInDiary: Boolean(memory?.storedInDiary),
+    lostReason: cleanText(memory?.lostReason),
   };
+};
+
+const createDiary = (diary = {}, resources = []) => {
+  const resourceId = cleanText(diary?.resourceId);
+  const memoryIds = Array.isArray(diary?.memoryIds)
+    ? diary.memoryIds.map((memoryId) => cleanText(memoryId)).filter(Boolean).slice(0, MAX_DIARY_MEMORIES)
+    : [];
+
+  if (!resourceId || !memoryIds.length) return null;
+
+  const resource = resources.find((item) => item.id === resourceId);
+  if (!resource || cleanText(resource.name).toLowerCase() !== "diary") return null;
+
+  return { resourceId, memoryIds };
 };
 
 export class Character {
@@ -64,6 +81,7 @@ export class Character {
     this.resources = [];
     this.characters = [];
     this.marks = [];
+    this.diary = null;
   }
 
   static from(data = {}) {
@@ -109,8 +127,10 @@ export class Character {
           return createMemory(memory, traitLookup);
         })
         .filter((memory) => memory.experiences.length > 0)
-        .slice(0, MAX_MEMORIES)
+        .slice(0, MAX_MEMORIES + MAX_DIARY_MEMORIES)
       : [];
+    character.diary = createDiary(data.diary, character.resources);
+    character.#syncDiaryState();
     return character;
   }
 
@@ -125,13 +145,19 @@ export class Character {
 
     if (memoryId !== null) {
       const memory = this.memories.find((entry) => entry.id === memoryId);
-      if (!memory || memory.lost || memory.experiences.length >= MAX_EXPERIENCES_PER_MEMORY) return false;
+      if (!memory || memory.lost || memory.storedInDiary || memory.experiences.length >= MAX_EXPERIENCES_PER_MEMORY) return false;
       memory.experiences.push(cleanedExperience);
       return true;
     }
 
-    if (this.memories.length >= MAX_MEMORIES) return false;
-    this.memories.push({ id: createId("memory"), experiences: [cleanedExperience], lost: false });
+    if (this.activeMemories.length >= MAX_MEMORIES) return false;
+    this.memories.push({
+      id: createId("memory"),
+      experiences: [cleanedExperience],
+      lost: false,
+      storedInDiary: false,
+      lostReason: "",
+    });
     return true;
   }
 
@@ -142,7 +168,16 @@ export class Character {
   setMemoryLost(index, lost) {
     const memory = this.memories[index];
     if (!memory) return false;
-    memory.lost = Boolean(lost);
+    const nextLost = Boolean(lost);
+    memory.lost = nextLost;
+    if (nextLost) {
+      memory.lostReason = memory.storedInDiary ? "diary" : "mind";
+      memory.storedInDiary = false;
+      if (this.diary) {
+        this.diary.memoryIds = this.diary.memoryIds.filter((memoryId) => memoryId !== memory.id);
+        if (!this.diary.memoryIds.length) this.#clearDiaryState();
+      }
+    } else memory.lostReason = "";
     return true;
   }
 
@@ -183,7 +218,71 @@ export class Character {
   }
 
   setResourceLost(index, lost) {
-    return this.#setBoolean(this.resources, index, "lost", lost);
+    const item = this.resources[index];
+    if (!item) return false;
+    const nextLost = Boolean(lost);
+    item.lost = nextLost;
+    if (this.diary?.resourceId === item.id && nextLost) {
+      this.diary.memoryIds.forEach((memoryId) => {
+        const memory = this.memories.find((entry) => entry.id === memoryId);
+        if (!memory) return;
+        memory.storedInDiary = false;
+        memory.lost = true;
+        memory.lostReason = "diary";
+      });
+      this.#clearDiaryState();
+    }
+    return true;
+  }
+
+  createDiary(description = "") {
+    if (this.diary) return false;
+    const cleanedDescription = cleanText(description);
+    this.resources.push({
+      id: createId("resource"),
+      name: "Diary",
+      description: cleanedDescription,
+      used: false,
+      lost: false,
+    });
+    const resourceId = this.resources.at(-1)?.id;
+    if (!resourceId) return false;
+    this.diary = { resourceId, memoryIds: [] };
+    return true;
+  }
+
+  moveMemoryToDiary(memoryId, description = "") {
+    const cleanedMemoryId = cleanText(memoryId);
+    const memory = this.memories.find((entry) => entry.id === cleanedMemoryId);
+    if (!memory || memory.lost || memory.storedInDiary) return false;
+
+    if (!this.diary) {
+      const created = this.createDiary(description);
+      if (!created) return false;
+    }
+
+    if (!this.diary || this.diary.memoryIds.length >= MAX_DIARY_MEMORIES) return false;
+
+    memory.storedInDiary = true;
+    memory.lost = false;
+    memory.lostReason = "";
+    this.diary.memoryIds.push(memory.id);
+    return true;
+  }
+
+  get diaryResource() {
+    if (!this.diary) return null;
+    return this.resources.find((entry) => entry.id === this.diary.resourceId && !entry.lost) ?? null;
+  }
+
+  get diaryMemories() {
+    if (!this.diary) return [];
+    const diaryIds = new Set(this.diary.memoryIds);
+    return this.memories.filter((memory) => diaryIds.has(memory.id) && memory.storedInDiary && !memory.lost);
+  }
+
+  get activeMemories() {
+    return this.memories.filter((memory) => !memory.lost && !memory.storedInDiary);
   }
 
   addMark(name, description = "") {
@@ -283,6 +382,35 @@ export class Character {
     return this.characters.filter((character) => character.type === "immortal").length;
   }
 
+  #clearDiaryState() {
+    this.diary = null;
+  }
+
+  #syncDiaryState() {
+    if (!this.diary) {
+      this.memories.forEach((memory) => {
+        if (!memory.lost) memory.storedInDiary = false;
+      });
+      return;
+    }
+
+    const validMemoryIds = new Set();
+    this.diary.memoryIds = this.diary.memoryIds.filter((memoryId) => {
+      const memory = this.memories.find((entry) => entry.id === memoryId);
+      if (!memory || memory.lost) return false;
+      validMemoryIds.add(memoryId);
+      memory.storedInDiary = true;
+      return true;
+    });
+
+    this.memories.forEach((memory) => {
+      if (!validMemoryIds.has(memory.id) && !memory.lost) memory.storedInDiary = false;
+      if (memory.lost && !memory.lostReason) memory.lostReason = "mind";
+    });
+
+    if (!this.diary.memoryIds.length || !this.diaryResource) this.#clearDiaryState();
+  }
+
   #addDetailItem(list, name, description, prefix) {
     const cleanedName = cleanText(name);
     const cleanedDescription = cleanText(description);
@@ -348,4 +476,4 @@ export class Character {
   }
 }
 
-export { MAX_MEMORIES, MAX_EXPERIENCES_PER_MEMORY };
+export { MAX_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_DIARY_MEMORIES };

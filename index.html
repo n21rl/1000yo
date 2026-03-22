@@ -197,6 +197,18 @@
             </div>
           </article>
 
+          <article id="diary-card" class="card play-card" data-card-key="diary" hidden>
+            <div class="section-heading play-static-heading">
+              <div class="card-title-row">
+                <h2>Diary</h2>
+              </div>
+            </div>
+            <div>
+              <p id="diary-description" class="supporting"></p>
+              <ul id="diary-memory-list" class="record-list"></ul>
+            </div>
+          </article>
+
           <div class="play-traits-column">
             <article class="card play-card" data-card-key="characters">
               <div class="section-heading" data-card-toggle>
@@ -310,6 +322,17 @@
           <div class="form-actions">
             <button type="submit" id="play-resource-submit">Add resource</button>
             <button type="button" class="ghost-button" id="play-resource-cancel">Cancel</button>
+          </div>
+        </form>
+
+        <form id="play-diary-form" class="stack compact-form modal-form" hidden>
+          <h3 class="modal-form-title">Create Diary</h3>
+          <p class="supporting">Describe the Diary that will hold this Memory. Once moved, the Memory can no longer gain new Experiences.</p>
+          <label for="play-diary-description">Diary description</label>
+          <textarea id="play-diary-description" rows="2" placeholder="A sturdy, leather-bound book."></textarea>
+          <div class="form-actions">
+            <button type="submit" id="play-diary-submit">Create Diary and Move Memory</button>
+            <button type="button" class="ghost-button" id="play-diary-cancel">Cancel</button>
           </div>
         </form>
       </section>

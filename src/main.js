@@ -19,6 +19,7 @@ let experienceComposer = { open: false, target: "new" };
 let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
+const collapsedRecords = new Set();
 const sampleMortals = [
   ["Yvette", "A mortal sibling who still writes to me."],
   ["Tomas", "A steward who knows too much."],
@@ -71,6 +72,9 @@ const LUCIDE_ICON_NODES = {
     ["path", { d: "m19 6-1 14H6L5 6" }],
     ["path", { d: "M10 11v6" }],
     ["path", { d: "M14 11v6" }],
+  ],
+  "chevron-right": [
+    ["path", { d: "m9 18 6-6-6-6" }],
   ],
 };
 
@@ -396,6 +400,30 @@ const createEmptyRecord = (message) => {
   return item;
 };
 
+const getRecordCollapseKey = (kind, id) => `${kind}:${id}`;
+const isRecordCollapsed = (kind, id) => collapsedRecords.has(getRecordCollapseKey(kind, id));
+const setRecordCollapsed = (kind, id, collapsed) => {
+  const key = getRecordCollapseKey(kind, id);
+  if (collapsed) collapsedRecords.add(key);
+  else collapsedRecords.delete(key);
+};
+const toggleRecordCollapsed = (kind, id) => setRecordCollapsed(kind, id, !isRecordCollapsed(kind, id));
+
+const collapseSettledRecords = () => {
+  character.memories.forEach((memory) => {
+    if (memory.lost) setRecordCollapsed("memory", memory.id, true);
+  });
+  character.skills.forEach((item) => {
+    if (item.used || item.lost) setRecordCollapsed("skill", item.id, true);
+  });
+  character.resources.forEach((item) => {
+    if (item.used || item.lost) setRecordCollapsed("resource", item.id, true);
+  });
+  character.characters.forEach((item) => {
+    if (item.used || item.lost) setRecordCollapsed("character", item.id, true);
+  });
+};
+
 const createLucideIcon = (name) => {
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 24 24");
@@ -442,6 +470,13 @@ const createInlineIconButton = (label, iconName, className, handler, { pressed =
     event.stopPropagation();
     handler();
   });
+  return button;
+};
+
+const createCollapseToggle = (label, collapsed, handler) => {
+  const button = createInlineIconButton(label, "chevron-right", "record-inline-button record-collapse-toggle", handler);
+  button.setAttribute("aria-expanded", String(!collapsed));
+  button.classList.toggle("is-expanded", !collapsed);
   return button;
 };
 
@@ -669,15 +704,24 @@ const renderPlayComposer = () => {
 const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   const item = document.createElement("li");
   item.className = lost ? "record play-memory lost" : "record play-memory";
+  if (memory.lost) setRecordCollapsed("memory", memory.id, true);
+  const collapsed = isRecordCollapsed("memory", memory.id);
 
   const body = document.createElement("div");
   body.className = "record-body";
 
   const titleRow = document.createElement("div");
   titleRow.className = "record-title-row";
+  const titleGroup = document.createElement("div");
+  titleGroup.className = "record-title-group";
+  titleGroup.append(createCollapseToggle(`Toggle Memory ${memoryIndex + 1}`, collapsed, () => {
+    toggleRecordCollapsed("memory", memory.id);
+    render();
+  }));
   const title = document.createElement("strong");
   title.textContent = `Memory ${memoryIndex + 1}`;
-  titleRow.append(title);
+  titleGroup.append(title);
+  titleRow.append(titleGroup);
 
   titleRow.append(createInlineIconButton(
     lost ? "Restore memory" : "Strike out memory",
@@ -692,6 +736,8 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   ));
 
   body.append(titleRow);
+  const details = document.createElement("div");
+  details.hidden = collapsed;
 
   const experienceList = document.createElement("ol");
   experienceList.className = "experience-list";
@@ -702,7 +748,7 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
     experienceItem.append(text);
     experienceList.append(experienceItem);
   });
-  body.append(experienceList);
+  details.append(experienceList);
 
   const memoryTags = lost ? getLostMemoryTags(memory) : (memory.storedInDiary ? ["In Diary"] : []);
   if (memoryTags.length) {
@@ -714,7 +760,7 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
       tag.textContent = label;
       tags.append(tag);
     });
-    body.append(tags);
+    details.append(tags);
   }
 
   if (!lost && !memory.storedInDiary && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
@@ -744,8 +790,9 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
       icon: "plus",
       title: "Add experience",
     }));
-    body.append(footer);
+    details.append(footer);
   }
+  body.append(details);
   item.append(body);
   return item;
 };
@@ -773,31 +820,20 @@ const renderDiaryCard = () => {
 const renderPlayMemoryList = () => {
   elements.playMemoryList.innerHTML = "";
   elements.playLostMemoryList.innerHTML = "";
+  elements.lostMemoriesCard.hidden = true;
+  elements.playLostMemoryList.hidden = true;
 
-  const activeMemories = character.memories
+  const visibleMemories = character.memories
     .map((memory, index) => ({ memory, index }))
-    .filter(({ memory }) => !memory.lost && !memory.storedInDiary);
-  const lostMemories = character.memories
-    .map((memory, index) => ({ memory, index }))
-    .filter(({ memory }) => memory.lost);
+    .filter(({ memory }) => !memory.storedInDiary);
 
-  if (!activeMemories.length) {
+  if (!visibleMemories.length) {
     elements.playMemoryList.append(createEmptyRecord("No active memories."));
   } else {
-    activeMemories.forEach(({ memory, index }) => {
-      elements.playMemoryList.append(renderMemoryRecord({ memory, memoryIndex: index }));
+    visibleMemories.forEach(({ memory, index }) => {
+      elements.playMemoryList.append(renderMemoryRecord({ memory, memoryIndex: index, lost: memory.lost }));
     });
   }
-
-  const lostMemoriesCollapsed = collapsedCards.has("lost-memories");
-  elements.lostMemoriesCard.hidden = lostMemories.length === 0;
-  elements.lostMemoriesToggle.setAttribute("aria-expanded", String(!lostMemoriesCollapsed));
-  elements.lostMemoriesToggle.querySelector(".card-toggle-indicator")?.classList.toggle("is-collapsed", lostMemoriesCollapsed);
-  elements.playLostMemoryList.hidden = lostMemoriesCollapsed;
-
-  lostMemories.forEach(({ memory, index }) => {
-    elements.playLostMemoryList.append(renderMemoryRecord({ memory, memoryIndex: index, lost: true }));
-  });
   renderDiaryCard();
 };
 
@@ -809,6 +845,8 @@ const renderTraitList = (listElement, items, kind) => {
   }
 
   items.forEach((item, index) => {
+    if (item.used || item.lost) setRecordCollapsed(kind, item.id, true);
+    const collapsed = isRecordCollapsed(kind, item.id);
     const entry = document.createElement("li");
     const traitId = item.id;
     const selectedForExperience = pendingExperienceTraitIds.has(traitId);
@@ -872,10 +910,23 @@ const renderTraitList = (listElement, items, kind) => {
     contentColumn.className = "record-trait-content";
     const titleRow = document.createElement("div");
     titleRow.className = "record-title-row";
+    const titleGroup = document.createElement("div");
+    titleGroup.className = "record-title-group";
 
+    const tags = formatStatusTags(item, kind);
+    if (kind === "character") tags.unshift(item.type === "mortal" ? "Mortal" : "Immortal");
+    if (selectedForExperience) tags.unshift("Tagged");
+    const hasSubitems = Boolean(item.description || tags.length);
+    if (hasSubitems) {
+      titleGroup.append(createCollapseToggle(`Toggle ${kind} details`, collapsed, () => {
+        toggleRecordCollapsed(kind, item.id);
+        renderPlayLists();
+      }));
+    }
     const title = document.createElement("strong");
     title.textContent = item.name;
-    titleRow.append(title);
+    titleGroup.append(title);
+    titleRow.append(titleGroup);
 
     if (!item.used) {
       titleRow.append(createInlineIconButton(
@@ -904,15 +955,14 @@ const renderTraitList = (listElement, items, kind) => {
     }
 
     contentColumn.append(titleRow);
+    const details = document.createElement("div");
+    details.hidden = hasSubitems ? collapsed : false;
     if (item.description) {
       const text = document.createElement("p");
       text.textContent = item.description;
-      contentColumn.append(text);
+      details.append(text);
     }
 
-    const tags = formatStatusTags(item, kind);
-    if (kind === "character") tags.unshift(item.type === "mortal" ? "Mortal" : "Immortal");
-    if (selectedForExperience) tags.unshift("Tagged");
     if (tags.length) {
       const tagWrap = document.createElement("div");
       tagWrap.className = "record-tags";
@@ -922,8 +972,9 @@ const renderTraitList = (listElement, items, kind) => {
         tag.textContent = label;
         tagWrap.append(tag);
       });
-      contentColumn.append(tagWrap);
+      details.append(tagWrap);
     }
+    if (hasSubitems) contentColumn.append(details);
 
     bodyInner.append(checkSlot, contentColumn);
     body.append(bodyInner);
@@ -1524,8 +1575,9 @@ elements.promptButton.addEventListener("click", () => {
   const delta = rollDie(10) - rollDie(6);
   const target = clampPromptIndex(promptState.currentPrompt + delta);
   moveToNextAvailablePrompt(target);
+  collapseSettledRecords();
   persistCurrentCharacter();
-  renderPromptPanel();
+  render();
 });
 
 elements.addMemoryButton.addEventListener("click", (event) => {

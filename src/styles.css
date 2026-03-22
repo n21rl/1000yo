@@ -164,29 +164,7 @@ h2 {
 }
 
 .card-toggle-indicator {
-  display: inline-flex;
-  flex: 0 0 auto;
-  width: 0.85rem;
-  height: 0.85rem;
-  color: #bda88c;
-  align-items: center;
-  justify-content: center;
-  transform: rotate(90deg);
-  transform-origin: center;
-  transition: transform 140ms ease;
-}
-
-.card-toggle-indicator::before {
-  content: "";
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: currentColor;
-  clip-path: polygon(24% 16%, 24% 84%, 82% 50%);
-}
-
-.card-toggle-indicator.is-collapsed {
-  transform: rotate(0deg);
+  display: none;
 }
 
 .wizard-title {
@@ -410,6 +388,16 @@ button:disabled {
   gap: 0.35rem;
 }
 
+.record-title-toggle {
+  cursor: pointer;
+}
+
+.record-title-toggle:focus-visible {
+  outline: 2px solid #c9a370;
+  outline-offset: 2px;
+  border-radius: 0.25rem;
+}
+
 
 .record-body strong {
   display: block;
@@ -493,18 +481,6 @@ button:disabled {
 .menu-delete-control .lucide-icon {
   width: 1rem;
   height: 1rem;
-}
-
-.record-collapse-toggle {
-  color: #bda88c;
-}
-
-.record-collapse-toggle .lucide-icon {
-  transition: transform 140ms ease;
-}
-
-.record-collapse-toggle.is-expanded .lucide-icon {
-  transform: rotate(90deg);
 }
 
 .record-inline-button:hover {

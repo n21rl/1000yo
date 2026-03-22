@@ -73,9 +73,6 @@ const LUCIDE_ICON_NODES = {
     ["path", { d: "M10 11v6" }],
     ["path", { d: "M14 11v6" }],
   ],
-  "chevron-right": [
-    ["path", { d: "m9 18 6-6-6-6" }],
-  ],
 };
 
 const promptState = {
@@ -473,13 +470,6 @@ const createInlineIconButton = (label, iconName, className, handler, { pressed =
   return button;
 };
 
-const createCollapseToggle = (label, collapsed, handler) => {
-  const button = createInlineIconButton(label, "chevron-right", "record-inline-button record-collapse-toggle", handler);
-  button.setAttribute("aria-expanded", String(!collapsed));
-  button.classList.toggle("is-expanded", !collapsed);
-  return button;
-};
-
 const renderTraitSelector = (container, selectedIds) => {
   container.innerHTML = "";
 
@@ -714,10 +704,20 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   titleRow.className = "record-title-row";
   const titleGroup = document.createElement("div");
   titleGroup.className = "record-title-group";
-  titleGroup.append(createCollapseToggle(`Toggle Memory ${memoryIndex + 1}`, collapsed, () => {
+  titleGroup.classList.add("record-title-toggle");
+  titleGroup.tabIndex = 0;
+  titleGroup.role = "button";
+  titleGroup.setAttribute("aria-expanded", String(!collapsed));
+  const toggleMemoryCollapsed = () => {
     toggleRecordCollapsed("memory", memory.id);
     render();
-  }));
+  };
+  titleGroup.addEventListener("click", toggleMemoryCollapsed);
+  titleGroup.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    toggleMemoryCollapsed();
+  });
   const title = document.createElement("strong");
   title.textContent = `Memory ${memoryIndex + 1}`;
   titleGroup.append(title);
@@ -918,10 +918,20 @@ const renderTraitList = (listElement, items, kind) => {
     if (selectedForExperience) tags.unshift("Tagged");
     const hasSubitems = Boolean(item.description || tags.length);
     if (hasSubitems) {
-      titleGroup.append(createCollapseToggle(`Toggle ${kind} details`, collapsed, () => {
+      titleGroup.classList.add("record-title-toggle");
+      titleGroup.tabIndex = 0;
+      titleGroup.role = "button";
+      titleGroup.setAttribute("aria-expanded", String(!collapsed));
+      const toggleTraitCollapsed = () => {
         toggleRecordCollapsed(kind, item.id);
         renderPlayLists();
-      }));
+      };
+      titleGroup.addEventListener("click", toggleTraitCollapsed);
+      titleGroup.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        toggleTraitCollapsed();
+      });
     }
     const title = document.createElement("strong");
     title.textContent = item.name;
@@ -1277,10 +1287,8 @@ const renderCollapsibleCards = () => {
   document.querySelectorAll("[data-card-key]").forEach((card) => {
     const key = card.dataset.cardKey;
     const content = card.querySelector("[data-card-content]");
-    const indicator = card.querySelector(".card-toggle-indicator");
     const collapsed = key === "prompt" ? false : collapsedCards.has(key);
     if (content) content.hidden = collapsed;
-    if (indicator) indicator.classList.toggle("is-collapsed", collapsed);
   });
 };
 
@@ -1731,11 +1739,12 @@ document.addEventListener("keydown", (event) => {
   render();
 });
 
-document.querySelectorAll("[data-card-key]").forEach((card) => {
-  card.addEventListener("click", (event) => {
+document.querySelectorAll("[data-card-toggle]").forEach((toggle) => {
+  toggle.addEventListener("click", (event) => {
     const interactive = event.target.closest("button, input, textarea, select, label");
-    if (interactive && !interactive.hasAttribute("data-card-toggle")) return;
-    const key = card.dataset.cardKey;
+    if (interactive) return;
+    const card = toggle.closest("[data-card-key]");
+    const key = card?.dataset.cardKey;
     if (!key || key === "prompt") return;
     if (collapsedCards.has(key)) collapsedCards.delete(key);
     else collapsedCards.add(key);

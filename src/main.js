@@ -40,6 +40,40 @@ const sampleLaterMemories = [
   "I abandoned a refuge to protect the people tied to my mortal name.",
 ];
 
+const LUCIDE_ICON_NODES = {
+  plus: [
+    ["path", { d: "M12 5v14" }],
+    ["path", { d: "M5 12h14" }],
+  ],
+  x: [
+    ["path", { d: "M18 6 6 18" }],
+    ["path", { d: "m6 6 12 12" }],
+  ],
+  square: [
+    ["rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }],
+  ],
+  "square-check": [
+    ["rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }],
+    ["path", { d: "m9 12 2 2 4-4" }],
+  ],
+  notebook: [
+    ["path", { d: "M2 6h4" }],
+    ["path", { d: "M2 10h4" }],
+    ["path", { d: "M2 14h4" }],
+    ["path", { d: "M2 18h4" }],
+    ["rect", { x: "6", y: "3", width: "16", height: "18", rx: "2" }],
+    ["path", { d: "M10 7h8" }],
+    ["path", { d: "M10 11h8" }],
+  ],
+  trash: [
+    ["path", { d: "M3 6h18" }],
+    ["path", { d: "M8 6V4h8v2" }],
+    ["path", { d: "m19 6-1 14H6L5 6" }],
+    ["path", { d: "M10 11v6" }],
+    ["path", { d: "M14 11v6" }],
+  ],
+};
+
 const promptState = {
   deck: [],
   isLoading: false,
@@ -362,11 +396,30 @@ const createEmptyRecord = (message) => {
   return item;
 };
 
+const createLucideIcon = (name) => {
+  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+  svg.setAttribute("viewBox", "0 0 24 24");
+  svg.setAttribute("fill", "none");
+  svg.setAttribute("stroke", "currentColor");
+  svg.setAttribute("stroke-width", "2");
+  svg.setAttribute("stroke-linecap", "round");
+  svg.setAttribute("stroke-linejoin", "round");
+  svg.classList.add("lucide-icon");
+  const nodes = LUCIDE_ICON_NODES[name] ?? [];
+  nodes.forEach(([tagName, attributes]) => {
+    const node = document.createElementNS("http://www.w3.org/2000/svg", tagName);
+    Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
+    svg.append(node);
+  });
+  return svg;
+};
+
 const createButton = (label, className, handler, options = {}) => {
   const button = document.createElement("button");
   button.type = "button";
   button.className = className;
-  button.textContent = options.symbol ?? label;
+  if (options.icon) button.append(createLucideIcon(options.icon));
+  else button.textContent = options.symbol ?? label;
   button.title = options.title ?? label;
   button.setAttribute("aria-label", options.ariaLabel ?? label);
   if (options.pressed !== undefined) button.setAttribute("aria-pressed", String(Boolean(options.pressed)));
@@ -377,11 +430,11 @@ const createButton = (label, className, handler, options = {}) => {
   return button;
 };
 
-const createInlineIconButton = (label, symbol, className, handler, { pressed = false } = {}) => {
+const createInlineIconButton = (label, iconName, className, handler, { pressed = false } = {}) => {
   const button = document.createElement("button");
   button.type = "button";
   button.className = className;
-  button.textContent = symbol;
+  button.append(createLucideIcon(iconName));
   button.title = label;
   button.setAttribute("aria-label", label);
   button.setAttribute("aria-pressed", String(Boolean(pressed)));
@@ -521,6 +574,7 @@ const renderMenu = () => {
       render();
     });
     deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
+    deleteButton.replaceChildren(createLucideIcon("trash"));
 
     actions.append(deleteButton);
     item.append(body, actions);
@@ -627,7 +681,7 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
 
   titleRow.append(createInlineIconButton(
     lost ? "Restore memory" : "Strike out memory",
-    "✕",
+    "x",
     "record-inline-button record-strike-toggle",
     () => {
       character.setMemoryLost(memoryIndex, !memory.lost);
@@ -672,7 +726,7 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
       openExperienceComposer(memory.id);
       render();
     }, {
-      symbol: "＋",
+      icon: "plus",
       title: "Add experience",
     }));
     if (character.diaryMemories.length < MAX_DIARY_MEMORIES) {
@@ -688,7 +742,7 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
         activeModal = "diary";
         render();
       }, {
-        symbol: "↓",
+        icon: "notebook",
         title: "Move to Diary",
       }));
     }
@@ -788,7 +842,7 @@ const renderTraitList = (listElement, items, kind) => {
     if (!item.lost) {
       checkSlot.append(createInlineIconButton(
         item.used ? `Uncheck ${kind}` : `Check ${kind}`,
-        item.used ? "☑" : "☐",
+        item.used ? "square-check" : "square",
         "record-inline-button record-check-toggle",
         () => {
           const nextUsed = !item.used;
@@ -827,7 +881,7 @@ const renderTraitList = (listElement, items, kind) => {
     if (!item.used) {
       titleRow.append(createInlineIconButton(
         item.lost ? `Restore ${kind}` : `Strike out ${kind}`,
-        "✕",
+        "x",
         "record-inline-button record-strike-toggle",
         () => {
           const nextLost = !item.lost;
@@ -1641,6 +1695,15 @@ document.querySelectorAll("[data-card-key]").forEach((card) => {
 const initialize = () => {
   const vampires = getStoredVampires();
   selectedVampireId = vampires[0]?.id ?? "";
+  [
+    elements.addMemoryButton,
+    elements.addSkillButton,
+    elements.addResourceButton,
+    elements.addCharacterButton,
+  ].forEach((button) => {
+    if (!button) return;
+    button.replaceChildren(createLucideIcon("plus"));
+  });
   window.addEventListener("hashchange", () => {
     void handleRouteChange();
   });

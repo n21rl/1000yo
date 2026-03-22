@@ -442,6 +442,7 @@ button:disabled {
 .play-memory .record-body {
   display: flex;
   flex-direction: column;
+  width: 100%;
   min-height: 100%;
 }
 
@@ -551,23 +552,26 @@ button:disabled {
 }
 
 .record-footer-actions {
-  display: flex;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
   width: 100%;
-  gap: 0.45rem;
+  column-gap: 0.45rem;
   margin-top: auto;
   padding-top: 0.35rem;
 }
 
 .memory-add-button {
   margin-top: 0;
-  margin-left: auto;
+  margin-left: 0;
+  grid-column: 3;
+  justify-self: end;
 }
 
 .memory-diary-button {
   margin-top: 0;
-  margin-left: 0;
+  grid-column: 1;
+  justify-self: start;
 }
 
 .inline-form {
@@ -708,7 +712,7 @@ button:disabled {
   background: rgba(20, 14, 14, 0.45);
   color: #efe0c0;
   text-align: center;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
 }

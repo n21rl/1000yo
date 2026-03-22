@@ -143,7 +143,6 @@
 
         <div class="wizard-nav">
           <button type="button" class="ghost-button" id="back-button">Back</button>
-          <button type="button" class="ghost-button" id="autofill-button">Autofill Step</button>
           <button type="button" id="next-button">Next</button>
         </div>
         <p id="save-confirmation" class="save-confirmation" hidden>
@@ -158,7 +157,7 @@
 
         <section class="play-grid">
           <article class="card play-card prompt-card" data-card-key="prompt">
-            <div class="section-heading play-static-heading">
+            <div class="section-heading">
               <div class="card-title-row">
                 <h2>Prompt</h2>
               </div>
@@ -197,18 +196,6 @@
             </div>
           </article>
 
-          <article id="diary-card" class="card play-card" data-card-key="diary" hidden>
-            <div class="section-heading play-static-heading">
-              <div class="card-title-row">
-                <h2>Diary</h2>
-              </div>
-            </div>
-            <div>
-              <p id="diary-description" class="supporting"></p>
-              <ul id="diary-memory-list" class="record-list"></ul>
-            </div>
-          </article>
-
           <div class="play-traits-column">
             <article class="card play-card" data-card-key="characters">
               <div class="section-heading" data-card-toggle>
@@ -219,7 +206,7 @@
               </div>
               <div data-card-content hidden>
                 <ul id="play-character-list" class="record-list"></ul>
-                <button type="button" id="add-character-button" class="add-card-button" title="Add character" aria-label="Add character">＋</button>
+                <button type="button" id="add-character-button" class="add-card-button">Add character</button>
               </div>
             </article>
 
@@ -232,7 +219,7 @@
               </div>
               <div data-card-content hidden>
                 <ul id="play-skill-list" class="record-list"></ul>
-                <button type="button" id="add-skill-button" class="add-card-button" title="Add skill" aria-label="Add skill">＋</button>
+                <button type="button" id="add-skill-button" class="add-card-button">Add skill</button>
               </div>
             </article>
 
@@ -245,7 +232,7 @@
               </div>
               <div data-card-content hidden>
                 <ul id="play-resource-list" class="record-list"></ul>
-                <button type="button" id="add-resource-button" class="add-card-button" title="Add resource" aria-label="Add resource">＋</button>
+                <button type="button" id="add-resource-button" class="add-card-button">Add resource</button>
               </div>
             </article>
 

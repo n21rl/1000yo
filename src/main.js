@@ -1,10 +1,29 @@
 import { restoreCampaignState, serializeCampaignState } from "./campaign-state.js";
-import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
-
-const STORAGE_KEY = "1000yo.vampires";
-const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
-const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
+import { elements, totalSteps } from "./dom.js";
+import { Character, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
+import {
+  clampPromptIndex,
+  getPromptEntry,
+  loadPromptDeck,
+  moveToNextAvailablePrompt,
+  rollDie,
+} from "./prompts.js";
+import {
+  TEST_VAMPIRE_ID,
+  cleanText,
+  createStoredRecord,
+  ensureTestVampireRecord,
+  findStoredVampireByRouteId,
+  getStoredVampires,
+  getVampireRouteId,
+  isDuplicateVampireName,
+  normalizeCharacterName,
+  parseRouteId,
+  saveStoredVampires,
+} from "./storage.js";
+import { createButton, createEmptyRecord, renderRecords } from "./ui-helpers.js";
 const MIN_MEMORY_TRAITS = 2;
+const COLLAPSIBLE_SECTIONS = ["memories", "characters", "skills", "resources", "marks"];
 
 let character = new Character();
 let currentStep = 0;
@@ -18,63 +37,7 @@ let editingTrait = null;
 let experienceComposer = { open: false, target: "new" };
 let pendingDiaryMemoryId = "";
 let activeModal = null;
-const collapsedCards = new Set();
-const collapsedRecords = new Set();
-const sampleMortals = [
-  ["Yvette", "A mortal sibling who still writes to me."],
-  ["Tomas", "A steward who knows too much."],
-  ["Lucien", "A former lover who still trusts me."],
-];
-const sampleSkills = [
-  ["Falconry", "Learned in the service of a minor lord."],
-  ["Swordplay", "Refined during years of border war."],
-  ["Court Etiquette", "Useful whenever I need to appear harmless."],
-];
-const sampleResources = [
-  ["Family Signet", "Proof of a claim nobody else believes."],
-  ["Black Mare", "A reliable horse for night journeys."],
-  ["Hidden Letters", "Correspondence that can ruin a household."],
-];
-const sampleLaterMemories = [
-  "I crossed the winter sea with trusted company and learned which promises survive hunger.",
-  "My finest weapon bought me safety, but only because an old ally chose my side.",
-  "I abandoned a refuge to protect the people tied to my mortal name.",
-];
-
-const LUCIDE_ICON_NODES = {
-  plus: [
-    ["path", { d: "M12 5v14" }],
-    ["path", { d: "M5 12h14" }],
-  ],
-  x: [
-    ["path", { d: "M18 6 6 18" }],
-    ["path", { d: "m6 6 12 12" }],
-  ],
-  square: [
-    ["rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }],
-  ],
-  "square-check": [
-    ["rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }],
-    ["path", { d: "m9 12 2 2 4-4" }],
-  ],
-  notebook: [
-    ["path", { d: "M2 6h4" }],
-    ["path", { d: "M2 10h4" }],
-    ["path", { d: "M2 14h4" }],
-    ["path", { d: "M2 18h4" }],
-    ["rect", { x: "6", y: "3", width: "16", height: "18", rx: "2" }],
-    ["path", { d: "M10 7h8" }],
-    ["path", { d: "M10 11h8" }],
-  ],
-  trash: [
-    ["path", { d: "M3 6h18" }],
-    ["path", { d: "M8 6V4h8v2" }],
-    ["path", { d: "m19 6-1 14H6L5 6" }],
-    ["path", { d: "M10 11v6" }],
-    ["path", { d: "M14 11v6" }],
-  ],
-};
-
+const collapsedCards = new Set(["characters", "skills", "resources", "marks"]);
 const promptState = {
   deck: [],
   isLoading: false,
@@ -83,169 +46,58 @@ const promptState = {
   visits: new Map(),
 };
 
-const safeLocalStorage = {
-  getItem(key) {
-    try {
-      return window.localStorage.getItem(key);
-    } catch (error) {
-      console.error(error);
-      return null;
-    }
-  },
-  setItem(key, value) {
-    try {
-      window.localStorage.setItem(key, value);
-      return true;
-    } catch (error) {
-      console.error(error);
-      return false;
-    }
-  },
-};
-
-const elements = {
-  menuScreen: document.querySelector("#menu-screen"),
-  creationScreen: document.querySelector("#creation-screen"),
-  playScreen: document.querySelector("#play-screen"),
-  vampireList: document.querySelector("#vampire-list"),
-  newVampireButton: document.querySelector("#new-vampire-button"),
-  nameInput: document.querySelector("#name"),
-  identityMemoryInput: document.querySelector("#memory-identity"),
-  stepProgress: document.querySelector("#step-progress"),
-  stepPanels: [...document.querySelectorAll("[data-step-panel]")],
-  backButton: document.querySelector("#back-button"),
-  autofillButton: document.querySelector("#autofill-button"),
-  nextButton: document.querySelector("#next-button"),
-  saveConfirmation: document.querySelector("#save-confirmation"),
-  mortalForm: document.querySelector("#mortal-form"),
-  mortalName: document.querySelector("#mortal-name"),
-  mortalDescription: document.querySelector("#mortal-description"),
-  mortalList: document.querySelector("#mortal-list"),
-  skillForm: document.querySelector("#skill-form"),
-  skillName: document.querySelector("#skill-name"),
-  skillDescription: document.querySelector("#skill-description"),
-  skillList: document.querySelector("#skill-list"),
-  resourceForm: document.querySelector("#resource-form"),
-  resourceName: document.querySelector("#resource-name"),
-  resourceDescription: document.querySelector("#resource-description"),
-  resourceList: document.querySelector("#resource-list"),
-  memoryFormLater: document.querySelector("#memory-form-later"),
-  memoryLater: document.querySelector("#memory-later"),
-  memoryTraitsLater: document.querySelector("#memory-traits-later"),
-  laterMemoryList: document.querySelector("#later-memory-list"),
-  immortalForm: document.querySelector("#immortal-form"),
-  immortalName: document.querySelector("#immortal-name"),
-  immortalDescription: document.querySelector("#immortal-description"),
-  immortalList: document.querySelector("#immortal-list"),
-  markForm: document.querySelector("#mark-form"),
-  markInput: document.querySelector("#mark-input"),
-  markDescription: document.querySelector("#mark-description"),
-  markList: document.querySelector("#mark-list"),
-  memoryFormCurse: document.querySelector("#memory-form-curse"),
-  memoryCurse: document.querySelector("#memory-curse"),
-  memoryTraitsCurse: document.querySelector("#memory-traits-curse"),
-  curseMemoryList: document.querySelector("#curse-memory-list"),
-  identityMemoryList: document.querySelector("#identity-memory-list"),
-  playNameHeading: document.querySelector("#play-name-heading"),
-  playMemoryList: document.querySelector("#play-memory-list"),
-  diaryCard: document.querySelector("#diary-card"),
-  diaryDescription: document.querySelector("#diary-description"),
-  diaryMemoryList: document.querySelector("#diary-memory-list"),
-  lostMemoriesCard: document.querySelector("#lost-memories-card"),
-  lostMemoriesToggle: document.querySelector("#lost-memories-toggle"),
-  playLostMemoryList: document.querySelector("#play-lost-memory-list"),
-  playCharacterList: document.querySelector("#play-character-list"),
-  playSkillList: document.querySelector("#play-skill-list"),
-  playResourceList: document.querySelector("#play-resource-list"),
-  playMarkList: document.querySelector("#play-mark-list"),
-  promptButton: document.querySelector("#next-prompt-button"),
-  promptText: document.querySelector("#prompt-text"),
-  addMemoryButton: document.querySelector("#add-memory-button"),
-  playExperienceForm: document.querySelector("#play-experience-form"),
-  playExperienceFormTitle: document.querySelector("#play-experience-form-title"),
-  playExperienceText: document.querySelector("#play-experience-text"),
-  playSelectedTraits: document.querySelector("#play-selected-traits"),
-  playExperienceSubmit: document.querySelector("#play-experience-submit"),
-  playExperienceCancel: document.querySelector("#play-experience-cancel"),
-  playMemoryHint: document.querySelector("#play-memory-hint"),
-  addSkillButton: document.querySelector("#add-skill-button"),
-  playSkillForm: document.querySelector("#play-skill-form"),
-  playSkillTitle: document.querySelector("#play-skill-form-title"),
-  playSkillName: document.querySelector("#play-skill-name"),
-  playSkillDescription: document.querySelector("#play-skill-description"),
-  playSkillSubmit: document.querySelector("#play-skill-submit"),
-  playSkillCancel: document.querySelector("#play-skill-cancel"),
-  addResourceButton: document.querySelector("#add-resource-button"),
-  playResourceForm: document.querySelector("#play-resource-form"),
-  playResourceTitle: document.querySelector("#play-resource-form-title"),
-  playResourceName: document.querySelector("#play-resource-name"),
-  playResourceDescription: document.querySelector("#play-resource-description"),
-  playResourceSubmit: document.querySelector("#play-resource-submit"),
-  playResourceCancel: document.querySelector("#play-resource-cancel"),
-  playDiaryForm: document.querySelector("#play-diary-form"),
-  playDiaryDescription: document.querySelector("#play-diary-description"),
-  playDiarySubmit: document.querySelector("#play-diary-submit"),
-  playDiaryCancel: document.querySelector("#play-diary-cancel"),
-  addCharacterButton: document.querySelector("#add-character-button"),
-  playCharacterForm: document.querySelector("#play-character-form"),
-  playCharacterTitle: document.querySelector("#play-character-form-title"),
-  playCharacterName: document.querySelector("#play-character-name"),
-  playCharacterDescription: document.querySelector("#play-character-description"),
-  playCharacterType: document.querySelector("#play-character-type"),
-  playCharacterSubmit: document.querySelector("#play-character-submit"),
-  playCharacterCancel: document.querySelector("#play-character-cancel"),
-  playTraitModal: document.querySelector("#play-trait-modal"),
-  playModalTitle: document.querySelector("#play-modal-title"),
-};
-
-const totalSteps = elements.stepPanels.length;
 const SCREEN_TITLES = {
   menu: "Start Menu",
   creation: "Vampire Creation",
   play: "Play",
 };
 
-const getStoredVampires = () => {
-  try {
-    const rawValue = safeLocalStorage.getItem(STORAGE_KEY);
-    const parsed = rawValue ? JSON.parse(rawValue) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    console.error(error);
-    return [];
+const syncNameValidity = (name, excludingId = selectedVampireId) => {
+  const cleanedName = cleanText(name);
+  if (!cleanedName) {
+    elements.nameInput.setCustomValidity("Name is required.");
+    return false;
   }
+  if (isDuplicateVampireName(cleanedName, excludingId)) {
+    elements.nameInput.setCustomValidity(`A character named "${cleanedName}" already exists.`);
+    return false;
+  }
+  elements.nameInput.setCustomValidity("");
+  return true;
 };
 
-const saveStoredVampires = (vampires) => safeLocalStorage.setItem(STORAGE_KEY, JSON.stringify(vampires));
-
-const serializeCharacter = () => ({
-  name: character.name,
-  memories: character.memories,
-  skills: character.skills,
-  resources: character.resources,
-  characters: character.characters,
-  marks: character.marks,
-  diary: character.diary,
-});
-
-const createStoredRecord = () => ({
-  id: selectedVampireId || crypto.randomUUID(),
-  updatedAt: new Date().toISOString(),
-  isComplete: character.isReadyForPromptOne(),
-  data: serializeCharacter(),
-  campaign: serializeCampaignState(promptState),
-});
-
 const persistCurrentCharacter = () => {
-  selectedVampireId = selectedVampireId || crypto.randomUUID();
   const vampires = getStoredVampires();
-  const record = createStoredRecord();
+  const previousId = selectedVampireId;
+  const cleanedName = cleanText(character.name);
+  const nextId = getVampireRouteId(cleanedName);
+
+  if (cleanedName) {
+    const duplicate = vampires.find((entry) => {
+      if (entry.id === previousId) return false;
+      return normalizeCharacterName(entry.data?.name) === normalizeCharacterName(cleanedName);
+    });
+    if (duplicate) return false;
+  }
+
+  selectedVampireId = nextId || previousId || crypto.randomUUID();
+  const record = createStoredRecord({
+    selectedVampireId,
+    character,
+    serializeCampaignState,
+    promptState,
+  });
   const existingIndex = vampires.findIndex((entry) => entry.id === record.id);
 
   if (existingIndex >= 0) vampires.splice(existingIndex, 1, record);
   else vampires.push(record);
+  if (previousId && previousId !== record.id) {
+    const staleIndex = vampires.findIndex((entry) => entry.id === previousId);
+    if (staleIndex >= 0) vampires.splice(staleIndex, 1);
+  }
 
   saveStoredVampires(vampires);
+  return true;
 };
 
 const resetPlayState = () => {
@@ -294,7 +146,10 @@ const resetPromptState = () => {
 
 const getRouteForScreen = (screen) => {
   if (screen === "creation") return "#/create";
-  if (screen === "play" && selectedVampireId) return `#/play/${selectedVampireId}`;
+  if (screen === "play" && selectedVampireId) {
+    const routeId = parseRouteId(selectedVampireId) || selectedVampireId;
+    return `#/play/${encodeURIComponent(routeId)}`;
+  }
   return "#/menu";
 };
 
@@ -336,7 +191,7 @@ const startNewVampire = () => {
 
 const markDirty = () => {
   hasSavedSetup = false;
-  persistCurrentCharacter();
+  return persistCurrentCharacter();
 };
 
 const getTraitGroups = () => [
@@ -377,99 +232,6 @@ const syncSelectedTraits = (selectedIds) => {
   }
 };
 
-const selectAutofillTraits = (selectedIds) => {
-  selectedIds.clear();
-  for (const option of getTraitGroups().flatMap((group) => group.options).slice(0, MIN_MEMORY_TRAITS)) {
-    selectedIds.add(option.id);
-  }
-};
-
-const createEmptyRecord = (message) => {
-  const item = document.createElement("li");
-  item.className = "record record-empty";
-  const body = document.createElement("div");
-  body.className = "record-body";
-  const text = document.createElement("p");
-  text.className = "supporting";
-  text.textContent = message;
-  body.append(text);
-  item.append(body);
-  return item;
-};
-
-const getRecordCollapseKey = (kind, id) => `${kind}:${id}`;
-const isRecordCollapsed = (kind, id) => collapsedRecords.has(getRecordCollapseKey(kind, id));
-const setRecordCollapsed = (kind, id, collapsed) => {
-  const key = getRecordCollapseKey(kind, id);
-  if (collapsed) collapsedRecords.add(key);
-  else collapsedRecords.delete(key);
-};
-const toggleRecordCollapsed = (kind, id) => setRecordCollapsed(kind, id, !isRecordCollapsed(kind, id));
-
-const collapseSettledRecords = () => {
-  character.memories.forEach((memory) => {
-    if (memory.lost) setRecordCollapsed("memory", memory.id, true);
-  });
-  character.skills.forEach((item) => {
-    if (item.used || item.lost) setRecordCollapsed("skill", item.id, true);
-  });
-  character.resources.forEach((item) => {
-    if (item.used || item.lost) setRecordCollapsed("resource", item.id, true);
-  });
-  character.characters.forEach((item) => {
-    if (item.used || item.lost) setRecordCollapsed("character", item.id, true);
-  });
-};
-
-const createLucideIcon = (name) => {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("fill", "none");
-  svg.setAttribute("stroke", "currentColor");
-  svg.setAttribute("stroke-width", "2");
-  svg.setAttribute("stroke-linecap", "round");
-  svg.setAttribute("stroke-linejoin", "round");
-  svg.classList.add("lucide-icon");
-  const nodes = LUCIDE_ICON_NODES[name] ?? [];
-  nodes.forEach(([tagName, attributes]) => {
-    const node = document.createElementNS("http://www.w3.org/2000/svg", tagName);
-    Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
-    svg.append(node);
-  });
-  return svg;
-};
-
-const createButton = (label, className, handler, options = {}) => {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = className;
-  if (options.icon) button.append(createLucideIcon(options.icon));
-  else button.textContent = options.symbol ?? label;
-  button.title = options.title ?? label;
-  button.setAttribute("aria-label", options.ariaLabel ?? label);
-  if (options.pressed !== undefined) button.setAttribute("aria-pressed", String(Boolean(options.pressed)));
-  button.addEventListener("click", (event) => {
-    event.stopPropagation();
-    handler();
-  });
-  return button;
-};
-
-const createInlineIconButton = (label, iconName, className, handler, { pressed = false } = {}) => {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = className;
-  button.append(createLucideIcon(iconName));
-  button.title = label;
-  button.setAttribute("aria-label", label);
-  button.setAttribute("aria-pressed", String(Boolean(pressed)));
-  button.addEventListener("click", (event) => {
-    event.stopPropagation();
-    handler();
-  });
-  return button;
-};
-
 const renderTraitSelector = (container, selectedIds) => {
   container.innerHTML = "";
 
@@ -500,57 +262,8 @@ const renderTraitSelector = (container, selectedIds) => {
   }
 };
 
-const renderRecords = (listElement, records, removeItem = null, emptyMessage = "No entries yet.") => {
-  listElement.innerHTML = "";
-  if (!records.length) {
-    listElement.append(createEmptyRecord(emptyMessage));
-    return;
-  }
-
-  for (const record of records) {
-    const item = document.createElement("li");
-    item.className = "record";
-    const body = document.createElement("div");
-    body.className = "record-body";
-
-    if (record.title) {
-      const title = document.createElement("strong");
-      title.textContent = record.title;
-      body.append(title);
-    }
-    if (record.text) {
-      const text = document.createElement("p");
-      text.textContent = record.text;
-      body.append(text);
-    }
-    if (record.tags?.length) {
-      const tags = document.createElement("div");
-      tags.className = "record-tags";
-      record.tags.forEach((tagText) => {
-        const tag = document.createElement("span");
-        tag.className = "record-tag";
-        tag.textContent = tagText;
-        tags.append(tag);
-      });
-      body.append(tags);
-    }
-
-    if (removeItem) {
-      const removeButton = createButton("Remove", "ghost-button", () => {
-        removeItem(record.index);
-        markDirty();
-        render();
-      });
-      item.append(body, removeButton);
-    } else {
-      item.append(body);
-    }
-
-    listElement.append(item);
-  }
-};
-
 const renderMenu = () => {
+  ensureTestVampireRecord({ Character, serializeCampaignState });
   const vampires = getStoredVampires();
   elements.vampireList.innerHTML = "";
   elements.vampireList.hidden = vampires.length === 0;
@@ -585,23 +298,24 @@ const renderMenu = () => {
 
     const actions = document.createElement("div");
     actions.className = "menu-record-actions";
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "menu-delete-control";
-    deleteButton.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const displayName = vampire.data?.name || "this vampire";
-      if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
-      const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id);
-      saveStoredVampires(remaining);
-      if (selectedVampireId === vampire.id) selectedVampireId = "";
-      setScreen("menu", { updateRoute: true });
-      render();
-    });
-    deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
-    deleteButton.replaceChildren(createLucideIcon("trash"));
+    if (vampire.id !== TEST_VAMPIRE_ID) {
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "menu-delete-control";
+      deleteButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const displayName = vampire.data?.name || "this vampire";
+        if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
+        const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id);
+        saveStoredVampires(remaining);
+        if (selectedVampireId === vampire.id) selectedVampireId = "";
+        setScreen("menu", { updateRoute: true });
+        render();
+      });
+      deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
+      actions.append(deleteButton);
+    }
 
-    actions.append(deleteButton);
     item.append(body, actions);
     elements.vampireList.append(item);
   }
@@ -618,7 +332,16 @@ const getMemoryRecords = (startIndex, endIndexExclusive) => character.memories
   }));
 
 const renderMemoryList = (listElement, startIndex, endIndexExclusive) => {
-  renderRecords(listElement, getMemoryRecords(startIndex, endIndexExclusive), (index) => character.removeMemory(index), "No memories yet.");
+  renderRecords({
+    listElement,
+    records: getMemoryRecords(startIndex, endIndexExclusive),
+    removeItem: (index) => character.removeMemory(index),
+    emptyMessage: null,
+    onAfterRemove: () => {
+      markDirty();
+      render();
+    },
+  });
 };
 
 const renderCharacterList = (listElement, type) => {
@@ -626,12 +349,30 @@ const renderCharacterList = (listElement, type) => {
     .map((entry, index) => ({ index, entry }))
     .filter(({ entry }) => entry.type === type)
     .map(({ index, entry }) => ({ index, title: entry.name, text: entry.description }));
-  renderRecords(listElement, records, (index) => character.removeCharacter(index), "No characters yet.");
+  renderRecords({
+    listElement,
+    records,
+    removeItem: (index) => character.removeCharacter(index),
+    emptyMessage: null,
+    onAfterRemove: () => {
+      markDirty();
+      render();
+    },
+  });
 };
 
 const renderDetailList = (listElement, items, removeItem) => {
   const records = items.map((item, index) => ({ index, title: item.name, text: item.description }));
-  renderRecords(listElement, records, removeItem);
+  renderRecords({
+    listElement,
+    records,
+    removeItem,
+    emptyMessage: null,
+    onAfterRemove: () => {
+      markDirty();
+      render();
+    },
+  });
 };
 
 const togglePendingTrait = (traitId) => {
@@ -850,8 +591,7 @@ const renderTraitList = (listElement, items, kind) => {
     const entry = document.createElement("li");
     const traitId = item.id;
     const selectedForExperience = pendingExperienceTraitIds.has(traitId);
-    entry.className = ["record", item.used ? "used" : "", item.lost ? "lost" : ""].filter(Boolean).join(" ");
-    if (selectedForExperience) entry.classList.add("tag-target-active");
+    entry.className = item.lost ? "record lost" : "record";
 
     const body = document.createElement("div");
     body.className = "record-select";
@@ -1061,17 +801,14 @@ const renderPlayLists = () => {
   renderTraitList(elements.playSkillList, character.skills, "skill");
   renderTraitList(elements.playResourceList, character.resources, "resource");
   renderTraitList(elements.playCharacterList, character.characters, "character");
-  renderRecords(
-    elements.playMarkList,
-    character.marks.map((item, index) => ({ title: item.name, text: item.description, index })),
-    null,
-    "No marks available.",
-  );
+  renderRecords({
+    listElement: elements.playMarkList,
+    records: character.marks.map((item, index) => ({ title: item.name, text: item.description, index })),
+    emptyMessage: "No marks available.",
+  });
 
-  character.marks.forEach((item, index) => {
-    const entry = elements.playMarkList.children[index];
-    const traitId = item.id;
-    if (pendingExperienceTraitIds.has(traitId)) entry.classList.add("tag-target-active");
+  [...elements.playMarkList.querySelectorAll(".record")].forEach((entry, index) => {
+    const traitId = `mark-${index}`;
     entry.addEventListener("click", () => togglePendingTrait(traitId));
   });
 
@@ -1080,89 +817,6 @@ const renderPlayLists = () => {
   renderFormState("resource", editingTrait?.kind === "resource" ? character.resources[editingTrait.index] : null);
   renderFormState("diary");
   renderFormState("character", editingTrait?.kind === "character" ? character.characters[editingTrait.index] : null);
-};
-
-const parseCsv = (csvText = "") => {
-  const rows = [];
-  let row = [];
-  let field = "";
-  let inQuotes = false;
-  const source = String(csvText).replace(/^\uFEFF/, "");
-
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index];
-    if (inQuotes) {
-      if (char === '"') {
-        if (source[index + 1] === '"') {
-          field += '"';
-          index += 1;
-        } else inQuotes = false;
-      } else field += char;
-      continue;
-    }
-    if (char === '"') {
-      inQuotes = true;
-      continue;
-    }
-    if (char === ',') {
-      row.push(field);
-      field = "";
-      continue;
-    }
-    if (char === "\n") {
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = "";
-      continue;
-    }
-    if (char === "\r") continue;
-    field += char;
-  }
-
-  row.push(field);
-  rows.push(row);
-  return rows.filter((candidate) => candidate.some((value) => cleanText(value)));
-};
-
-const parsePromptDeck = (csvText) => {
-  const rows = parseCsv(csvText);
-  if (!rows.length) return [];
-  const [firstRow, ...remainingRows] = rows;
-  const hasHeader = firstRow.slice(0, 3).map((value) => cleanPromptText(value).toLowerCase()).join("|") === "a|b|c";
-  const dataRows = hasHeader ? remainingRows : rows;
-  return dataRows
-    .map((row) => ({ a: cleanPromptText(row[0] ?? ""), b: cleanPromptText(row[1] ?? ""), c: cleanPromptText(row[2] ?? "") }))
-    .filter((prompt) => Boolean(prompt.a || prompt.b || prompt.c));
-};
-
-const getPromptEntry = (prompt, visitCount) => {
-  if (!prompt) return "";
-  if (visitCount === 1) return prompt.a;
-  if (visitCount === 2) return prompt.b;
-  if (visitCount === 3) return prompt.c;
-  return "";
-};
-
-const hasPromptEntryForVisit = (prompt, visitCount) => Boolean(getPromptEntry(prompt, visitCount));
-const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
-const clampPromptIndex = (index) => (!promptState.deck.length ? 1 : Math.max(1, Math.min(index, promptState.deck.length)));
-
-const moveToNextAvailablePrompt = (targetIndex) => {
-  if (!promptState.deck.length) return { prompt: 1, visit: 0 };
-  let nextIndex = clampPromptIndex(targetIndex);
-  while (nextIndex <= promptState.deck.length) {
-    const prompt = promptState.deck[nextIndex - 1];
-    const visitCount = (promptState.visits.get(nextIndex) ?? 0) + 1;
-    if (hasPromptEntryForVisit(prompt, visitCount)) {
-      promptState.visits.set(nextIndex, visitCount);
-      promptState.currentPrompt = nextIndex;
-      return { prompt: nextIndex, visit: visitCount };
-    }
-    promptState.visits.set(nextIndex, visitCount);
-    nextIndex += 1;
-  }
-  return { prompt: promptState.currentPrompt, visit: promptState.visits.get(promptState.currentPrompt) ?? 1 };
 };
 
 const renderPromptPanel = () => {
@@ -1187,31 +841,6 @@ const renderPromptPanel = () => {
   elements.promptText.textContent = getPromptEntry(currentPrompt, visitCount) || "No remaining prompt entry at this position.";
 };
 
-const loadPromptDeck = async () => {
-  if (promptState.deck.length || promptState.isLoading) return;
-  promptState.isLoading = true;
-  promptState.loadError = "";
-  renderPromptPanel();
-  try {
-    const response = await fetch("/refs/prompts.csv");
-    if (!response.ok) throw new Error(`Could not load prompts (${response.status}).`);
-    const csvText = await response.text();
-    promptState.deck = parsePromptDeck(csvText);
-    if (!promptState.deck.length) promptState.loadError = "No prompts were found in refs/prompts.csv.";
-  } catch (error) {
-    promptState.loadError = "Unable to load prompt data from refs/prompts.csv.";
-    console.error(error);
-  } finally {
-    promptState.isLoading = false;
-    if (promptState.deck.length) {
-      promptState.currentPrompt = clampPromptIndex(promptState.currentPrompt);
-      if (!promptState.visits.has(promptState.currentPrompt)) promptState.visits.set(promptState.currentPrompt, 1);
-      persistCurrentCharacter();
-    }
-    render();
-  }
-};
-
 const startPlay = async (skipCreationGate = false) => {
   if (!skipCreationGate && !character.isReadyForPromptOne()) {
     setScreen("creation", { updateRoute: true });
@@ -1227,7 +856,18 @@ const startPlay = async (skipCreationGate = false) => {
     persistCurrentCharacter();
   }
   render();
-  await loadPromptDeck();
+  await loadPromptDeck({
+    promptState,
+    onLoading: renderPromptPanel,
+    onLoaded: () => {
+      if (promptState.deck.length) {
+        promptState.currentPrompt = clampPromptIndex(promptState.currentPrompt, promptState.deck.length);
+        if (!promptState.visits.has(promptState.currentPrompt)) promptState.visits.set(promptState.currentPrompt, 1);
+        persistCurrentCharacter();
+      }
+      render();
+    },
+  });
 };
 
 const stepRequirements = [
@@ -1241,8 +881,13 @@ const stepRequirements = [
   () => character.memories.length >= 5,
 ];
 
+const hasValidUniqueName = () => {
+  const cleanedName = cleanText(elements.nameInput.value || character.name);
+  return Boolean(cleanedName) && !isDuplicateVampireName(cleanedName, selectedVampireId);
+};
+
 const stepCanAdvance = [
-  () => true,
+  () => hasValidUniqueName(),
   () => stepRequirements[1](),
   () => stepRequirements[2](),
   () => stepRequirements[3](),
@@ -1269,6 +914,7 @@ const renderCreation = () => {
   syncSelectedTraits(selectedLaterTraitIds);
   syncSelectedTraits(selectedCurseTraitIds);
   elements.nameInput.value = character.name;
+  syncNameValidity(elements.nameInput.value, selectedVampireId);
   renderMemoryList(elements.identityMemoryList, 0, 1);
   renderCharacterList(elements.mortalList, "mortal");
   renderDetailList(elements.skillList, character.skills, (index) => character.removeSkill(index));
@@ -1287,6 +933,7 @@ const renderCollapsibleCards = () => {
   document.querySelectorAll("[data-card-key]").forEach((card) => {
     const key = card.dataset.cardKey;
     const content = card.querySelector("[data-card-content]");
+    const indicator = card.querySelector(".card-toggle-indicator");
     const collapsed = key === "prompt" ? false : collapsedCards.has(key);
     if (content) content.hidden = collapsed;
   });
@@ -1332,7 +979,7 @@ const handleRouteChange = async () => {
     render();
     return;
   }
-  const storedCharacter = getStoredVampires().find((entry) => entry.id === vampireId);
+  const storedCharacter = findStoredVampireByRouteId(vampireId);
   if (!storedCharacter) {
     setScreen("menu", { updateRoute: true, replaceRoute: true });
     render();
@@ -1344,13 +991,19 @@ const handleRouteChange = async () => {
 };
 
 const saveIdentityStep = () => {
-  markDirty();
+  if (!syncNameValidity(elements.nameInput.value, selectedVampireId)) {
+    elements.nameInput.reportValidity();
+    return false;
+  }
   character.rename(elements.nameInput.value);
   if (character.memories.length === 0) {
     if (!character.addMemory(elements.identityMemoryInput.value)) return false;
     elements.identityMemoryInput.value = "";
   }
-  persistCurrentCharacter();
+  if (!markDirty()) {
+    elements.nameInput.reportValidity();
+    return false;
+  }
   return isStepComplete(0);
 };
 
@@ -1384,80 +1037,11 @@ const saveCurseMemoryStep = () => {
   return didSave;
 };
 
-const autofillCurrentStep = () => {
-  markDirty();
-  if (currentStep === 0) {
-    if (!cleanText(elements.nameInput.value)) {
-      elements.nameInput.value = "Test Vampire";
-      character.rename(elements.nameInput.value);
-    }
-    if (!cleanText(elements.identityMemoryInput.value) && character.memories.length === 0) {
-      elements.identityMemoryInput.value = "I was born to a fading noble house and learned early that affection is transactional.";
-    }
-    renderStep();
-    return;
-  }
-  if (currentStep === 1) {
-    while (character.mortalCount < 3) {
-      const [name, description] = sampleMortals[character.mortalCount] ?? [`Mortal ${character.mortalCount + 1}`, "A mortal tied to my earliest years."];
-      character.addCharacter(name, description, "mortal");
-    }
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 2) {
-    while (character.skills.length < 3) {
-      const [name, description] = sampleSkills[character.skills.length] ?? [`Skill ${character.skills.length + 1}`, "A practiced talent from mortal life."];
-      character.addSkill(name, description);
-    }
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 3) {
-    while (character.resources.length < 3) {
-      const [name, description] = sampleResources[character.resources.length] ?? [`Resource ${character.resources.length + 1}`, "A useful possession I can still rely on."];
-      character.addResource(name, description);
-    }
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 4) {
-    while (character.memories.length < 4) {
-      const sampleIndex = character.memories.length - 1;
-      selectAutofillTraits(selectedLaterTraitIds);
-      character.addMemory(sampleLaterMemories[sampleIndex] ?? `Another memory ${character.memories.length + 1}.`, getSelectedTraitLabels(selectedLaterTraitIds));
-    }
-    selectedLaterTraitIds.clear();
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 5) {
-    if (!cleanText(elements.immortalName.value) && character.immortalCount === 0) elements.immortalName.value = "Baron Severin";
-    if (!cleanText(elements.immortalDescription.value) && character.immortalCount === 0) elements.immortalDescription.value = "The immortal who dragged me into unlife.";
-    renderStep();
-    return;
-  }
-  if (currentStep === 6) {
-    if (!cleanText(elements.markInput.value) && character.marks.length === 0) elements.markInput.value = "My shadow lags a heartbeat behind me.";
-    if (!cleanText(elements.markDescription.value) && character.marks.length === 0) elements.markDescription.value = "It is most visible in torchlight and unsettles the faithful.";
-    renderStep();
-    return;
-  }
-  if (currentStep === 7) {
-    if (!cleanText(elements.memoryCurse.value) && character.memories.length === 4) elements.memoryCurse.value = "I pursued Baron Severin onto the chapel roof and rose again after the mortal blow.";
-    if (selectedCurseTraitIds.size < MIN_MEMORY_TRAITS) selectAutofillTraits(selectedCurseTraitIds);
-    render();
-  }
-};
-
 elements.newVampireButton.addEventListener("click", () => startNewVampire());
 elements.nameInput.addEventListener("input", () => {
-  markDirty();
   character.rename(elements.nameInput.value);
+  if (syncNameValidity(elements.nameInput.value, selectedVampireId)) markDirty();
+  else hasSavedSetup = false;
   renderStep();
 });
 elements.identityMemoryInput.addEventListener("input", () => {
@@ -1542,7 +1126,6 @@ elements.backButton.addEventListener("click", () => {
   currentStep = Math.max(0, currentStep - 1);
   renderStep();
 });
-elements.autofillButton.addEventListener("click", () => autofillCurrentStep());
 elements.nextButton.addEventListener("click", () => {
   if (currentStep === 0) {
     if (!saveIdentityStep()) return;
@@ -1581,9 +1164,8 @@ elements.nextButton.addEventListener("click", () => {
 elements.promptButton.addEventListener("click", () => {
   if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
   const delta = rollDie(10) - rollDie(6);
-  const target = clampPromptIndex(promptState.currentPrompt + delta);
-  moveToNextAvailablePrompt(target);
-  collapseSettledRecords();
+  const target = clampPromptIndex(promptState.currentPrompt + delta, promptState.deck.length);
+  moveToNextAvailablePrompt(promptState, target);
   persistCurrentCharacter();
   render();
 });
@@ -1742,9 +1324,8 @@ document.addEventListener("keydown", (event) => {
 document.querySelectorAll("[data-card-toggle]").forEach((toggle) => {
   toggle.addEventListener("click", (event) => {
     const interactive = event.target.closest("button, input, textarea, select, label");
-    if (interactive) return;
-    const card = toggle.closest("[data-card-key]");
-    const key = card?.dataset.cardKey;
+    if (interactive && !interactive.hasAttribute("data-card-toggle")) return;
+    const key = card.dataset.cardKey;
     if (!key || key === "prompt") return;
     if (collapsedCards.has(key)) collapsedCards.delete(key);
     else collapsedCards.add(key);
@@ -1753,6 +1334,8 @@ document.querySelectorAll("[data-card-toggle]").forEach((toggle) => {
 });
 
 const initialize = () => {
+  saveStoredVampires(getStoredVampires());
+  ensureTestVampireRecord({ Character, serializeCampaignState });
   const vampires = getStoredVampires();
   selectedVampireId = vampires[0]?.id ?? "";
   [
@@ -1766,6 +1349,9 @@ const initialize = () => {
   });
   window.addEventListener("hashchange", () => {
     void handleRouteChange();
+  });
+  COLLAPSIBLE_SECTIONS.forEach((key) => {
+    if (!collapsedCards.has(key) && key !== "memories") collapsedCards.add(key);
   });
   void handleRouteChange();
 };

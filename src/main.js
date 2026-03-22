@@ -452,7 +452,14 @@ const renderMenu = () => {
       loadCharacter(vampire);
       resetCreationForms();
       resetPromptState();
-      void startPlay(true);
+
+      if (vampire.isComplete && character.isReadyForPromptOne()) {
+        void startPlay(true);
+        return;
+      }
+
+      setScreen("creation");
+      render();
     });
 
     const title = document.createElement("strong");

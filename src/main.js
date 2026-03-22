@@ -717,8 +717,6 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
     body.append(tags);
   }
 
-  item.append(body);
-
   if (!lost && !memory.storedInDiary && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
     const footer = document.createElement("div");
     footer.className = "record-footer-actions";
@@ -746,8 +744,9 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
       icon: "plus",
       title: "Add experience",
     }));
-    item.append(footer);
+    body.append(footer);
   }
+  item.append(body);
   return item;
 };
 

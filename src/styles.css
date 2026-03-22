@@ -441,6 +441,9 @@ button:disabled {
 
 .play-memory .record-body {
   padding-right: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
 }
 
 
@@ -565,13 +568,24 @@ button:disabled {
 }
 
 .experience-list {
-  list-style: decimal;
-  padding-left: 1.2rem;
+  list-style: none;
+  padding-left: 0;
 }
 
 .experience-list li {
   display: grid;
+  grid-template-columns: 0.55rem minmax(0, 1fr);
   gap: 0.45rem;
+  align-items: start;
+}
+
+.experience-list li::before {
+  content: "";
+  width: 0.38rem;
+  height: 0.38rem;
+  margin-top: 0.38rem;
+  border-radius: 0.08rem;
+  background: currentColor;
 }
 
 .save-confirmation {

@@ -722,15 +722,8 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   if (!lost && !memory.storedInDiary && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
     const footer = document.createElement("div");
     footer.className = "record-footer-actions";
-    footer.append(createButton("Add experience", "add-card-button memory-add-button", () => {
-      openExperienceComposer(memory.id);
-      render();
-    }, {
-      icon: "plus",
-      title: "Add experience",
-    }));
     if (character.diaryMemories.length < MAX_DIARY_MEMORIES) {
-      footer.append(createButton("Move to Diary", "add-card-button memory-add-button", () => {
+      footer.append(createButton("Move to Diary", "add-card-button memory-diary-button", () => {
         if (!window.confirm("Move this Memory to the Diary? This cannot be undone. The Memory can no longer gain new Experiences.")) return;
         if (character.diaryResource) {
           if (!character.moveMemoryToDiary(memory.id)) return;
@@ -746,6 +739,13 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
         title: "Move to Diary",
       }));
     }
+    footer.append(createButton("Add experience", "add-card-button memory-add-button", () => {
+      openExperienceComposer(memory.id);
+      render();
+    }, {
+      icon: "plus",
+      title: "Add experience",
+    }));
     item.append(footer);
   }
   return item;

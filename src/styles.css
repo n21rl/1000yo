@@ -537,11 +537,20 @@ button:disabled {
 .record-footer-actions {
   display: flex;
   justify-content: flex-end;
+  align-items: center;
+  width: 100%;
+  gap: 0.45rem;
   margin-top: 0.35rem;
 }
 
 .memory-add-button {
   margin-top: 0;
+  margin-left: auto;
+}
+
+.memory-diary-button {
+  margin-top: 0;
+  margin-left: 0;
 }
 
 .inline-form {

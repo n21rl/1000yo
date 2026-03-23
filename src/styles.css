@@ -103,6 +103,18 @@ h2 {
   margin-bottom: 0.45rem;
 }
 
+.card-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.card-title-icon {
+  font-size: 1.3rem;
+  line-height: 1;
+  color: #e6b876;
+}
+
 .prompt-text {
   margin: 0.8rem 0 0;
   font-size: 1.03rem;

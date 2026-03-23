@@ -9,15 +9,9 @@ This is an unofficial fan project and is not affiliated with Tim Hutchings or th
 - Multi-character save menu backed by browser `localStorage`
 - 8-step character creation wizard with validation and step autofill
 - Prompt play screen that loads `refs/prompts.csv` (`a`, `b`, `c` entries per prompt)
-- Memory model with:
-- `5` active memory slots
-- up to `3` experiences per memory
-- optional diary storage for up to `4` preserved memories
+- Memory model: `5` active memory slots, up to `3` experiences per memory, and optional diary storage for up to `4` preserved memories
 - Trait tracking for characters, skills, resources, and marks (used/lost states)
-- Hash routes for direct navigation:
-- `#/menu`
-- `#/create`
-- `#/play/<vampire-id>`
+- Hash routes for direct navigation: `#/menu`, `#/create`, `#/play/<vampire-id>`
 
 ## Tech Stack
 
@@ -27,7 +21,7 @@ This is an unofficial fan project and is not affiliated with Tim Hutchings or th
 
 ## Requirements
 
-- Node.js 20+ (recommended)
+- Node.js 18+ (recommended)
 - Python 3 (used by `npm run dev` to serve static files)
 
 ## Getting Started
@@ -48,16 +42,10 @@ npm test
 ## Gameplay Flow
 
 1. Create or select a vampire from the start menu.
-2. Complete setup requirements through the wizard:
-3. 5 memories
-4. 3 skills
-5. 3 resources
-6. 3 mortal characters
-7. 1 immortal character
-8. 1 mark
-9. Enter play mode and resolve prompts.
-10. Use `Next prompt` to roll `d10 - d6` and move through the prompt deck.
-11. Add new memories or experiences, mark traits used/lost, and move memories into the diary when needed.
+2. Complete setup requirements in the wizard: 5 memories, 3 skills, 3 resources, 3 mortals, 1 immortal, and 1 mark.
+3. Enter play mode and resolve prompts.
+4. Use `Next prompt` to roll `d10 - d6` and move through the prompt deck.
+5. Add new memories or experiences, mark traits used/lost, and move memories into the diary when needed.
 
 ## Data Files
 
@@ -73,10 +61,7 @@ Prompt CSV expectations:
 ## Persistence
 
 - Save key: `1000yo.vampires` in browser `localStorage`
-- Stored record includes:
-- character data
-- completion state
-- campaign state (`currentPrompt` + visit counts)
+- Stored record includes character data, completion state, and campaign state (`currentPrompt` + visit counts)
 
 ## Project Structure
 

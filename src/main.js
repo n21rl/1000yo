@@ -41,38 +41,13 @@ const sampleLaterMemories = [
   "I abandoned a refuge to protect the people tied to my mortal name.",
 ];
 
-const LUCIDE_ICON_NODES = {
-  plus: [
-    ["path", { d: "M12 5v14" }],
-    ["path", { d: "M5 12h14" }],
-  ],
-  x: [
-    ["path", { d: "M18 6 6 18" }],
-    ["path", { d: "m6 6 12 12" }],
-  ],
-  square: [
-    ["rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }],
-  ],
-  "square-check": [
-    ["rect", { x: "3", y: "3", width: "18", height: "18", rx: "2" }],
-    ["path", { d: "m9 12 2 2 4-4" }],
-  ],
-  notebook: [
-    ["path", { d: "M2 6h4" }],
-    ["path", { d: "M2 10h4" }],
-    ["path", { d: "M2 14h4" }],
-    ["path", { d: "M2 18h4" }],
-    ["rect", { x: "6", y: "3", width: "16", height: "18", rx: "2" }],
-    ["path", { d: "M10 7h8" }],
-    ["path", { d: "M10 11h8" }],
-  ],
-  trash: [
-    ["path", { d: "M3 6h18" }],
-    ["path", { d: "M8 6V4h8v2" }],
-    ["path", { d: "m19 6-1 14H6L5 6" }],
-    ["path", { d: "M10 11v6" }],
-    ["path", { d: "M14 11v6" }],
-  ],
+const MATERIAL_ICONS = {
+  plus: "add",
+  x: "close",
+  square: "check_box_outline_blank",
+  "square-check": "check_box",
+  notebook: "menu_book",
+  trash: "delete",
 };
 
 const promptState = {
@@ -421,29 +396,19 @@ const collapseSettledRecords = () => {
   });
 };
 
-const createLucideIcon = (name) => {
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("fill", "none");
-  svg.setAttribute("stroke", "currentColor");
-  svg.setAttribute("stroke-width", "2");
-  svg.setAttribute("stroke-linecap", "round");
-  svg.setAttribute("stroke-linejoin", "round");
-  svg.classList.add("lucide-icon");
-  const nodes = LUCIDE_ICON_NODES[name] ?? [];
-  nodes.forEach(([tagName, attributes]) => {
-    const node = document.createElementNS("http://www.w3.org/2000/svg", tagName);
-    Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
-    svg.append(node);
-  });
-  return svg;
+const createMaterialIcon = (name, classNames = []) => {
+  const icon = document.createElement("span");
+  icon.className = ["material-symbols-outlined", "material-icon", ...classNames].join(" ");
+  icon.setAttribute("aria-hidden", "true");
+  icon.textContent = MATERIAL_ICONS[name] ?? name;
+  return icon;
 };
 
 const createButton = (label, className, handler, options = {}) => {
   const button = document.createElement("button");
   button.type = "button";
   button.className = className;
-  if (options.icon) button.append(createLucideIcon(options.icon));
+  if (options.icon) button.append(createMaterialIcon(options.icon));
   else button.textContent = options.symbol ?? label;
   button.title = options.title ?? label;
   button.setAttribute("aria-label", options.ariaLabel ?? label);
@@ -459,7 +424,7 @@ const createInlineIconButton = (label, iconName, className, handler, { pressed =
   const button = document.createElement("button");
   button.type = "button";
   button.className = className;
-  button.append(createLucideIcon(iconName));
+  button.append(createMaterialIcon(iconName));
   button.title = label;
   button.setAttribute("aria-label", label);
   button.setAttribute("aria-pressed", String(Boolean(pressed)));
@@ -599,7 +564,7 @@ const renderMenu = () => {
       render();
     });
     deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
-    deleteButton.replaceChildren(createLucideIcon("trash"));
+    deleteButton.replaceChildren(createMaterialIcon("trash"));
 
     actions.append(deleteButton);
     item.append(body, actions);
@@ -822,6 +787,7 @@ const renderPlayMemoryList = () => {
   elements.playLostMemoryList.innerHTML = "";
   elements.lostMemoriesCard.hidden = true;
   elements.playLostMemoryList.hidden = true;
+  elements.lostMemoriesToggle.setAttribute("aria-expanded", "false");
 
   const visibleMemories = character.memories
     .map((memory, index) => ({ memory, index }))
@@ -1287,8 +1253,10 @@ const renderCollapsibleCards = () => {
   document.querySelectorAll("[data-card-key]").forEach((card) => {
     const key = card.dataset.cardKey;
     const content = card.querySelector("[data-card-content]");
+    const toggle = card.querySelector("[data-card-toggle]");
     const collapsed = key === "prompt" ? false : collapsedCards.has(key);
     if (content) content.hidden = collapsed;
+    if (toggle) toggle.setAttribute("aria-expanded", String(!collapsed));
   });
 };
 
@@ -1762,7 +1730,7 @@ const initialize = () => {
     elements.addCharacterButton,
   ].forEach((button) => {
     if (!button) return;
-    button.replaceChildren(createLucideIcon("plus"));
+    button.replaceChildren(createMaterialIcon("plus"));
   });
   window.addEventListener("hashchange", () => {
     void handleRouteChange();

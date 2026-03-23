@@ -4,6 +4,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>1000yo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:FILL@0..1&family=Roboto+Flex:opsz,wght@8..144,400..700&display=block&icon_names=add,bolt,check_box,check_box_outline_blank,cognition,close,delete,deployed_code,keyboard_arrow_down,local_fire_department,menu_book,person,sticky_note_2"
+    />
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
@@ -160,7 +166,7 @@
           <article class="card play-card prompt-card" data-card-key="prompt">
             <div class="section-heading play-static-heading">
               <div class="card-title-row">
-                <h2>Prompt</h2>
+                <h2><span class="material-symbols-outlined card-heading-icon" aria-hidden="true">sticky_note_2</span><span>Prompt</span></h2>
               </div>
             </div>
             <div data-card-content>
@@ -172,8 +178,8 @@
           <article class="card play-card" data-card-key="memories">
             <div class="section-heading" data-card-toggle>
               <div class="card-title-row">
-                <h2>Memories</h2>
-                <span class="card-toggle-indicator" aria-hidden="true"></span>
+                <h2><span class="material-symbols-outlined card-heading-icon" aria-hidden="true">cognition</span><span>Memories</span></h2>
+                <span class="material-symbols-outlined card-toggle-indicator" aria-hidden="true">keyboard_arrow_down</span>
               </div>
             </div>
             <div data-card-content>
@@ -188,12 +194,12 @@
                 >
                   <span class="card-title-row">
                     <strong>Lost memories</strong>
-                    <span class="card-toggle-indicator" aria-hidden="true"></span>
+                    <span class="material-symbols-outlined card-toggle-indicator" aria-hidden="true">keyboard_arrow_down</span>
                   </span>
                 </button>
                 <ul id="play-lost-memory-list" class="record-list" hidden></ul>
               </section>
-              <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory">＋</button>
+              <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory"></button>
             </div>
           </article>
 
@@ -213,47 +219,47 @@
             <article class="card play-card" data-card-key="characters">
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
-                  <h2>Characters</h2>
-                  <span class="card-toggle-indicator" aria-hidden="true"></span>
+                  <h2><span class="material-symbols-outlined card-heading-icon" aria-hidden="true">person</span><span>Characters</span></h2>
+                  <span class="material-symbols-outlined card-toggle-indicator" aria-hidden="true">keyboard_arrow_down</span>
                 </div>
               </div>
               <div data-card-content hidden>
                 <ul id="play-character-list" class="record-list"></ul>
-                <button type="button" id="add-character-button" class="add-card-button" title="Add character" aria-label="Add character">＋</button>
+                <button type="button" id="add-character-button" class="add-card-button" title="Add character" aria-label="Add character"></button>
               </div>
             </article>
 
             <article class="card play-card" data-card-key="skills">
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
-                  <h2>Skills</h2>
-                  <span class="card-toggle-indicator" aria-hidden="true"></span>
+                  <h2><span class="material-symbols-outlined card-heading-icon" aria-hidden="true">bolt</span><span>Skills</span></h2>
+                  <span class="material-symbols-outlined card-toggle-indicator" aria-hidden="true">keyboard_arrow_down</span>
                 </div>
               </div>
               <div data-card-content hidden>
                 <ul id="play-skill-list" class="record-list"></ul>
-                <button type="button" id="add-skill-button" class="add-card-button" title="Add skill" aria-label="Add skill">＋</button>
+                <button type="button" id="add-skill-button" class="add-card-button" title="Add skill" aria-label="Add skill"></button>
               </div>
             </article>
 
             <article class="card play-card" data-card-key="resources">
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
-                  <h2>Resources</h2>
-                  <span class="card-toggle-indicator" aria-hidden="true"></span>
+                  <h2><span class="material-symbols-outlined card-heading-icon" aria-hidden="true">deployed_code</span><span>Resources</span></h2>
+                  <span class="material-symbols-outlined card-toggle-indicator" aria-hidden="true">keyboard_arrow_down</span>
                 </div>
               </div>
               <div data-card-content hidden>
                 <ul id="play-resource-list" class="record-list"></ul>
-                <button type="button" id="add-resource-button" class="add-card-button" title="Add resource" aria-label="Add resource">＋</button>
+                <button type="button" id="add-resource-button" class="add-card-button" title="Add resource" aria-label="Add resource"></button>
               </div>
             </article>
 
             <article class="card play-card" data-card-key="marks">
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
-                  <h2>Marks</h2>
-                  <span class="card-toggle-indicator" aria-hidden="true"></span>
+                  <h2><span class="material-symbols-outlined card-heading-icon" aria-hidden="true">local_fire_department</span><span>Marks</span></h2>
+                  <span class="material-symbols-outlined card-toggle-indicator" aria-hidden="true">keyboard_arrow_down</span>
                 </div>
               </div>
               <div data-card-content hidden>

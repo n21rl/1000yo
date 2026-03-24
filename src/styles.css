@@ -91,10 +91,6 @@ h2 {
   gap: 0.65rem;
 }
 
-.play-titlebar {
-  padding: 0.25rem 0 0;
-}
-
 .play-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(18rem, 1fr));

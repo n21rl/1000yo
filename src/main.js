@@ -158,7 +158,6 @@ const elements = {
   memoryTraitsCurse: document.querySelector("#memory-traits-curse"),
   curseMemoryList: document.querySelector("#curse-memory-list"),
   identityMemoryList: document.querySelector("#identity-memory-list"),
-  playNameHeading: document.querySelector("#play-name-heading"),
   playMemoryList: document.querySelector("#play-memory-list"),
   diaryCard: document.querySelector("#diary-card"),
   diaryDescription: document.querySelector("#diary-description"),
@@ -1132,7 +1131,6 @@ const syncActiveModal = () => {
 
 const renderPlayLists = () => {
   syncActiveModal();
-  elements.playNameHeading.textContent = character.name || "Unnamed Vampire";
   syncSelectedTraits(pendingExperienceTraitIds);
   renderPlayMemoryList();
   renderTraitList(elements.playSkillList, character.skills, "skill");

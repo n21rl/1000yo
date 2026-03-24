@@ -551,14 +551,19 @@ button:disabled {
 
 
 .record-inline-button {
-  width: auto;
-  min-width: 0;
+  width: 1.9rem;
+  min-width: 1.9rem;
+  height: 1.9rem;
   padding: 0;
-  border: 0;
-  background: transparent;
-  color: #bda88c;
+  border: 1px solid #725145;
+  border-radius: 0.55rem;
+  background: rgba(20, 14, 14, 0.72);
+  color: #f6eddc;
   line-height: 1;
   flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .record-inline-button .material-icon,
@@ -571,8 +576,7 @@ button:disabled {
 }
 
 .record-inline-button:hover {
-  filter: none;
-  color: #fff5e2;
+  filter: brightness(1.08);
 }
 
 .record-inline-button[aria-pressed="true"] {
@@ -580,12 +584,12 @@ button:disabled {
 }
 
 .record-check-toggle {
-  width: 1rem;
-  height: 1rem;
+  width: 1.9rem;
+  height: 1.9rem;
 }
 
 .record-strike-toggle {
-  width: 1rem;
+  width: 1.9rem;
   text-align: center;
 }
 
@@ -813,23 +817,18 @@ button:disabled {
 .add-card-button {
   margin-top: 0.55rem;
   margin-left: auto;
-  width: auto;
-  min-width: 2.1rem;
+  width: 1.9rem;
+  min-width: 1.9rem;
+  height: 1.9rem;
   padding: 0;
-  border-radius: 0.65rem;
-  border: 1px solid rgba(158, 122, 106, 0.35);
-  background: rgba(20, 14, 14, 0.45);
-  color: #efe0c0;
+  border-radius: 0.55rem;
+  border: 1px solid #725145;
+  background: rgba(20, 14, 14, 0.72);
+  color: #f6eddc;
   text-align: center;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.add-card-button {
-  height: 2rem;
-  width: 2rem;
-  line-height: 1;
 }
 
 .add-card-button:hover {

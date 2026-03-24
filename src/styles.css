@@ -187,11 +187,6 @@ h2 {
   color: #f6eddc;
 }
 
-.card-heading-actions #memory-slots-meta {
-  min-width: 2.8rem;
-  text-align: center;
-}
-
 .card-heading-actions button:hover {
   filter: brightness(1.08);
 }
@@ -243,14 +238,9 @@ img.material-icon {
   transform: rotate(180deg);
 }
 
-.section-heading:hover .card-toggle-indicator,
-.subcard-header:hover .card-toggle-indicator {
-  color: #fff5e2;
-}
-
-.section-heading:hover .card-toggle-indicator img.material-icon,
-.subcard-header:hover .card-toggle-indicator img.material-icon {
-  filter: brightness(0) saturate(100%) invert(97%) sepia(17%) saturate(323%) hue-rotate(304deg) brightness(107%) contrast(103%);
+.memory-slots-counter {
+  margin: 0.45rem 0 0;
+  text-align: right;
 }
 
 .wizard-title {
@@ -461,10 +451,12 @@ button:disabled {
 }
 
 .record-title-row {
-  position: relative;
-  display: block;
-  min-height: 1.1rem;
-  padding-right: 1.2rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 0;
+  padding-right: 0;
 }
 
 .record-title-group {
@@ -491,12 +483,6 @@ button:disabled {
 
 .record-title-row strong {
   margin-bottom: 0;
-}
-
-.record-title-row .record-strike-toggle {
-  position: absolute;
-  top: 0.02rem;
-  right: 0;
 }
 
 .record-body p,
@@ -649,7 +635,8 @@ button:disabled {
 .record-item-actions {
   display: flex;
   gap: 0.45rem;
-  margin-top: 0.35rem;
+  margin-top: 0;
+  align-items: center;
 }
 
 .memory-add-button {

@@ -539,24 +539,71 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   titleRow.className = "record-title-row";
   const titleGroup = document.createElement("div");
   titleGroup.className = "record-title-group";
-  titleGroup.classList.add("record-title-toggle");
-  titleGroup.tabIndex = 0;
-  titleGroup.role = "button";
-  titleGroup.setAttribute("aria-expanded", String(!collapsed));
   const toggleMemoryCollapsed = () => {
     toggleRecordCollapsed("memory", memory.id);
     render();
   };
-  titleGroup.addEventListener("click", toggleMemoryCollapsed);
-  titleGroup.addEventListener("keydown", (event) => {
-    if (event.key !== "Enter" && event.key !== " ") return;
-    event.preventDefault();
-    toggleMemoryCollapsed();
-  });
   const title = document.createElement("strong");
   title.textContent = `Memory ${memoryIndex + 1}`;
   titleGroup.append(title);
   titleRow.append(titleGroup);
+
+  const titleActions = document.createElement("div");
+  titleActions.className = "record-item-actions";
+  if (!lost && !memory.storedInDiary && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY && character.diaryMemories.length < MAX_DIARY_MEMORIES) {
+    titleActions.append(createInlineIconButton(
+      "Move to diary",
+      "notebook",
+      "record-inline-button",
+      () => {
+        if (!window.confirm("Move this Memory to the Diary? This cannot be undone. The Memory can no longer gain new Experiences.")) return;
+        if (character.diaryResource) {
+          if (!character.moveMemoryToDiary(memory.id)) return;
+          markDirty();
+          render();
+          return;
+        }
+        pendingDiaryMemoryId = memory.id;
+        activeModal = "diary";
+        render();
+      },
+    ));
+  }
+  if (!lost) {
+    titleActions.append(createInlineIconButton(
+      "Edit memory experiences",
+      "edit",
+      "record-inline-button",
+      () => {
+        memory.experiences.forEach((experience, experienceIndex) => {
+          const updatedText = window.prompt(`Edit experience ${experienceIndex + 1}`, experience.text);
+          if (updatedText === null) return;
+          character.updateMemoryExperience(memoryIndex, experienceIndex, updatedText);
+        });
+        markDirty();
+        render();
+      },
+    ));
+  }
+  titleActions.append(createInlineIconButton(
+    lost ? "Restore memory" : "Strike out memory",
+    "x",
+    "record-inline-button",
+    () => {
+      character.setMemoryLost(memoryIndex, !memory.lost);
+      markDirty();
+      render();
+    },
+    { pressed: lost },
+  ));
+  titleActions.append(createInlineIconButton(
+    collapsed ? "Expand memory" : "Collapse memory",
+    "keyboard_arrow_down",
+    "record-inline-button",
+    toggleMemoryCollapsed,
+    { pressed: collapsed },
+  ));
+  titleRow.append(titleActions);
 
   body.append(titleRow);
   const details = document.createElement("div");
@@ -586,55 +633,6 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
     details.append(tags);
   }
 
-  const footer = document.createElement("div");
-  footer.className = "record-footer-actions";
-  if (!lost && !memory.storedInDiary && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
-    if (character.diaryMemories.length < MAX_DIARY_MEMORIES) {
-      footer.append(createButton("Move to Diary", "add-card-button memory-diary-button", () => {
-        if (!window.confirm("Move this Memory to the Diary? This cannot be undone. The Memory can no longer gain new Experiences.")) return;
-        if (character.diaryResource) {
-          if (!character.moveMemoryToDiary(memory.id)) return;
-          markDirty();
-          render();
-          return;
-        }
-        pendingDiaryMemoryId = memory.id;
-        activeModal = "diary";
-        render();
-      }, {
-        icon: "notebook",
-        title: "Move to Diary",
-      }));
-    }
-  }
-  if (!lost) {
-    footer.append(createInlineIconButton(
-      "Edit memory experiences",
-      "edit",
-      "record-inline-button",
-      () => {
-        memory.experiences.forEach((experience, experienceIndex) => {
-          const updatedText = window.prompt(`Edit experience ${experienceIndex + 1}`, experience.text);
-          if (updatedText === null) return;
-          character.updateMemoryExperience(memoryIndex, experienceIndex, updatedText);
-        });
-        markDirty();
-        render();
-      },
-    ));
-  }
-  footer.append(createInlineIconButton(
-    lost ? "Restore memory" : "Strike out memory",
-    "x",
-    "record-inline-button",
-    () => {
-      character.setMemoryLost(memoryIndex, !memory.lost);
-      markDirty();
-      render();
-    },
-    { pressed: lost },
-  ));
-  details.append(footer);
   body.append(details);
   item.append(body);
   return item;
@@ -766,48 +764,14 @@ const renderTraitList = (listElement, items, kind) => {
     if (kind === "character") tags.unshift(item.type === "mortal" ? "Mortal" : "Immortal");
     if (selectedForExperience) tags.unshift("Tagged");
     const hasSubitems = Boolean(item.description || tags.length);
-    if (hasSubitems) {
-      titleGroup.classList.add("record-title-toggle");
-      titleGroup.tabIndex = 0;
-      titleGroup.role = "button";
-      titleGroup.setAttribute("aria-expanded", String(!collapsed));
-      const toggleTraitCollapsed = () => {
-        toggleRecordCollapsed(kind, item.id);
-        renderPlayLists();
-      };
-      titleGroup.addEventListener("click", toggleTraitCollapsed);
-      titleGroup.addEventListener("keydown", (event) => {
-        if (event.key !== "Enter" && event.key !== " ") return;
-        event.preventDefault();
-        toggleTraitCollapsed();
-      });
-    }
+    const toggleTraitCollapsed = () => {
+      toggleRecordCollapsed(kind, item.id);
+      renderPlayLists();
+    };
     const title = document.createElement("strong");
     title.textContent = item.name;
     titleGroup.append(title);
     titleRow.append(titleGroup);
-
-    contentColumn.append(titleRow);
-    const details = document.createElement("div");
-    details.hidden = hasSubitems ? collapsed : false;
-    if (item.description) {
-      const text = document.createElement("p");
-      text.textContent = item.description;
-      details.append(text);
-    }
-
-    if (tags.length) {
-      const tagWrap = document.createElement("div");
-      tagWrap.className = "record-tags";
-      tags.forEach((label) => {
-        const tag = document.createElement("span");
-        tag.className = label === "Tagged" ? "record-tag selected-trait" : "record-tag";
-        tag.textContent = label;
-        tagWrap.append(tag);
-      });
-      details.append(tagWrap);
-    }
-    if (hasSubitems) contentColumn.append(details);
 
     const actionRow = document.createElement("div");
     actionRow.className = "record-item-actions";
@@ -831,8 +795,39 @@ const renderTraitList = (listElement, items, kind) => {
         createInlineIconButton(item.lost ? `Restore ${kind}` : `Strike out ${kind}`, "x", "record-inline-button", toggleStruck, { pressed: item.lost }),
       );
     }
+    if (hasSubitems) {
+      actionRow.append(createInlineIconButton(
+        collapsed ? `Expand ${kind}` : `Collapse ${kind}`,
+        "keyboard_arrow_down",
+        "record-inline-button",
+        toggleTraitCollapsed,
+        { pressed: collapsed },
+      ));
+    }
+    titleRow.append(actionRow);
 
-    contentColumn.append(actionRow);
+    contentColumn.append(titleRow);
+    const details = document.createElement("div");
+    details.hidden = hasSubitems ? collapsed : false;
+    if (item.description) {
+      const text = document.createElement("p");
+      text.textContent = item.description;
+      details.append(text);
+    }
+
+    if (tags.length) {
+      const tagWrap = document.createElement("div");
+      tagWrap.className = "record-tags";
+      tags.forEach((label) => {
+        const tag = document.createElement("span");
+        tag.className = label === "Tagged" ? "record-tag selected-trait" : "record-tag";
+        tag.textContent = label;
+        tagWrap.append(tag);
+      });
+      details.append(tagWrap);
+    }
+    if (hasSubitems) contentColumn.append(details);
+
     bodyInner.append(contentColumn);
     body.append(bodyInner);
 
@@ -1189,6 +1184,7 @@ const initialize = () => {
     if (!button) return;
     button.replaceChildren(createMaterialIcon("plus"));
   });
+  if (elements.promptButton) elements.promptButton.replaceChildren(createMaterialIcon("casino"));
   hydrateStaticIcons();
   bindModalCloseEvents(closeModalAndResetPlayForms);
   bindEscapeKeyHandler(() => activeModal !== null, closeModalAndResetPlayForms);

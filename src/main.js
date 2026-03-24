@@ -1,10 +1,29 @@
-import { restoreCampaignState, serializeCampaignState } from "./campaign-state.js";
+import { restoreCampaignState } from "./campaign-state.js";
 import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
+import {
+  clampPromptIndex,
+  getPromptEntry,
+  hasPromptEntryForVisit,
+  parsePromptDeck,
+} from "./prompt-deck.js";
+import {
+  createStoredRecord,
+  getStoredVampires,
+  saveStoredVampires,
+  upsertVampireRecord,
+} from "./vampire-storage.js";
+import { getElements } from "./ui/elements.js";
+import { createMaterialIcon, hydrateStaticIcons } from "./ui/icons.js";
+import {
+  bindCardToggleEvents,
+  bindEscapeKeyHandler,
+  bindHashChange,
+  bindModalCloseEvents,
+} from "./events/global-events.js";
 
 const STORAGE_KEY = "1000yo.vampires";
 const TEST_VAMPIRE_ID = "preset-test-vampire";
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
-const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
 const MIN_MEMORY_TRAITS = 2;
 
 let character = new Character();
@@ -21,72 +40,6 @@ let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
 const collapsedRecords = new Set();
-const MATERIAL_ICON_NODES = {
-  add: [
-    ["path", { d: "M12 5v14" }],
-    ["path", { d: "M5 12h14" }],
-  ],
-  close: [
-    ["path", { d: "M18 6 6 18" }],
-    ["path", { d: "m6 6 12 12" }],
-  ],
-  check_box_outline_blank: [
-    ["rect", { x: "4", y: "4", width: "16", height: "16", rx: "2.5" }],
-  ],
-  check_box: [
-    ["rect", { x: "4", y: "4", width: "16", height: "16", rx: "2.5" }],
-    ["path", { d: "m8.5 12 2.5 2.5 4.5-5" }],
-  ],
-  menu_book: [
-    ["path", { d: "M6 5.5A2.5 2.5 0 0 1 8.5 3H20v17H8.5A2.5 2.5 0 0 0 6 22" }],
-    ["path", { d: "M6 5.5V22" }],
-    ["path", { d: "M9.5 7H16" }],
-  ],
-  book_2: [
-    ["path", { d: "M5 5.5A2.5 2.5 0 0 1 7.5 3H19v17H7.5A2.5 2.5 0 0 0 5 20" }],
-    ["path", { d: "M5 5.5V20" }],
-    ["path", { d: "M8.5 8H15" }],
-    ["path", { d: "M8.5 12H15" }],
-  ],
-  delete: [
-    ["path", { d: "M5 7h14" }],
-    ["path", { d: "M9 7V5h6v2" }],
-    ["path", { d: "M8 7l1 12h6l1-12" }],
-    ["path", { d: "M10 10.5v5.5" }],
-    ["path", { d: "M14 10.5v5.5" }],
-  ],
-  keyboard_arrow_down: [
-    ["path", { d: "m7 10 5 5 5-5" }],
-  ],
-  sticky_note_2: [
-    ["path", { d: "M6 4h12a2 2 0 0 1 2 2v12H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" }],
-    ["path", { d: "M14 4v5h5" }],
-  ],
-  cognition: [
-    ["path", { d: "M9.5 7a3.5 3.5 0 0 0-3.5 3.5c0 1 .42 1.9 1.1 2.54A3 3 0 0 0 9 18h1" }],
-    ["path", { d: "M14.5 7a3.5 3.5 0 0 1 3.5 3.5c0 1-.42 1.9-1.1 2.54A3 3 0 0 1 15 18h-1" }],
-    ["path", { d: "M12 6v12" }],
-    ["path", { d: "M9 10.5h6" }],
-    ["path", { d: "M9.5 14.5h5" }],
-  ],
-  person: [
-    ["circle", { cx: "12", cy: "8", r: "3" }],
-    ["path", { d: "M6 19a6 6 0 0 1 12 0" }],
-  ],
-  bolt: [
-    ["path", { d: "M13 3 6.5 13H11l-1 8 6.5-10H12z" }],
-  ],
-  deployed_code: [
-    ["path", { d: "m8.5 9-3 3 3 3" }],
-    ["path", { d: "m15.5 9 3 3-3 3" }],
-    ["path", { d: "M10 19h4" }],
-    ["path", { d: "M12 5v10" }],
-    ["path", { d: "M8 5h8" }],
-  ],
-  local_fire_department: [
-    ["path", { d: "M12 3c1.5 2.5 4.5 4.4 4.5 8.1A4.5 4.5 0 1 1 7.5 11c0-1.8.8-3.2 2.3-4.8.2 1.5 1 2.4 2.2 3.1C13 7.8 13 5.7 12 3z" }],
-  ],
-};
 
 const promptState = {
   deck: [],
@@ -116,98 +69,7 @@ const safeLocalStorage = {
   },
 };
 
-const elements = {
-  menuScreen: document.querySelector("#menu-screen"),
-  creationScreen: document.querySelector("#creation-screen"),
-  playScreen: document.querySelector("#play-screen"),
-  vampireList: document.querySelector("#vampire-list"),
-  newVampireButton: document.querySelector("#new-vampire-button"),
-  nameInput: document.querySelector("#name"),
-  identityMemoryInput: document.querySelector("#memory-identity"),
-  stepProgress: document.querySelector("#step-progress"),
-  stepPanels: [...document.querySelectorAll("[data-step-panel]")],
-  backButton: document.querySelector("#back-button"),
-  nextButton: document.querySelector("#next-button"),
-  saveConfirmation: document.querySelector("#save-confirmation"),
-  mortalForm: document.querySelector("#mortal-form"),
-  mortalName: document.querySelector("#mortal-name"),
-  mortalDescription: document.querySelector("#mortal-description"),
-  mortalList: document.querySelector("#mortal-list"),
-  skillForm: document.querySelector("#skill-form"),
-  skillName: document.querySelector("#skill-name"),
-  skillDescription: document.querySelector("#skill-description"),
-  skillList: document.querySelector("#skill-list"),
-  resourceForm: document.querySelector("#resource-form"),
-  resourceName: document.querySelector("#resource-name"),
-  resourceDescription: document.querySelector("#resource-description"),
-  resourceList: document.querySelector("#resource-list"),
-  memoryFormLater: document.querySelector("#memory-form-later"),
-  memoryLater: document.querySelector("#memory-later"),
-  memoryTraitsLater: document.querySelector("#memory-traits-later"),
-  laterMemoryList: document.querySelector("#later-memory-list"),
-  immortalForm: document.querySelector("#immortal-form"),
-  immortalName: document.querySelector("#immortal-name"),
-  immortalDescription: document.querySelector("#immortal-description"),
-  immortalList: document.querySelector("#immortal-list"),
-  markForm: document.querySelector("#mark-form"),
-  markInput: document.querySelector("#mark-input"),
-  markDescription: document.querySelector("#mark-description"),
-  markList: document.querySelector("#mark-list"),
-  memoryFormCurse: document.querySelector("#memory-form-curse"),
-  memoryCurse: document.querySelector("#memory-curse"),
-  memoryTraitsCurse: document.querySelector("#memory-traits-curse"),
-  curseMemoryList: document.querySelector("#curse-memory-list"),
-  identityMemoryList: document.querySelector("#identity-memory-list"),
-  playMemoryList: document.querySelector("#play-memory-list"),
-  diaryCard: document.querySelector("#diary-card"),
-  diaryDescription: document.querySelector("#diary-description"),
-  diaryMemoryList: document.querySelector("#diary-memory-list"),
-  lostMemoriesCard: document.querySelector("#lost-memories-card"),
-  lostMemoriesToggle: document.querySelector("#lost-memories-toggle"),
-  playLostMemoryList: document.querySelector("#play-lost-memory-list"),
-  playCharacterList: document.querySelector("#play-character-list"),
-  playSkillList: document.querySelector("#play-skill-list"),
-  playResourceList: document.querySelector("#play-resource-list"),
-  playMarkList: document.querySelector("#play-mark-list"),
-  promptButton: document.querySelector("#next-prompt-button"),
-  promptText: document.querySelector("#prompt-text"),
-  addMemoryButton: document.querySelector("#add-memory-button"),
-  playExperienceForm: document.querySelector("#play-experience-form"),
-  playExperienceFormTitle: document.querySelector("#play-experience-form-title"),
-  playExperienceText: document.querySelector("#play-experience-text"),
-  playSelectedTraits: document.querySelector("#play-selected-traits"),
-  playExperienceSubmit: document.querySelector("#play-experience-submit"),
-  playExperienceCancel: document.querySelector("#play-experience-cancel"),
-  playMemoryHint: document.querySelector("#play-memory-hint"),
-  addSkillButton: document.querySelector("#add-skill-button"),
-  playSkillForm: document.querySelector("#play-skill-form"),
-  playSkillTitle: document.querySelector("#play-skill-form-title"),
-  playSkillName: document.querySelector("#play-skill-name"),
-  playSkillDescription: document.querySelector("#play-skill-description"),
-  playSkillSubmit: document.querySelector("#play-skill-submit"),
-  playSkillCancel: document.querySelector("#play-skill-cancel"),
-  addResourceButton: document.querySelector("#add-resource-button"),
-  playResourceForm: document.querySelector("#play-resource-form"),
-  playResourceTitle: document.querySelector("#play-resource-form-title"),
-  playResourceName: document.querySelector("#play-resource-name"),
-  playResourceDescription: document.querySelector("#play-resource-description"),
-  playResourceSubmit: document.querySelector("#play-resource-submit"),
-  playResourceCancel: document.querySelector("#play-resource-cancel"),
-  playDiaryForm: document.querySelector("#play-diary-form"),
-  playDiaryDescription: document.querySelector("#play-diary-description"),
-  playDiarySubmit: document.querySelector("#play-diary-submit"),
-  playDiaryCancel: document.querySelector("#play-diary-cancel"),
-  addCharacterButton: document.querySelector("#add-character-button"),
-  playCharacterForm: document.querySelector("#play-character-form"),
-  playCharacterTitle: document.querySelector("#play-character-form-title"),
-  playCharacterName: document.querySelector("#play-character-name"),
-  playCharacterDescription: document.querySelector("#play-character-description"),
-  playCharacterType: document.querySelector("#play-character-type"),
-  playCharacterSubmit: document.querySelector("#play-character-submit"),
-  playCharacterCancel: document.querySelector("#play-character-cancel"),
-  playTraitModal: document.querySelector("#play-trait-modal"),
-  playModalTitle: document.querySelector("#play-modal-title"),
-};
+const elements = getElements();
 
 const totalSteps = elements.stepPanels.length;
 const SCREEN_TITLES = {
@@ -258,49 +120,36 @@ const createTestVampireRecord = () => {
   };
 };
 
-const getStoredVampires = () => {
-  try {
-    const rawValue = safeLocalStorage.getItem(STORAGE_KEY);
-    const parsed = rawValue ? JSON.parse(rawValue) : [];
-    const stored = Array.isArray(parsed) ? parsed : [];
-    if (!stored.some((entry) => entry?.id === TEST_VAMPIRE_ID)) stored.unshift(createTestVampireRecord());
-    return stored;
-  } catch (error) {
-    console.error(error);
-    return [createTestVampireRecord()];
-  }
-};
+const loadStoredVampires = () => getStoredVampires(
+  safeLocalStorage,
+  STORAGE_KEY,
+  TEST_VAMPIRE_ID,
+  createTestVampireRecord,
+);
 
-const saveStoredVampires = (vampires) => safeLocalStorage.setItem(STORAGE_KEY, JSON.stringify(vampires));
+const persistStoredVampires = (vampires) => saveStoredVampires(safeLocalStorage, STORAGE_KEY, vampires);
 
-const serializeCharacter = () => ({
-  name: character.name,
-  memories: character.memories,
-  skills: character.skills,
-  resources: character.resources,
-  characters: character.characters,
-  marks: character.marks,
-  diary: character.diary,
-});
-
-const createStoredRecord = () => ({
-  id: selectedVampireId || crypto.randomUUID(),
-  updatedAt: new Date().toISOString(),
-  isComplete: character.isReadyForPromptOne(),
-  data: serializeCharacter(),
-  campaign: serializeCampaignState(promptState),
+const serializeCharacter = (currentCharacter) => ({
+  name: currentCharacter.name,
+  memories: currentCharacter.memories,
+  skills: currentCharacter.skills,
+  resources: currentCharacter.resources,
+  characters: currentCharacter.characters,
+  marks: currentCharacter.marks,
+  diary: currentCharacter.diary,
 });
 
 const persistCurrentCharacter = () => {
   selectedVampireId = selectedVampireId || crypto.randomUUID();
-  const vampires = getStoredVampires();
-  const record = createStoredRecord();
-  const existingIndex = vampires.findIndex((entry) => entry.id === record.id);
-
-  if (existingIndex >= 0) vampires.splice(existingIndex, 1, record);
-  else vampires.push(record);
-
-  saveStoredVampires(vampires);
+  const vampires = loadStoredVampires();
+  const record = createStoredRecord({
+    selectedVampireId,
+    character,
+    promptState,
+    serializeCharacter,
+  });
+  const nextVampires = upsertVampireRecord(vampires, record);
+  persistStoredVampires(nextVampires);
 };
 
 const resetPlayState = () => {
@@ -469,58 +318,6 @@ const collapseSettledRecords = () => {
   });
 };
 
-const resolveMaterialIconName = (name) => ({
-  plus: "add",
-  x: "close",
-  square: "check_box_outline_blank",
-  "square-check": "check_box",
-  notebook: "book_2",
-  trash: "delete",
-})[name] ?? name;
-
-const createMaterialFallbackIcon = (name, classNames = []) => {
-  const resolvedName = resolveMaterialIconName(name);
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("fill", "none");
-  svg.setAttribute("stroke", "currentColor");
-  svg.setAttribute("stroke-width", "2");
-  svg.setAttribute("stroke-linecap", "round");
-  svg.setAttribute("stroke-linejoin", "round");
-  svg.setAttribute("aria-hidden", "true");
-  svg.classList.add("material-icon", ...classNames);
-  const nodes = MATERIAL_ICON_NODES[resolvedName] ?? [];
-  nodes.forEach(([tagName, attributes]) => {
-    const node = document.createElementNS("http://www.w3.org/2000/svg", tagName);
-    Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
-    svg.append(node);
-  });
-  return svg;
-};
-
-const createMaterialIcon = (name, classNames = []) => {
-  const resolvedName = resolveMaterialIconName(name);
-  const img = document.createElement("img");
-  img.classList.add("material-icon", ...classNames);
-  img.alt = "";
-  img.setAttribute("aria-hidden", "true");
-  img.decoding = "async";
-  img.loading = "lazy";
-  img.src = `https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/${resolvedName}/default/24px.svg`;
-  img.addEventListener("error", () => {
-    img.replaceWith(createMaterialFallbackIcon(resolvedName, classNames));
-  }, { once: true });
-  return img;
-};
-
-const hydrateStaticIcons = () => {
-  document.querySelectorAll("[data-material-icon]").forEach((element) => {
-    const iconName = element.dataset.materialIcon;
-    if (!iconName) return;
-    element.replaceChildren(createMaterialIcon(iconName));
-  });
-};
-
 const createButton = (label, className, handler, options = {}) => {
   const button = document.createElement("button");
   button.type = "button";
@@ -629,7 +426,7 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
 };
 
 const renderMenu = () => {
-  const vampires = getStoredVampires();
+  const vampires = loadStoredVampires();
   elements.vampireList.innerHTML = "";
   elements.vampireList.hidden = vampires.length === 0;
 
@@ -671,8 +468,8 @@ const renderMenu = () => {
         event.stopPropagation();
         const displayName = vampire.data?.name || "this vampire";
         if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
-        const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id && entry.id !== TEST_VAMPIRE_ID);
-        saveStoredVampires(remaining);
+        const remaining = loadStoredVampires().filter((entry) => entry.id !== vampire.id && entry.id !== TEST_VAMPIRE_ID);
+        persistStoredVampires(remaining);
         if (selectedVampireId === vampire.id) selectedVampireId = "";
         setScreen("menu", { updateRoute: true });
         render();
@@ -1163,75 +960,11 @@ const renderPlayLists = () => {
   renderFormState("character", editingTrait?.kind === "character" ? character.characters[editingTrait.index] : null);
 };
 
-const parseCsv = (csvText = "") => {
-  const rows = [];
-  let row = [];
-  let field = "";
-  let inQuotes = false;
-  const source = String(csvText).replace(/^\uFEFF/, "");
-
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index];
-    if (inQuotes) {
-      if (char === '"') {
-        if (source[index + 1] === '"') {
-          field += '"';
-          index += 1;
-        } else inQuotes = false;
-      } else field += char;
-      continue;
-    }
-    if (char === '"') {
-      inQuotes = true;
-      continue;
-    }
-    if (char === ',') {
-      row.push(field);
-      field = "";
-      continue;
-    }
-    if (char === "\n") {
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = "";
-      continue;
-    }
-    if (char === "\r") continue;
-    field += char;
-  }
-
-  row.push(field);
-  rows.push(row);
-  return rows.filter((candidate) => candidate.some((value) => cleanText(value)));
-};
-
-const parsePromptDeck = (csvText) => {
-  const rows = parseCsv(csvText);
-  if (!rows.length) return [];
-  const [firstRow, ...remainingRows] = rows;
-  const hasHeader = firstRow.slice(0, 3).map((value) => cleanPromptText(value).toLowerCase()).join("|") === "a|b|c";
-  const dataRows = hasHeader ? remainingRows : rows;
-  return dataRows
-    .map((row) => ({ a: cleanPromptText(row[0] ?? ""), b: cleanPromptText(row[1] ?? ""), c: cleanPromptText(row[2] ?? "") }))
-    .filter((prompt) => Boolean(prompt.a || prompt.b || prompt.c));
-};
-
-const getPromptEntry = (prompt, visitCount) => {
-  if (!prompt) return "";
-  if (visitCount === 1) return prompt.a;
-  if (visitCount === 2) return prompt.b;
-  if (visitCount === 3) return prompt.c;
-  return "";
-};
-
-const hasPromptEntryForVisit = (prompt, visitCount) => Boolean(getPromptEntry(prompt, visitCount));
 const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
-const clampPromptIndex = (index) => (!promptState.deck.length ? 1 : Math.max(1, Math.min(index, promptState.deck.length)));
 
 const moveToNextAvailablePrompt = (targetIndex) => {
   if (!promptState.deck.length) return { prompt: 1, visit: 0 };
-  let nextIndex = clampPromptIndex(targetIndex);
+  let nextIndex = clampPromptIndex(targetIndex, promptState.deck.length);
   while (nextIndex <= promptState.deck.length) {
     const prompt = promptState.deck[nextIndex - 1];
     const visitCount = (promptState.visits.get(nextIndex) ?? 0) + 1;
@@ -1285,7 +1018,7 @@ const loadPromptDeck = async () => {
   } finally {
     promptState.isLoading = false;
     if (promptState.deck.length) {
-      promptState.currentPrompt = clampPromptIndex(promptState.currentPrompt);
+      promptState.currentPrompt = clampPromptIndex(promptState.currentPrompt, promptState.deck.length);
       if (!promptState.visits.has(promptState.currentPrompt)) promptState.visits.set(promptState.currentPrompt, 1);
       persistCurrentCharacter();
     }
@@ -1415,7 +1148,7 @@ const handleRouteChange = async () => {
     render();
     return;
   }
-  const storedCharacter = getStoredVampires().find((entry) => entry.id === vampireId);
+  const storedCharacter = loadStoredVampires().find((entry) => entry.id === vampireId);
   if (!storedCharacter) {
     setScreen("menu", { updateRoute: true, replaceRoute: true });
     render();
@@ -1593,7 +1326,7 @@ elements.nextButton.addEventListener("click", () => {
 elements.promptButton.addEventListener("click", () => {
   if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
   const delta = rollDie(10) - rollDie(6);
-  const target = clampPromptIndex(promptState.currentPrompt + delta);
+  const target = clampPromptIndex(promptState.currentPrompt + delta, promptState.deck.length);
   moveToNextAvailablePrompt(target);
   collapseSettledRecords();
   persistCurrentCharacter();
@@ -1730,42 +1463,17 @@ elements.playDiaryCancel.addEventListener("click", (event) => {
   render();
 });
 
-document.querySelectorAll("[data-modal-close]").forEach((target) => {
-  target.addEventListener("click", () => {
-    activeModal = null;
-    closeExperienceComposer();
-    editingTrait = null;
-    pendingDiaryMemoryId = "";
-    resetPlayForms();
-    render();
-  });
-});
-
-document.addEventListener("keydown", (event) => {
-  if (event.key !== "Escape" || activeModal === null) return;
+const closeModalAndResetPlayForms = () => {
   activeModal = null;
   closeExperienceComposer();
   editingTrait = null;
   pendingDiaryMemoryId = "";
   resetPlayForms();
   render();
-});
-
-document.querySelectorAll("[data-card-toggle]").forEach((toggle) => {
-  toggle.addEventListener("click", (event) => {
-    const interactive = event.target.closest("button, input, textarea, select, label");
-    if (interactive) return;
-    const card = toggle.closest("[data-card-key]");
-    const key = card?.dataset.cardKey;
-    if (!key || key === "prompt") return;
-    if (collapsedCards.has(key)) collapsedCards.delete(key);
-    else collapsedCards.add(key);
-    renderCollapsibleCards();
-  });
-});
+};
 
 const initialize = () => {
-  const vampires = getStoredVampires();
+  const vampires = loadStoredVampires();
   selectedVampireId = vampires[0]?.id ?? "";
   [
     elements.addMemoryButton,
@@ -1777,7 +1485,14 @@ const initialize = () => {
     button.replaceChildren(createMaterialIcon("plus"));
   });
   hydrateStaticIcons();
-  window.addEventListener("hashchange", () => {
+  bindModalCloseEvents(closeModalAndResetPlayForms);
+  bindEscapeKeyHandler(() => activeModal !== null, closeModalAndResetPlayForms);
+  bindCardToggleEvents((key) => {
+    if (collapsedCards.has(key)) collapsedCards.delete(key);
+    else collapsedCards.add(key);
+    renderCollapsibleCards();
+  });
+  bindHashChange(() => {
     void handleRouteChange();
   });
   void handleRouteChange();

@@ -561,9 +561,17 @@ const renderTraitSelector = (container, selectedIds) => {
   const pills = document.createElement("div");
   pills.className = "trait-pills";
   options.forEach((option) => {
-    const pill = document.createElement("span");
-    pill.className = selectedIds.has(option.id) ? "record-tag selected-trait" : "record-tag";
+    const pill = document.createElement("button");
+    pill.type = "button";
+    pill.className = selectedIds.has(option.id) ? "record-tag selected-trait trait-select-pill" : "record-tag trait-select-pill";
+    pill.setAttribute("aria-pressed", String(selectedIds.has(option.id)));
     pill.append(createMaterialIcon(option.icon, ["record-tag-icon"]), document.createTextNode(option.value));
+    pill.addEventListener("click", () => {
+      if (selectedIds.has(option.id)) selectedIds.delete(option.id);
+      else selectedIds.add(option.id);
+      markDirty();
+      render();
+    });
     pills.append(pill);
   });
   if (options.length) container.append(pills);

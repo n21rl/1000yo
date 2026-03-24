@@ -1,5 +1,5 @@
 :root {
-  font-family: "Roboto Flex", "Helvetica Neue", Arial, sans-serif;
+  font-family: "Helvetica Neue", Arial, sans-serif;
   color: #f6eddc;
   background:
     radial-gradient(circle at top, rgba(167, 39, 51, 0.28), transparent 36%),
@@ -27,23 +27,6 @@ select {
   font: inherit;
 }
 
-.material-symbols-outlined {
-  font-family: "Material Symbols Outlined";
-  font-weight: normal;
-  font-style: normal;
-  font-size: 1.5rem;
-  line-height: 1;
-  letter-spacing: normal;
-  text-transform: none;
-  display: inline-block;
-  white-space: nowrap;
-  word-wrap: normal;
-  direction: ltr;
-  font-feature-settings: "liga";
-  -webkit-font-feature-settings: "liga";
-  -webkit-font-smoothing: antialiased;
-}
-
 .app {
   max-width: 76rem;
   margin: 0 auto;
@@ -64,8 +47,7 @@ p {
 h1,
 h2,
 .wizard-title {
-  font-family: "Roboto Flex", "Helvetica Neue", Arial, sans-serif;
-  font-variation-settings: "opsz" 48, "wght" 600;
+  font-family: "Georgia", "Times New Roman", serif;
 }
 
 h1 {
@@ -186,22 +168,29 @@ h2 {
 
 .material-icon,
 .card-heading-icon {
-  font-size: 1.35rem;
-  line-height: 1;
-  font-variation-settings: "FILL" 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
 }
 
+.material-icon,
 .card-heading-icon {
   color: #e9c78f;
 }
 
 .card-toggle-indicator {
-  font-size: 1.4rem;
+  width: 1.25rem;
+  height: 1.25rem;
   color: #d9cbb4;
   transition: transform 160ms ease, color 160ms ease;
+}
+
+.card-toggle-indicator .material-icon {
+  width: 100%;
+  height: 100%;
+  color: inherit;
 }
 
 .section-heading[aria-expanded="true"] .card-toggle-indicator,
@@ -360,7 +349,8 @@ button:disabled {
 }
 
 .icon-button .material-icon {
-  font-size: 1rem;
+  width: 1rem;
+  height: 1rem;
 }
 
 .record-list,
@@ -526,7 +516,7 @@ button:disabled {
 .add-card-button .material-icon {
   width: 1rem;
   height: 1rem;
-  font-size: 1rem;
+  display: block;
 }
 
 .record-inline-button:hover {

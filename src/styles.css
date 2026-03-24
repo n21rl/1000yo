@@ -173,16 +173,26 @@ h2 {
 }
 
 .card-heading-actions .add-card-button,
-.card-heading-actions .ghost-button {
-  width: auto;
+.card-heading-actions .ghost-button,
+.card-heading-actions .card-chevron-button {
+  width: 1.9rem;
   min-width: 1.9rem;
+  height: 1.9rem;
   margin-top: 0;
-  padding: 0.3rem 0.45rem;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .card-heading-actions #memory-slots-meta {
   min-width: 2.8rem;
   text-align: center;
+}
+
+.card-chevron-button {
+  border: 1px solid #725145;
+  background: transparent;
 }
 
 .card-title-row h2 {

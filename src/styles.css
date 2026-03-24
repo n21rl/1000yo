@@ -164,6 +164,19 @@ h2 {
   gap: 0.4rem;
 }
 
+.card-heading-actions .add-card-button,
+.card-heading-actions .ghost-button {
+  width: auto;
+  min-width: 1.9rem;
+  margin-top: 0;
+  padding: 0.3rem 0.45rem;
+}
+
+.card-heading-actions #memory-slots-meta {
+  min-width: 2.8rem;
+  text-align: center;
+}
+
 .card-title-row h2 {
   display: flex;
   align-items: center;

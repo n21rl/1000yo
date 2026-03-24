@@ -177,6 +177,7 @@
                 <h2><span class="card-heading-icon" data-material-icon="cognition" aria-hidden="true"></span><span>Memories</span></h2>
               </div>
               <div class="card-heading-actions">
+                <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory"></button>
                 <button type="button" id="decrease-memory-slots-button" class="ghost-button small-button" title="Remove memory slot">-</button>
                 <span id="memory-slots-meta" class="supporting">0/0</span>
                 <button type="button" id="increase-memory-slots-button" class="ghost-button small-button" title="Add memory slot">+</button>
@@ -200,17 +201,19 @@
                 </button>
                 <ul id="play-lost-memory-list" class="record-list" hidden></ul>
               </section>
-              <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory"></button>
             </div>
           </article>
 
           <article id="diary-card" class="card play-card" data-card-key="diary" hidden>
-            <div class="section-heading play-static-heading">
+            <div class="section-heading" data-card-toggle>
               <div class="card-title-row">
                 <h2><span class="card-heading-icon" data-material-icon="book_2" aria-hidden="true"></span><span>Diary</span></h2>
               </div>
+              <div class="card-heading-actions">
+                <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+              </div>
             </div>
-            <div>
+            <div data-card-content>
               <p id="diary-description" class="supporting"></p>
               <ul id="diary-memory-list" class="record-list"></ul>
             </div>
@@ -221,12 +224,14 @@
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
                   <h2><span class="card-heading-icon" data-material-icon="person" aria-hidden="true"></span><span>Characters</span></h2>
+                </div>
+                <div class="card-heading-actions">
+                  <button type="button" id="add-character-button" class="add-card-button" title="Add character" aria-label="Add character"></button>
                   <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
                 </div>
               </div>
               <div data-card-content hidden>
                 <ul id="play-character-list" class="record-list"></ul>
-                <button type="button" id="add-character-button" class="add-card-button" title="Add character" aria-label="Add character"></button>
               </div>
             </article>
 
@@ -234,12 +239,14 @@
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
                   <h2><span class="card-heading-icon" data-material-icon="bolt" aria-hidden="true"></span><span>Skills</span></h2>
+                </div>
+                <div class="card-heading-actions">
+                  <button type="button" id="add-skill-button" class="add-card-button" title="Add skill" aria-label="Add skill"></button>
                   <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
                 </div>
               </div>
               <div data-card-content hidden>
                 <ul id="play-skill-list" class="record-list"></ul>
-                <button type="button" id="add-skill-button" class="add-card-button" title="Add skill" aria-label="Add skill"></button>
               </div>
             </article>
 
@@ -247,12 +254,14 @@
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
                   <h2><span class="card-heading-icon" data-material-icon="deployed_code" aria-hidden="true"></span><span>Resources</span></h2>
+                </div>
+                <div class="card-heading-actions">
+                  <button type="button" id="add-resource-button" class="add-card-button" title="Add resource" aria-label="Add resource"></button>
                   <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
                 </div>
               </div>
               <div data-card-content hidden>
                 <ul id="play-resource-list" class="record-list"></ul>
-                <button type="button" id="add-resource-button" class="add-card-button" title="Add resource" aria-label="Add resource"></button>
               </div>
             </article>
 
@@ -260,12 +269,14 @@
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
                   <h2><span class="card-heading-icon" data-material-icon="local_fire_department" aria-hidden="true"></span><span>Marks</span></h2>
+                </div>
+                <div class="card-heading-actions">
+                  <button type="button" id="add-mark-button" class="add-card-button" title="Add mark" aria-label="Add mark"></button>
                   <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
                 </div>
               </div>
               <div data-card-content hidden>
                 <ul id="play-mark-list" class="record-list"></ul>
-                <button type="button" id="add-mark-button" class="add-card-button" title="Add mark" aria-label="Add mark"></button>
               </div>
             </article>
           </div>

@@ -276,12 +276,20 @@ label {
 }
 
 .record-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
   width: auto;
   border-radius: 999px;
   border: 1px solid #725145;
   background: rgba(20, 14, 14, 0.72);
   color: #d9cbb4;
   padding: 0.35rem 0.8rem;
+}
+
+.record-tag-icon {
+  width: 0.95rem;
+  height: 0.95rem;
 }
 
 .selected-trait {

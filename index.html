@@ -15,6 +15,7 @@
       <section id="menu-screen" class="card menu-screen">
         <ul id="vampire-list" class="record-list"></ul>
         <button type="button" id="new-vampire-button" class="menu-new-button">New character</button>
+        <button type="button" id="load-test-vampire-button" class="ghost-button">Load test vampire</button>
       </section>
 
       <section id="creation-screen" class="wizard card" hidden>
@@ -25,10 +26,10 @@
 
         <section class="step-panel" data-step-panel="0">
           <label for="name">Vampire name *</label>
-          <input id="name" placeholder="Enter the vampire's name" />
+          <input id="name" placeholder="Test Vampire" />
 
           <label for="memory-identity">First memory *</label>
-          <textarea id="memory-identity" rows="4" placeholder="Describe the vampire's first defining memory"></textarea>
+          <textarea id="memory-identity" rows="4" placeholder="Memory 1"></textarea>
 
           <ul id="identity-memory-list" class="record-list"></ul>
         </section>
@@ -38,10 +39,10 @@
 
           <form id="mortal-form" class="stack">
             <label for="mortal-name">Mortal name *</label>
-            <input id="mortal-name" placeholder="Enter a mortal's name" />
+            <input id="mortal-name" placeholder="Mortal 1" />
 
             <label for="mortal-description">Description</label>
-            <textarea id="mortal-description" rows="3" placeholder="Describe this mortal's role or relationship to the vampire"></textarea>
+            <textarea id="mortal-description" rows="3" placeholder="Description of Mortal 1"></textarea>
 
             <button type="submit">Add mortal</button>
           </form>
@@ -54,10 +55,10 @@
 
           <form id="skill-form" class="stack">
             <label for="skill-name">Skill *</label>
-            <input id="skill-name" placeholder="Enter a skill the vampire has learned" />
+            <input id="skill-name" placeholder="Skill 1" />
 
             <label for="skill-description">Description</label>
-            <textarea id="skill-description" rows="3" placeholder="Describe how this skill was learned or how it is used"></textarea>
+            <textarea id="skill-description" rows="3" placeholder="Description of Skill 1"></textarea>
 
             <button type="submit">Add skill</button>
           </form>
@@ -70,10 +71,10 @@
 
           <form id="resource-form" class="stack">
             <label for="resource-name">Resource *</label>
-            <input id="resource-name" placeholder="Enter a resource the vampire can rely on" />
+            <input id="resource-name" placeholder="Resource 1" />
 
             <label for="resource-description">Description</label>
-            <textarea id="resource-description" rows="3" placeholder="Describe what this resource is or why it matters"></textarea>
+            <textarea id="resource-description" rows="3" placeholder="Description of Resource 1"></textarea>
 
             <button type="submit">Add resource</button>
           </form>
@@ -86,7 +87,7 @@
 
           <form id="memory-form-later" class="stack">
             <label for="memory-later">Memory *</label>
-            <textarea id="memory-later" rows="4" placeholder="Describe another important memory from the vampire's life"></textarea>
+            <textarea id="memory-later" rows="4" placeholder="Experience 1 of Memory 2"></textarea>
 
             <label>Traits *</label>
             <p class="supporting trait-guidance">Select at least 2 traits this memory combines.</p>
@@ -101,10 +102,10 @@
         <section class="step-panel" data-step-panel="5" hidden>
           <form id="immortal-form" class="stack">
             <label for="immortal-name">Immortal name *</label>
-            <input id="immortal-name" placeholder="Enter an immortal's name" />
+            <input id="immortal-name" placeholder="Immortal 1" />
 
             <label for="immortal-description">Description</label>
-            <textarea id="immortal-description" rows="3" placeholder="Describe this immortal's role or relationship to the vampire"></textarea>
+            <textarea id="immortal-description" rows="3" placeholder="Description of Immortal 1"></textarea>
 
             <button type="submit">Add immortal</button>
           </form>
@@ -115,10 +116,10 @@
         <section class="step-panel" data-step-panel="6" hidden>
           <form id="mark-form" class="stack">
             <label for="mark-input">Mark *</label>
-            <input id="mark-input" placeholder="Describe a lasting physical or supernatural mark" />
+            <input id="mark-input" placeholder="Mark 1" />
 
             <label for="mark-description">Description</label>
-            <textarea id="mark-description" rows="3" placeholder="Describe what this mark looks like or how it affects the vampire"></textarea>
+            <textarea id="mark-description" rows="3" placeholder="Description of Mark 1"></textarea>
 
             <button type="submit">Add mark</button>
           </form>
@@ -129,7 +130,7 @@
         <section class="step-panel" data-step-panel="7" hidden>
           <form id="memory-form-curse" class="stack">
             <label for="memory-curse">Curse memory *</label>
-            <textarea id="memory-curse" rows="4" placeholder="Describe the memory of the vampire's curse or transformation"></textarea>
+            <textarea id="memory-curse" rows="4" placeholder="Experience 1 of Memory 5"></textarea>
 
             <label>Traits *</label>
             <p class="supporting trait-guidance">Select at least 2 traits this memory combines.</p>
@@ -143,7 +144,6 @@
 
         <div class="wizard-nav">
           <button type="button" class="ghost-button" id="back-button">Back</button>
-          <button type="button" class="ghost-button" id="autofill-button">Autofill Step</button>
           <button type="button" id="next-button">Next</button>
         </div>
         <p id="save-confirmation" class="save-confirmation" hidden>
@@ -276,7 +276,7 @@
           <h3 id="play-experience-form-title" class="modal-form-title">Add memory</h3>
           <p id="play-memory-hint" class="supporting"></p>
           <label for="play-experience-text">Current experience</label>
-          <textarea id="play-experience-text" rows="3" placeholder="Write a single evocative sentence for the current prompt."></textarea>
+          <textarea id="play-experience-text" rows="3" placeholder="Experience 1 of Memory 1"></textarea>
           <div id="play-selected-traits" class="record-tags"></div>
           <div class="form-actions">
             <button type="submit" id="play-experience-submit">Save</button>
@@ -287,9 +287,9 @@
         <form id="play-character-form" class="stack compact-form modal-form" hidden>
           <h3 id="play-character-form-title" class="modal-form-title">Add character</h3>
           <label for="play-character-name">Name</label>
-          <input id="play-character-name" placeholder="Name the character" />
+          <input id="play-character-name" placeholder="Character 1" />
           <label for="play-character-description">Description</label>
-          <textarea id="play-character-description" rows="2" placeholder="Describe their relationship to the vampire"></textarea>
+          <textarea id="play-character-description" rows="2" placeholder="Description of Character 1"></textarea>
           <label for="play-character-type">Type</label>
           <select id="play-character-type">
             <option value="mortal">Mortal</option>
@@ -304,9 +304,9 @@
         <form id="play-skill-form" class="stack compact-form modal-form" hidden>
           <h3 id="play-skill-form-title" class="modal-form-title">Add skill</h3>
           <label for="play-skill-name">Skill</label>
-          <input id="play-skill-name" placeholder="Record a skill" />
+          <input id="play-skill-name" placeholder="Skill 4" />
           <label for="play-skill-description">Description</label>
-          <textarea id="play-skill-description" rows="2" placeholder="What does this skill mean in play?"></textarea>
+          <textarea id="play-skill-description" rows="2" placeholder="Description of Skill 4"></textarea>
           <div class="form-actions">
             <button type="submit" id="play-skill-submit">Add skill</button>
             <button type="button" class="ghost-button" id="play-skill-cancel">Cancel</button>
@@ -316,9 +316,9 @@
         <form id="play-resource-form" class="stack compact-form modal-form" hidden>
           <h3 id="play-resource-form-title" class="modal-form-title">Add resource</h3>
           <label for="play-resource-name">Resource</label>
-          <input id="play-resource-name" placeholder="Record a resource" />
+          <input id="play-resource-name" placeholder="Resource 2" />
           <label for="play-resource-description">Description</label>
-          <textarea id="play-resource-description" rows="2" placeholder="Why does this resource matter?"></textarea>
+          <textarea id="play-resource-description" rows="2" placeholder="Description of Resource 2"></textarea>
           <div class="form-actions">
             <button type="submit" id="play-resource-submit">Add resource</button>
             <button type="button" class="ghost-button" id="play-resource-cancel">Cancel</button>
@@ -329,7 +329,7 @@
           <h3 class="modal-form-title">Create Diary</h3>
           <p class="supporting">Describe the Diary that will hold this Memory. Once moved, the Memory can no longer gain new Experiences.</p>
           <label for="play-diary-description">Diary description</label>
-          <textarea id="play-diary-description" rows="2" placeholder="A sturdy, leather-bound book."></textarea>
+          <textarea id="play-diary-description" rows="2" placeholder="Description of Diary"></textarea>
           <div class="form-actions">
             <button type="submit" id="play-diary-submit">Create Diary and Move Memory</button>
             <button type="button" class="ghost-button" id="play-diary-cancel">Cancel</button>

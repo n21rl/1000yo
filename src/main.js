@@ -2,6 +2,7 @@ import { restoreCampaignState, serializeCampaignState } from "./campaign-state.j
 import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
 
 const STORAGE_KEY = "1000yo.vampires";
+const TEST_VAMPIRE_ID = "preset-test-vampire";
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
 const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
 const MIN_MEMORY_TRAITS = 2;
@@ -20,27 +21,6 @@ let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
 const collapsedRecords = new Set();
-const sampleMortals = [
-  ["Yvette", "A mortal sibling who still writes to me."],
-  ["Tomas", "A steward who knows too much."],
-  ["Lucien", "A former lover who still trusts me."],
-];
-const sampleSkills = [
-  ["Falconry", "Learned in the service of a minor lord."],
-  ["Swordplay", "Refined during years of border war."],
-  ["Court Etiquette", "Useful whenever I need to appear harmless."],
-];
-const sampleResources = [
-  ["Family Signet", "Proof of a claim nobody else believes."],
-  ["Black Mare", "A reliable horse for night journeys."],
-  ["Hidden Letters", "Correspondence that can ruin a household."],
-];
-const sampleLaterMemories = [
-  "I crossed the winter sea with trusted company and learned which promises survive hunger.",
-  "My finest weapon bought me safety, but only because an old ally chose my side.",
-  "I abandoned a refuge to protect the people tied to my mortal name.",
-];
-
 const MATERIAL_ICON_NODES = {
   add: [
     ["path", { d: "M12 5v14" }],
@@ -147,7 +127,6 @@ const elements = {
   stepProgress: document.querySelector("#step-progress"),
   stepPanels: [...document.querySelectorAll("[data-step-panel]")],
   backButton: document.querySelector("#back-button"),
-  autofillButton: document.querySelector("#autofill-button"),
   nextButton: document.querySelector("#next-button"),
   saveConfirmation: document.querySelector("#save-confirmation"),
   mortalForm: document.querySelector("#mortal-form"),
@@ -179,7 +158,6 @@ const elements = {
   memoryTraitsCurse: document.querySelector("#memory-traits-curse"),
   curseMemoryList: document.querySelector("#curse-memory-list"),
   identityMemoryList: document.querySelector("#identity-memory-list"),
-  playNameHeading: document.querySelector("#play-name-heading"),
   playMemoryList: document.querySelector("#play-memory-list"),
   diaryCard: document.querySelector("#diary-card"),
   diaryDescription: document.querySelector("#diary-description"),
@@ -238,14 +216,58 @@ const SCREEN_TITLES = {
   play: "Play",
 };
 
+const createTestVampireRecord = () => {
+  const testCharacter = new Character("Test Vampire");
+  testCharacter.addMemory("Memory 1");
+  testCharacter.addCharacter("Mortal 1", "Description of Mortal 1", "mortal");
+  testCharacter.addCharacter("Mortal 2", "Description of Mortal 2", "mortal");
+  testCharacter.addCharacter("Mortal 3", "Description of Mortal 3", "mortal");
+  testCharacter.addSkill("Skill 1", "Description of Skill 1");
+  testCharacter.addSkill("Skill 2", "Description of Skill 2");
+  testCharacter.addSkill("Skill 3", "Description of Skill 3");
+  testCharacter.addResource("Resource 1", "Description of Resource 1");
+  testCharacter.addResource("Resource 2", "Description of Resource 2");
+  testCharacter.addResource("Resource 3", "Description of Resource 3");
+  const initialTraits = [testCharacter.characters[0]?.id, testCharacter.skills[0]?.id].filter(Boolean);
+  testCharacter.addMemory("Experience 1 of Memory 2", initialTraits);
+  testCharacter.addMemory("Experience 1 of Memory 3", initialTraits);
+  testCharacter.addMemory("Experience 1 of Memory 4", initialTraits);
+  testCharacter.addCharacter("Immortal 1", "Description of Immortal 1", "immortal");
+  testCharacter.addMark("Mark 1", "Description of Mark 1");
+  const curseTraits = [testCharacter.characters[3]?.id, testCharacter.marks[0]?.id].filter(Boolean);
+  testCharacter.addMemory("Experience 1 of Memory 5", curseTraits);
+
+  return {
+    id: TEST_VAMPIRE_ID,
+    updatedAt: new Date().toISOString(),
+    isComplete: true,
+    data: {
+      name: testCharacter.name,
+      memories: testCharacter.memories,
+      skills: testCharacter.skills,
+      resources: testCharacter.resources,
+      characters: testCharacter.characters,
+      marks: testCharacter.marks,
+      diary: testCharacter.diary,
+    },
+    campaign: {
+      currentPrompt: 1,
+      visits: [],
+    },
+    isPreset: true,
+  };
+};
+
 const getStoredVampires = () => {
   try {
     const rawValue = safeLocalStorage.getItem(STORAGE_KEY);
     const parsed = rawValue ? JSON.parse(rawValue) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    const stored = Array.isArray(parsed) ? parsed : [];
+    if (!stored.some((entry) => entry?.id === TEST_VAMPIRE_ID)) stored.unshift(createTestVampireRecord());
+    return stored;
   } catch (error) {
     console.error(error);
-    return [];
+    return [createTestVampireRecord()];
   }
 };
 
@@ -377,25 +399,25 @@ const getTraitGroups = () => [
     title: "Mortals",
     options: character.characters
       .filter((entry) => entry.type === "mortal")
-      .map((entry) => ({ id: entry.id, label: entry.name, value: `Mortal: ${entry.name}` })),
+      .map((entry) => ({ id: entry.id, label: entry.name, value: entry.name, icon: "person" })),
   },
   {
     title: "Immortals",
     options: character.characters
       .filter((entry) => entry.type === "immortal")
-      .map((entry) => ({ id: entry.id, label: entry.name, value: `Immortal: ${entry.name}` })),
+      .map((entry) => ({ id: entry.id, label: entry.name, value: entry.name, icon: "person" })),
   },
   {
     title: "Skills",
-    options: character.skills.map((item) => ({ id: item.id, label: item.name, value: `Skill: ${item.name}` })),
+    options: character.skills.map((item) => ({ id: item.id, label: item.name, value: item.name, icon: "bolt" })),
   },
   {
     title: "Resources",
-    options: character.resources.map((item) => ({ id: item.id, label: item.name, value: `Resource: ${item.name}` })),
+    options: character.resources.map((item) => ({ id: item.id, label: item.name, value: item.name, icon: "deployed_code" })),
   },
   {
     title: "Marks",
-    options: character.marks.map((item) => ({ id: item.id, label: item.name, value: `Mark: ${item.name}` })),
+    options: character.marks.map((item) => ({ id: item.id, label: item.name, value: item.name, icon: "local_fire_department" })),
   },
 ];
 
@@ -407,13 +429,6 @@ const syncSelectedTraits = (selectedIds) => {
   const availableIds = new Set(getTraitGroups().flatMap((group) => group.options).map((option) => option.id));
   for (const id of [...selectedIds]) {
     if (!availableIds.has(id)) selectedIds.delete(id);
-  }
-};
-
-const selectAutofillTraits = (selectedIds) => {
-  selectedIds.clear();
-  for (const option of getTraitGroups().flatMap((group) => group.options).slice(0, MIN_MEMORY_TRAITS)) {
-    selectedIds.add(option.id);
   }
 };
 
@@ -539,28 +554,24 @@ const createInlineIconButton = (label, iconName, className, handler, { pressed =
 
 const renderTraitSelector = (container, selectedIds) => {
   container.innerHTML = "";
-
-  for (const group of getTraitGroups()) {
-    if (!group.options.length) continue;
-
-    const section = document.createElement("section");
-    section.className = "trait-group";
-    const title = document.createElement("p");
-    title.className = "trait-group-title";
-    title.textContent = group.title;
-    const pills = document.createElement("div");
-    pills.className = "trait-pills";
-
-    for (const option of group.options) {
-      const pill = document.createElement("span");
-      pill.className = selectedIds.has(option.id) ? "record-tag selected-trait" : "record-tag";
-      pill.textContent = option.value;
-      pills.append(pill);
-    }
-
-    section.append(title, pills);
-    container.append(section);
-  }
+  const options = getTraitGroups().flatMap((group) => group.options);
+  const pills = document.createElement("div");
+  pills.className = "trait-pills";
+  options.forEach((option) => {
+    const pill = document.createElement("button");
+    pill.type = "button";
+    pill.className = selectedIds.has(option.id) ? "record-tag selected-trait trait-select-pill" : "record-tag trait-select-pill";
+    pill.setAttribute("aria-pressed", String(selectedIds.has(option.id)));
+    pill.append(createMaterialIcon(option.icon, ["record-tag-icon"]), document.createTextNode(option.value));
+    pill.addEventListener("click", () => {
+      if (selectedIds.has(option.id)) selectedIds.delete(option.id);
+      else selectedIds.add(option.id);
+      markDirty();
+      render();
+    });
+    pills.append(pill);
+  });
+  if (options.length) container.append(pills);
 
   if (!container.childElementCount) {
     container.append(createEmptyRecord("Select characters, skills, resources, or marks to tag this experience."));
@@ -652,23 +663,24 @@ const renderMenu = () => {
 
     const actions = document.createElement("div");
     actions.className = "menu-record-actions";
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "menu-delete-control";
-    deleteButton.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const displayName = vampire.data?.name || "this vampire";
-      if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
-      const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id);
-      saveStoredVampires(remaining);
-      if (selectedVampireId === vampire.id) selectedVampireId = "";
-      setScreen("menu", { updateRoute: true });
-      render();
-    });
-    deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
-    deleteButton.replaceChildren(createMaterialIcon("trash"));
-
-    actions.append(deleteButton);
+    if (!vampire.isPreset) {
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "menu-delete-control";
+      deleteButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const displayName = vampire.data?.name || "this vampire";
+        if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
+        const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id && entry.id !== TEST_VAMPIRE_ID);
+        saveStoredVampires(remaining);
+        if (selectedVampireId === vampire.id) selectedVampireId = "";
+        setScreen("menu", { updateRoute: true });
+        render();
+      });
+      deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
+      deleteButton.replaceChildren(createMaterialIcon("trash"));
+      actions.append(deleteButton);
+    }
     item.append(body, actions);
     elements.vampireList.append(item);
   }
@@ -718,12 +730,14 @@ const getLostMemoryTags = (memory) => {
 
 const renderSelectedTraitPills = () => {
   elements.playSelectedTraits.innerHTML = "";
-  const labels = getSelectedTraitLabels(pendingExperienceTraitIds);
-  if (!labels.length) return;
-  labels.forEach((label) => {
+  const selected = getTraitGroups()
+    .flatMap((group) => group.options)
+    .filter((option) => pendingExperienceTraitIds.has(option.id));
+  if (!selected.length) return;
+  selected.forEach((option) => {
     const pill = document.createElement("span");
     pill.className = "record-tag selected-trait";
-    pill.textContent = label;
+    pill.append(createMaterialIcon(option.icon, ["record-tag-icon"]), document.createTextNode(option.value));
     elements.playSelectedTraits.append(pill);
   });
 };
@@ -1123,7 +1137,6 @@ const syncActiveModal = () => {
 
 const renderPlayLists = () => {
   syncActiveModal();
-  elements.playNameHeading.textContent = character.name || "Unnamed Vampire";
   syncSelectedTraits(pendingExperienceTraitIds);
   renderPlayMemoryList();
   renderTraitList(elements.playSkillList, character.skills, "skill");
@@ -1454,76 +1467,6 @@ const saveCurseMemoryStep = () => {
   return didSave;
 };
 
-const autofillCurrentStep = () => {
-  markDirty();
-  if (currentStep === 0) {
-    if (!cleanText(elements.nameInput.value)) {
-      elements.nameInput.value = "Test Vampire";
-      character.rename(elements.nameInput.value);
-    }
-    if (!cleanText(elements.identityMemoryInput.value) && character.memories.length === 0) {
-      elements.identityMemoryInput.value = "I was born to a fading noble house and learned early that affection is transactional.";
-    }
-    renderStep();
-    return;
-  }
-  if (currentStep === 1) {
-    while (character.mortalCount < 3) {
-      const [name, description] = sampleMortals[character.mortalCount] ?? [`Mortal ${character.mortalCount + 1}`, "A mortal tied to my earliest years."];
-      character.addCharacter(name, description, "mortal");
-    }
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 2) {
-    while (character.skills.length < 3) {
-      const [name, description] = sampleSkills[character.skills.length] ?? [`Skill ${character.skills.length + 1}`, "A practiced talent from mortal life."];
-      character.addSkill(name, description);
-    }
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 3) {
-    while (character.resources.length < 3) {
-      const [name, description] = sampleResources[character.resources.length] ?? [`Resource ${character.resources.length + 1}`, "A useful possession I can still rely on."];
-      character.addResource(name, description);
-    }
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 4) {
-    while (character.memories.length < 4) {
-      const sampleIndex = character.memories.length - 1;
-      selectAutofillTraits(selectedLaterTraitIds);
-      character.addMemory(sampleLaterMemories[sampleIndex] ?? `Another memory ${character.memories.length + 1}.`, getSelectedTraitLabels(selectedLaterTraitIds));
-    }
-    selectedLaterTraitIds.clear();
-    persistCurrentCharacter();
-    render();
-    return;
-  }
-  if (currentStep === 5) {
-    if (!cleanText(elements.immortalName.value) && character.immortalCount === 0) elements.immortalName.value = "Baron Severin";
-    if (!cleanText(elements.immortalDescription.value) && character.immortalCount === 0) elements.immortalDescription.value = "The immortal who dragged me into unlife.";
-    renderStep();
-    return;
-  }
-  if (currentStep === 6) {
-    if (!cleanText(elements.markInput.value) && character.marks.length === 0) elements.markInput.value = "My shadow lags a heartbeat behind me.";
-    if (!cleanText(elements.markDescription.value) && character.marks.length === 0) elements.markDescription.value = "It is most visible in torchlight and unsettles the faithful.";
-    renderStep();
-    return;
-  }
-  if (currentStep === 7) {
-    if (!cleanText(elements.memoryCurse.value) && character.memories.length === 4) elements.memoryCurse.value = "I pursued Baron Severin onto the chapel roof and rose again after the mortal blow.";
-    if (selectedCurseTraitIds.size < MIN_MEMORY_TRAITS) selectAutofillTraits(selectedCurseTraitIds);
-    render();
-  }
-};
-
 elements.newVampireButton.addEventListener("click", () => startNewVampire());
 elements.nameInput.addEventListener("input", () => {
   markDirty();
@@ -1612,7 +1555,6 @@ elements.backButton.addEventListener("click", () => {
   currentStep = Math.max(0, currentStep - 1);
   renderStep();
 });
-elements.autofillButton.addEventListener("click", () => autofillCurrentStep());
 elements.nextButton.addEventListener("click", () => {
   if (currentStep === 0) {
     if (!saveIdentityStep()) return;

@@ -360,16 +360,16 @@ export class Character {
     if (!cleanedId) return "";
 
     const characterEntry = this.characters.find((entry) => entry.id === cleanedId);
-    if (characterEntry) return `${characterEntry.type === "mortal" ? "Mortal" : "Immortal"}: ${characterEntry.name}`;
+    if (characterEntry) return characterEntry.name;
 
     const skill = this.skills.find((entry) => entry.id === cleanedId);
-    if (skill) return `Skill: ${skill.name}`;
+    if (skill) return skill.name;
 
     const resource = this.resources.find((entry) => entry.id === cleanedId);
-    if (resource) return `Resource: ${resource.name}`;
+    if (resource) return resource.name;
 
     const mark = this.marks.find((entry) => entry.id === cleanedId);
-    if (mark) return `Mark: ${mark.name}`;
+    if (mark) return mark.name;
 
     return "";
   }
@@ -458,18 +458,22 @@ export class Character {
       const label = `${entry.type === "mortal" ? "Mortal" : "Immortal"}: ${entry.name}`;
       lookup.set(entry.id, entry.id);
       lookup.set(label, entry.id);
+      lookup.set(entry.name, entry.id);
     });
     this.skills.forEach((entry) => {
       lookup.set(entry.id, entry.id);
       lookup.set(`Skill: ${entry.name}`, entry.id);
+      lookup.set(entry.name, entry.id);
     });
     this.resources.forEach((entry) => {
       lookup.set(entry.id, entry.id);
       lookup.set(`Resource: ${entry.name}`, entry.id);
+      lookup.set(entry.name, entry.id);
     });
     this.marks.forEach((entry) => {
       lookup.set(entry.id, entry.id);
       lookup.set(`Mark: ${entry.name}`, entry.id);
+      lookup.set(entry.name, entry.id);
     });
 
     return lookup;

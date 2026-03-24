@@ -172,9 +172,7 @@ h2 {
   flex: 0 0 auto;
 }
 
-.card-heading-actions .add-card-button,
-.card-heading-actions .ghost-button,
-.card-heading-actions .card-chevron-button {
+.card-heading-actions button {
   width: 1.9rem;
   min-width: 1.9rem;
   height: 1.9rem;
@@ -183,6 +181,10 @@ h2 {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border-radius: 0.55rem;
+  border: 1px solid #725145;
+  background: rgba(20, 14, 14, 0.72);
+  color: #f6eddc;
 }
 
 .card-heading-actions #memory-slots-meta {
@@ -190,9 +192,8 @@ h2 {
   text-align: center;
 }
 
-.card-chevron-button {
-  border: 1px solid #725145;
-  background: transparent;
+.card-heading-actions button:hover {
+  filter: brightness(1.08);
 }
 
 .card-title-row h2 {

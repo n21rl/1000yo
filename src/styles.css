@@ -150,18 +150,26 @@ h2 {
   border-radius: 1rem 1rem 0 0;
 }
 
+.play-card .section-heading {
+  flex-wrap: nowrap;
+}
+
 .section-heading:hover {
   background: rgba(255, 255, 255, 0.03);
 }
 
 .card-title-row {
   align-items: center;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .card-heading-actions {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  margin-left: auto;
+  flex: 0 0 auto;
 }
 
 .card-heading-actions .add-card-button,
@@ -761,6 +769,10 @@ button:disabled {
   .wizard-nav,
   .form-actions {
     flex-direction: column;
+  }
+
+  .play-card .section-heading {
+    flex-direction: row;
   }
 
   .card-title-row {

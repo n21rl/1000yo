@@ -162,7 +162,7 @@
                 <h2><span class="card-heading-icon" data-material-icon="sticky_note_2" aria-hidden="true"></span><span>Prompt</span></h2>
               </div>
               <div class="card-heading-actions">
-                <button type="button" id="next-prompt-button" class="ghost-button small-button">Roll</button>
+                <button type="button" id="next-prompt-button" class="ghost-button small-button" aria-label="Roll prompt">🎲</button>
                 <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
               </div>
             </div>
@@ -177,7 +177,6 @@
                 <h2><span class="card-heading-icon" data-material-icon="cognition" aria-hidden="true"></span><span>Memories</span></h2>
               </div>
               <div class="card-heading-actions">
-                <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory"></button>
                 <button type="button" id="decrease-memory-slots-button" class="ghost-button small-button" title="Remove memory slot">-</button>
                 <span id="memory-slots-meta" class="supporting">0/0</span>
                 <button type="button" id="increase-memory-slots-button" class="ghost-button small-button" title="Add memory slot">+</button>
@@ -201,6 +200,7 @@
                 </button>
                 <ul id="play-lost-memory-list" class="record-list" hidden></ul>
               </section>
+              <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory"></button>
             </div>
           </article>
 

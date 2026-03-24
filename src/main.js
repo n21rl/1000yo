@@ -2,6 +2,7 @@ import { restoreCampaignState, serializeCampaignState } from "./campaign-state.j
 import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
 
 const STORAGE_KEY = "1000yo.vampires";
+const TEST_VAMPIRE_ID = "preset-test-vampire";
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
 const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
 const MIN_MEMORY_TRAITS = 2;
@@ -121,7 +122,6 @@ const elements = {
   playScreen: document.querySelector("#play-screen"),
   vampireList: document.querySelector("#vampire-list"),
   newVampireButton: document.querySelector("#new-vampire-button"),
-  loadTestVampireButton: document.querySelector("#load-test-vampire-button"),
   nameInput: document.querySelector("#name"),
   identityMemoryInput: document.querySelector("#memory-identity"),
   stepProgress: document.querySelector("#step-progress"),
@@ -216,14 +216,58 @@ const SCREEN_TITLES = {
   play: "Play",
 };
 
+const createTestVampireRecord = () => {
+  const testCharacter = new Character("Test Vampire");
+  testCharacter.addMemory("Memory 1");
+  testCharacter.addCharacter("Mortal 1", "Description of Mortal 1", "mortal");
+  testCharacter.addCharacter("Mortal 2", "Description of Mortal 2", "mortal");
+  testCharacter.addCharacter("Mortal 3", "Description of Mortal 3", "mortal");
+  testCharacter.addSkill("Skill 1", "Description of Skill 1");
+  testCharacter.addSkill("Skill 2", "Description of Skill 2");
+  testCharacter.addSkill("Skill 3", "Description of Skill 3");
+  testCharacter.addResource("Resource 1", "Description of Resource 1");
+  testCharacter.addResource("Resource 2", "Description of Resource 2");
+  testCharacter.addResource("Resource 3", "Description of Resource 3");
+  const initialTraits = [testCharacter.characters[0]?.id, testCharacter.skills[0]?.id].filter(Boolean);
+  testCharacter.addMemory("Experience 1 of Memory 2", initialTraits);
+  testCharacter.addMemory("Experience 1 of Memory 3", initialTraits);
+  testCharacter.addMemory("Experience 1 of Memory 4", initialTraits);
+  testCharacter.addCharacter("Immortal 1", "Description of Immortal 1", "immortal");
+  testCharacter.addMark("Mark 1", "Description of Mark 1");
+  const curseTraits = [testCharacter.characters[3]?.id, testCharacter.marks[0]?.id].filter(Boolean);
+  testCharacter.addMemory("Experience 1 of Memory 5", curseTraits);
+
+  return {
+    id: TEST_VAMPIRE_ID,
+    updatedAt: new Date().toISOString(),
+    isComplete: true,
+    data: {
+      name: testCharacter.name,
+      memories: testCharacter.memories,
+      skills: testCharacter.skills,
+      resources: testCharacter.resources,
+      characters: testCharacter.characters,
+      marks: testCharacter.marks,
+      diary: testCharacter.diary,
+    },
+    campaign: {
+      currentPrompt: 1,
+      visits: [],
+    },
+    isPreset: true,
+  };
+};
+
 const getStoredVampires = () => {
   try {
     const rawValue = safeLocalStorage.getItem(STORAGE_KEY);
     const parsed = rawValue ? JSON.parse(rawValue) : [];
-    return Array.isArray(parsed) ? parsed : [];
+    const stored = Array.isArray(parsed) ? parsed : [];
+    if (!stored.some((entry) => entry?.id === TEST_VAMPIRE_ID)) stored.unshift(createTestVampireRecord());
+    return stored;
   } catch (error) {
     console.error(error);
-    return [];
+    return [createTestVampireRecord()];
   }
 };
 
@@ -386,53 +430,6 @@ const syncSelectedTraits = (selectedIds) => {
   for (const id of [...selectedIds]) {
     if (!availableIds.has(id)) selectedIds.delete(id);
   }
-};
-
-const selectTestVampireTraits = (selectedIds) => {
-  selectedIds.clear();
-  for (const option of getTraitGroups().flatMap((group) => group.options).slice(0, MIN_MEMORY_TRAITS)) {
-    selectedIds.add(option.id);
-  }
-};
-
-const loadTestVampire = async () => {
-  character = new Character("Test Vampire");
-  selectedVampireId = crypto.randomUUID();
-  hasSavedSetup = false;
-  currentStep = 0;
-  selectedLaterTraitIds.clear();
-  selectedCurseTraitIds.clear();
-  resetPromptState();
-  resetCreationForms();
-  resetPlayState();
-  resetPlayForms();
-
-  character.addMemory("Memory 1");
-  character.addCharacter("Mortal 1", "Description of Mortal 1", "mortal");
-  character.addCharacter("Mortal 2", "Description of Mortal 2", "mortal");
-  character.addCharacter("Mortal 3", "Description of Mortal 3", "mortal");
-  character.addSkill("Skill 1", "Description of Skill 1");
-  character.addSkill("Skill 2", "Description of Skill 2");
-  character.addSkill("Skill 3", "Description of Skill 3");
-  character.addResource("Resource 1", "Description of Resource 1");
-  character.addResource("Resource 2", "Description of Resource 2");
-  character.addResource("Resource 3", "Description of Resource 3");
-
-  selectTestVampireTraits(selectedLaterTraitIds);
-  character.addMemory("Experience 1 of Memory 2", getSelectedTraitLabels(selectedLaterTraitIds));
-  character.addMemory("Experience 1 of Memory 3", getSelectedTraitLabels(selectedLaterTraitIds));
-  character.addMemory("Experience 1 of Memory 4", getSelectedTraitLabels(selectedLaterTraitIds));
-
-  character.addCharacter("Immortal 1", "Description of Immortal 1", "immortal");
-  character.addMark("Mark 1", "Description of Mark 1");
-  selectTestVampireTraits(selectedCurseTraitIds);
-  character.addMemory("Experience 1 of Memory 5", getSelectedTraitLabels(selectedCurseTraitIds));
-
-  selectedLaterTraitIds.clear();
-  selectedCurseTraitIds.clear();
-  persistCurrentCharacter();
-  render();
-  await startPlay(true);
 };
 
 const createEmptyRecord = (message) => {
@@ -666,23 +663,24 @@ const renderMenu = () => {
 
     const actions = document.createElement("div");
     actions.className = "menu-record-actions";
-    const deleteButton = document.createElement("button");
-    deleteButton.type = "button";
-    deleteButton.className = "menu-delete-control";
-    deleteButton.addEventListener("click", (event) => {
-      event.stopPropagation();
-      const displayName = vampire.data?.name || "this vampire";
-      if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
-      const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id);
-      saveStoredVampires(remaining);
-      if (selectedVampireId === vampire.id) selectedVampireId = "";
-      setScreen("menu", { updateRoute: true });
-      render();
-    });
-    deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
-    deleteButton.replaceChildren(createMaterialIcon("trash"));
-
-    actions.append(deleteButton);
+    if (!vampire.isPreset) {
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.className = "menu-delete-control";
+      deleteButton.addEventListener("click", (event) => {
+        event.stopPropagation();
+        const displayName = vampire.data?.name || "this vampire";
+        if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
+        const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id && entry.id !== TEST_VAMPIRE_ID);
+        saveStoredVampires(remaining);
+        if (selectedVampireId === vampire.id) selectedVampireId = "";
+        setScreen("menu", { updateRoute: true });
+        render();
+      });
+      deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
+      deleteButton.replaceChildren(createMaterialIcon("trash"));
+      actions.append(deleteButton);
+    }
     item.append(body, actions);
     elements.vampireList.append(item);
   }
@@ -1470,9 +1468,6 @@ const saveCurseMemoryStep = () => {
 };
 
 elements.newVampireButton.addEventListener("click", () => startNewVampire());
-elements.loadTestVampireButton?.addEventListener("click", () => {
-  void loadTestVampire();
-});
 elements.nameInput.addEventListener("input", () => {
   markDirty();
   character.rename(elements.nameInput.value);

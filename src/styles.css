@@ -191,6 +191,10 @@ h2 {
   filter: brightness(1.08);
 }
 
+.card-heading-actions .card-chevron-button:hover {
+  filter: none;
+}
+
 .card-title-row h2 {
   display: flex;
   align-items: center;

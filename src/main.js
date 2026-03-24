@@ -795,20 +795,18 @@ const renderTraitList = (listElement, items, kind) => {
         createInlineIconButton(item.lost ? `Restore ${kind}` : `Strike out ${kind}`, "x", "record-inline-button", toggleStruck, { pressed: item.lost }),
       );
     }
-    if (hasSubitems) {
-      actionRow.append(createInlineIconButton(
-        collapsed ? `Expand ${kind}` : `Collapse ${kind}`,
-        "keyboard_arrow_down",
-        "record-inline-button",
-        toggleTraitCollapsed,
-        { pressed: collapsed },
-      ));
-    }
+    actionRow.append(createInlineIconButton(
+      collapsed ? `Expand ${kind}` : `Collapse ${kind}`,
+      "keyboard_arrow_down",
+      "record-inline-button",
+      toggleTraitCollapsed,
+      { pressed: collapsed },
+    ));
     titleRow.append(actionRow);
 
     contentColumn.append(titleRow);
     const details = document.createElement("div");
-    details.hidden = hasSubitems ? collapsed : false;
+    details.hidden = collapsed;
     if (item.description) {
       const text = document.createElement("p");
       text.textContent = item.description;

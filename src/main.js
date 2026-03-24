@@ -448,15 +448,17 @@ const collapseSettledRecords = () => {
   });
 };
 
-const createMaterialIcon = (name, classNames = []) => {
-  const resolvedName = ({
-    plus: "add",
-    x: "close",
-    square: "check_box_outline_blank",
-    "square-check": "check_box",
-    notebook: "menu_book",
-    trash: "delete",
-  })[name] ?? name;
+const resolveMaterialIconName = (name) => ({
+  plus: "add",
+  x: "close",
+  square: "check_box_outline_blank",
+  "square-check": "check_box",
+  notebook: "menu_book",
+  trash: "delete",
+})[name] ?? name;
+
+const createMaterialFallbackIcon = (name, classNames = []) => {
+  const resolvedName = resolveMaterialIconName(name);
   const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svg.setAttribute("viewBox", "0 0 24 24");
   svg.setAttribute("fill", "none");
@@ -473,6 +475,21 @@ const createMaterialIcon = (name, classNames = []) => {
     svg.append(node);
   });
   return svg;
+};
+
+const createMaterialIcon = (name, classNames = []) => {
+  const resolvedName = resolveMaterialIconName(name);
+  const img = document.createElement("img");
+  img.classList.add("material-icon", ...classNames);
+  img.alt = "";
+  img.setAttribute("aria-hidden", "true");
+  img.decoding = "async";
+  img.loading = "lazy";
+  img.src = `https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/${resolvedName}/default/24px.svg`;
+  img.addEventListener("error", () => {
+    img.replaceWith(createMaterialFallbackIcon(resolvedName, classNames));
+  }, { once: true });
+  return img;
 };
 
 const hydrateStaticIcons = () => {

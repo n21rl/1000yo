@@ -20,6 +20,12 @@ import {
   bindHashChange,
   bindModalCloseEvents,
 } from "./events/global-events.js";
+import {
+  applyScreenVisibility,
+  getRouteForScreen,
+  updateDocumentTitle,
+} from "./navigation.js";
+import { parseRouteHash } from "./router.js";
 
 const STORAGE_KEY = "1000yo.vampires";
 const TEST_VAMPIRE_ID = "preset-test-vampire";
@@ -72,12 +78,6 @@ const safeLocalStorage = {
 const elements = getElements();
 
 const totalSteps = elements.stepPanels.length;
-const SCREEN_TITLES = {
-  menu: "Start Menu",
-  creation: "Vampire Creation",
-  play: "Play",
-};
-
 const createTestVampireRecord = () => {
   const testCharacter = new Character("Test Vampire");
   testCharacter.addMemory("Memory 1");
@@ -196,26 +196,13 @@ const resetPromptState = () => {
   promptState.visits = new Map();
 };
 
-const getRouteForScreen = (screen) => {
-  if (screen === "creation") return "#/create";
-  if (screen === "play" && selectedVampireId) return `#/play/${selectedVampireId}`;
-  return "#/menu";
-};
-
-const updateDocumentTitle = () => {
-  const title = SCREEN_TITLES[currentScreen] ?? "1000yo";
-  document.title = `${title} · 1000yo`;
-};
-
 const setScreen = (screen, { updateRoute = false, replaceRoute = false } = {}) => {
   currentScreen = screen;
-  elements.menuScreen.hidden = currentScreen !== "menu";
-  elements.creationScreen.hidden = currentScreen !== "creation";
-  elements.playScreen.hidden = currentScreen !== "play";
-  updateDocumentTitle();
+  applyScreenVisibility(currentScreen, elements);
+  updateDocumentTitle(currentScreen);
 
   if (updateRoute) {
-    const nextRoute = getRouteForScreen(screen);
+    const nextRoute = getRouteForScreen(screen, selectedVampireId);
     if (window.location.hash !== nextRoute) {
       if (replaceRoute) window.location.replace(nextRoute);
       else window.location.hash = nextRoute;
@@ -1117,18 +1104,8 @@ const render = () => {
   renderCollapsibleCards();
 };
 
-const parseRoute = () => {
-  const hash = window.location.hash || "#/menu";
-  const match = hash.match(/^#\/([a-z]+)(?:\/([^/]+))?$/i);
-  const route = match?.[1]?.toLowerCase() ?? "menu";
-  const routeId = match?.[2] ?? "";
-  if (route === "create") return { screen: "creation", vampireId: "" };
-  if (route === "play") return { screen: "play", vampireId: routeId };
-  return { screen: "menu", vampireId: "" };
-};
-
 const handleRouteChange = async () => {
-  const { screen, vampireId } = parseRoute();
+  const { screen, vampireId } = parseRouteHash(window.location.hash);
   if (screen === "menu") {
     setScreen("menu");
     render();

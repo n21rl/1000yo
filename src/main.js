@@ -62,6 +62,12 @@ const MATERIAL_ICON_NODES = {
     ["path", { d: "M6 5.5V22" }],
     ["path", { d: "M9.5 7H16" }],
   ],
+  book_2: [
+    ["path", { d: "M5 5.5A2.5 2.5 0 0 1 7.5 3H19v17H7.5A2.5 2.5 0 0 0 5 20" }],
+    ["path", { d: "M5 5.5V20" }],
+    ["path", { d: "M8.5 8H15" }],
+    ["path", { d: "M8.5 12H15" }],
+  ],
   delete: [
     ["path", { d: "M5 7h14" }],
     ["path", { d: "M9 7V5h6v2" }],
@@ -453,7 +459,7 @@ const resolveMaterialIconName = (name) => ({
   x: "close",
   square: "check_box_outline_blank",
   "square-check": "check_box",
-  notebook: "menu_book",
+  notebook: "book_2",
   trash: "delete",
 })[name] ?? name;
 

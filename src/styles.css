@@ -1,5 +1,5 @@
 :root {
-  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-family: "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
   color: #f6eddc;
   background:
     radial-gradient(circle at top, rgba(167, 39, 51, 0.28), transparent 36%),
@@ -47,7 +47,8 @@ p {
 h1,
 h2,
 .wizard-title {
-  font-family: "Georgia", "Times New Roman", serif;
+  font-family: "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
+  font-weight: 500;
 }
 
 h1 {
@@ -177,7 +178,7 @@ h2 {
 
 .material-icon,
 .card-heading-icon {
-  color: #e9c78f;
+  color: #f6eddc;
 }
 
 .card-toggle-indicator {

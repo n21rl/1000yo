@@ -181,6 +181,10 @@ h2 {
   color: #f6eddc;
 }
 
+img.material-icon {
+  filter: brightness(0) saturate(100%) invert(93%) sepia(20%) saturate(286%) hue-rotate(336deg) brightness(106%) contrast(97%);
+}
+
 .card-toggle-indicator {
   width: 1.25rem;
   height: 1.25rem;
@@ -194,6 +198,10 @@ h2 {
   color: inherit;
 }
 
+.card-toggle-indicator img.material-icon {
+  filter: brightness(0) saturate(100%) invert(84%) sepia(11%) saturate(533%) hue-rotate(337deg) brightness(96%) contrast(90%);
+}
+
 .section-heading[aria-expanded="true"] .card-toggle-indicator,
 .subcard-header[aria-expanded="true"] .card-toggle-indicator {
   transform: rotate(180deg);
@@ -202,6 +210,11 @@ h2 {
 .section-heading:hover .card-toggle-indicator,
 .subcard-header:hover .card-toggle-indicator {
   color: #fff5e2;
+}
+
+.section-heading:hover .card-toggle-indicator img.material-icon,
+.subcard-header:hover .card-toggle-indicator img.material-icon {
+  filter: brightness(0) saturate(100%) invert(97%) sepia(17%) saturate(323%) hue-rotate(304deg) brightness(107%) contrast(103%);
 }
 
 .wizard-title {

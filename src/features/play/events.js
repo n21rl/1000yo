@@ -7,7 +7,6 @@ export const bindPlayEvents = ({
   persistCurrentCharacter,
   render,
   collapsedCards,
-  maxMemories,
   setActiveModal,
   openExperienceComposer,
   getCharacter,
@@ -34,7 +33,7 @@ export const bindPlayEvents = ({
 
   elements.addMemoryButton.addEventListener("click", (event) => {
     event.stopPropagation();
-    if (getCharacter().memories.length >= maxMemories) return;
+    if (getCharacter().activeMemories.length >= getCharacter().memorySlots) return;
     collapsedCards.delete("memories");
     setActiveModal("memory");
     openExperienceComposer("new");
@@ -78,6 +77,38 @@ export const bindPlayEvents = ({
     event.stopPropagation();
     openTraitForm("character");
   });
+  elements.addMarkButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    openTraitForm("mark");
+  });
+  elements.editPlayNameButton.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const nextName = window.prompt("Edit vampire name", getCharacter().name);
+    if (nextName === null) return;
+    const didSave = getCharacter().rename(nextName);
+    if (!didSave) return;
+    markDirty();
+    render();
+  });
+  elements.increaseMemorySlotsButton.addEventListener("click", () => {
+    if (!window.confirm("Add a memory slot?")) return;
+    const didSave = getCharacter().setMemorySlots(getCharacter().memorySlots + 1);
+    if (!didSave) return;
+    markDirty();
+    render();
+  });
+  elements.decreaseMemorySlotsButton.addEventListener("click", () => {
+    const target = getCharacter().memorySlots - 1;
+    if (target < 1) return;
+    if (!window.confirm("Remove a memory slot? This can block new memories until slots are free.")) return;
+    const didSave = getCharacter().setMemorySlots(target);
+    if (!didSave) {
+      window.alert("Cannot remove a slot while active memories exceed the target slot count.");
+      return;
+    }
+    markDirty();
+    render();
+  });
 
   elements.playSkillForm.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -96,7 +127,12 @@ export const bindPlayEvents = ({
     event.preventDefault();
     const editingTrait = getEditingTrait();
     const didSave = editingTrait?.kind === "resource"
-      ? getCharacter().updateResource(editingTrait.index, elements.playResourceName.value, elements.playResourceDescription.value)
+      ? getCharacter().updateResource(
+        editingTrait.index,
+        elements.playResourceName.value,
+        elements.playResourceDescription.value,
+        elements.playResourceStationary.checked,
+      )
       : getCharacter().addResource(elements.playResourceName.value, elements.playResourceDescription.value);
     if (!didSave) return;
     markDirty();
@@ -130,6 +166,19 @@ export const bindPlayEvents = ({
     elements.playCharacterForm.reset();
     render();
   });
+  elements.playMarkForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const editingTrait = getEditingTrait();
+    const didSave = editingTrait?.kind === "mark"
+      ? getCharacter().updateMark(editingTrait.index, elements.playMarkName.value, elements.playMarkDescription.value)
+      : getCharacter().addMark(elements.playMarkName.value, elements.playMarkDescription.value);
+    if (!didSave) return;
+    markDirty();
+    setActiveModal(null);
+    setEditingTrait(null);
+    elements.playMarkForm.reset();
+    render();
+  });
 
   elements.playSkillCancel.addEventListener("click", (event) => {
     event.stopPropagation();
@@ -160,6 +209,14 @@ export const bindPlayEvents = ({
     setActiveModal(null);
     setPendingDiaryMemoryId("");
     elements.playDiaryForm.reset();
+    render();
+  });
+  elements.playMarkCancel.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setActiveModal(null);
+    const editingTrait = getEditingTrait();
+    setEditingTrait(editingTrait?.kind === "mark" ? null : editingTrait);
+    elements.playMarkForm.reset();
     render();
   });
 };

@@ -1,4 +1,4 @@
-const MAX_MEMORIES = 5;
+const DEFAULT_MEMORY_SLOTS = 5;
 const MAX_EXPERIENCES_PER_MEMORY = 3;
 const MAX_DIARY_MEMORIES = 4;
 const CHARACTER_TYPES = new Set(["mortal", "immortal"]);
@@ -19,6 +19,11 @@ const createTrackableItem = (item = {}, prefix = "trait") => ({
   description: cleanText(item?.description),
   used: Boolean(item?.used),
   lost: Boolean(item?.lost),
+});
+
+const createResource = (item = {}) => ({
+  ...createTrackableItem(item, "resource"),
+  stationary: Boolean(item?.stationary),
 });
 
 const createMark = (item = {}) => ({
@@ -73,9 +78,16 @@ const createDiary = (diary = {}, resources = []) => {
   return { resourceId, memoryIds };
 };
 
+const parseMemorySlots = (value) => {
+  const parsed = Number.parseInt(value, 10);
+  if (!Number.isFinite(parsed) || parsed < 1) return DEFAULT_MEMORY_SLOTS;
+  return parsed;
+};
+
 export class Character {
   constructor(name = "") {
     this.name = cleanText(name);
+    this.memorySlots = DEFAULT_MEMORY_SLOTS;
     this.memories = [];
     this.skills = [];
     this.resources = [];
@@ -86,11 +98,12 @@ export class Character {
 
   static from(data = {}) {
     const character = new Character(data.name);
+    character.memorySlots = parseMemorySlots(data.memorySlots);
     character.skills = Array.isArray(data.skills)
       ? data.skills.map((item) => createTrackableItem(item, "skill")).filter((item) => Boolean(item.name))
       : [];
     character.resources = Array.isArray(data.resources)
-      ? data.resources.map((item) => createTrackableItem(item, "resource")).filter((item) => Boolean(item.name))
+      ? data.resources.map((item) => createResource(item)).filter((item) => Boolean(item.name))
       : [];
     character.characters = Array.isArray(data.characters)
       ? data.characters
@@ -127,7 +140,7 @@ export class Character {
           return createMemory(memory, traitLookup);
         })
         .filter((memory) => memory.experiences.length > 0)
-        .slice(0, MAX_MEMORIES + MAX_DIARY_MEMORIES)
+        .slice(0, character.memorySlots + MAX_DIARY_MEMORIES)
       : [];
     character.diary = createDiary(data.diary, character.resources);
     character.#syncDiaryState();
@@ -137,6 +150,13 @@ export class Character {
   rename(name) {
     this.name = cleanText(name);
     return Boolean(this.name);
+  }
+
+  setMemorySlots(nextSlots) {
+    const slots = parseMemorySlots(nextSlots);
+    if (this.activeMemories.length > slots) return false;
+    this.memorySlots = slots;
+    return true;
   }
 
   addMemory(experience, traitIds = [], memoryId = null) {
@@ -150,7 +170,7 @@ export class Character {
       return true;
     }
 
-    if (this.activeMemories.length >= MAX_MEMORIES) return false;
+    if (this.activeMemories.length >= this.memorySlots) return false;
     this.memories.push({
       id: createId("memory"),
       experiences: [cleanedExperience],
@@ -158,6 +178,17 @@ export class Character {
       storedInDiary: false,
       lostReason: "",
     });
+    return true;
+  }
+
+  updateMemoryExperience(memoryIndex, experienceIndex, text) {
+    const memory = this.memories[memoryIndex];
+    if (!memory) return false;
+    const experience = memory.experiences[experienceIndex];
+    if (!experience) return false;
+    const cleanedText = cleanText(text);
+    if (!cleanedText) return false;
+    experience.text = cleanedText;
     return true;
   }
 
@@ -202,11 +233,11 @@ export class Character {
   }
 
   addResource(name, description = "") {
-    return this.#addDetailItem(this.resources, name, description, "resource");
+    return this.#addDetailItem(this.resources, name, description, "resource", { stationary: false });
   }
 
-  updateResource(index, name, description = "") {
-    return this.#updateTrackableItem(this.resources, index, name, description);
+  updateResource(index, name, description = "", stationary = false) {
+    return this.#updateTrackableItem(this.resources, index, name, description, { stationary });
   }
 
   removeResource(index) {
@@ -244,6 +275,7 @@ export class Character {
       description: cleanedDescription,
       used: false,
       lost: false,
+      stationary: false,
     });
     const resourceId = this.resources.at(-1)?.id;
     if (!resourceId) return false;
@@ -290,6 +322,16 @@ export class Character {
     const cleanedDescription = cleanText(description);
     if (!cleanedName) return false;
     this.marks.push({ id: createId("mark"), name: cleanedName, description: cleanedDescription });
+    return true;
+  }
+
+  updateMark(index, name, description = "") {
+    const item = this.marks[index];
+    const cleanedName = cleanText(name);
+    const cleanedDescription = cleanText(description);
+    if (!item || !cleanedName) return false;
+    item.name = cleanedName;
+    item.description = cleanedDescription;
     return true;
   }
 
@@ -342,7 +384,7 @@ export class Character {
 
   getSetupRequirements() {
     return [
-      buildRequirement("Memories", this.memories.length, MAX_MEMORIES),
+      buildRequirement("Memories", this.memories.length, DEFAULT_MEMORY_SLOTS),
       buildRequirement("Skills", this.skills.length, 3),
       buildRequirement("Resources", this.resources.length, 3),
       buildRequirement("Mortals", this.mortalCount, 3),
@@ -411,7 +453,7 @@ export class Character {
     if (!this.diary.memoryIds.length || !this.diaryResource) this.#clearDiaryState();
   }
 
-  #addDetailItem(list, name, description, prefix) {
+  #addDetailItem(list, name, description, prefix, extra = {}) {
     const cleanedName = cleanText(name);
     const cleanedDescription = cleanText(description);
 
@@ -423,17 +465,19 @@ export class Character {
       description: cleanedDescription,
       used: false,
       lost: false,
+      ...extra,
     });
     return true;
   }
 
-  #updateTrackableItem(list, index, name, description) {
+  #updateTrackableItem(list, index, name, description, extra = {}) {
     const item = list[index];
     const cleanedName = cleanText(name);
     const cleanedDescription = cleanText(description);
     if (!item || !cleanedName) return false;
     item.name = cleanedName;
     item.description = cleanedDescription;
+    Object.assign(item, extra);
     return true;
   }
 
@@ -480,4 +524,4 @@ export class Character {
   }
 }
 
-export { MAX_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_DIARY_MEMORIES };
+export { DEFAULT_MEMORY_SLOTS as MAX_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_DIARY_MEMORIES };

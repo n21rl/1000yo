@@ -151,6 +151,10 @@
       </section>
 
       <section id="play-screen" class="play-layout" hidden>
+        <div class="play-header">
+          <h2><span id="play-name">Unnamed Vampire</span></h2>
+          <button type="button" id="edit-play-name-button" class="ghost-button small-button">Edit name</button>
+        </div>
         <section class="play-grid">
           <article class="card play-card prompt-card" data-card-key="prompt">
             <div class="section-heading play-static-heading">
@@ -188,6 +192,13 @@
                 </button>
                 <ul id="play-lost-memory-list" class="record-list" hidden></ul>
               </section>
+              <div class="memory-slots-toolbar">
+                <span id="memory-slots-meta" class="supporting">Slots 0/0</span>
+                <div class="memory-slot-actions">
+                  <button type="button" id="decrease-memory-slots-button" class="ghost-button small-button" title="Remove memory slot">- Slot</button>
+                  <button type="button" id="increase-memory-slots-button" class="ghost-button small-button" title="Add memory slot">+ Slot</button>
+                </div>
+              </div>
               <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory"></button>
             </div>
           </article>
@@ -253,6 +264,7 @@
               </div>
               <div data-card-content hidden>
                 <ul id="play-mark-list" class="record-list"></ul>
+                <button type="button" id="add-mark-button" class="add-card-button" title="Add mark" aria-label="Add mark"></button>
               </div>
             </article>
           </div>
@@ -314,9 +326,22 @@
           <input id="play-resource-name" placeholder="Enter resource name" />
           <label for="play-resource-description">Description</label>
           <textarea id="play-resource-description" rows="2" placeholder="Why this resource matters"></textarea>
+          <label class="modal-checkbox-row"><input type="checkbox" id="play-resource-stationary" /> Stationary resource</label>
           <div class="form-actions">
             <button type="submit" id="play-resource-submit">Add resource</button>
             <button type="button" class="ghost-button" id="play-resource-cancel">Cancel</button>
+          </div>
+        </form>
+
+        <form id="play-mark-form" class="stack compact-form modal-form" hidden>
+          <h3 id="play-mark-form-title" class="modal-form-title">Add mark</h3>
+          <label for="play-mark-name">Mark</label>
+          <input id="play-mark-name" placeholder="Enter mark name" />
+          <label for="play-mark-description">Description</label>
+          <textarea id="play-mark-description" rows="2" placeholder="Describe the mark"></textarea>
+          <div class="form-actions">
+            <button type="submit" id="play-mark-submit">Add mark</button>
+            <button type="button" class="ghost-button" id="play-mark-cancel">Cancel</button>
           </div>
         </form>
 

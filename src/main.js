@@ -134,6 +134,7 @@ const persistStoredVampires = (vampires) => saveStoredVampires(safeLocalStorage,
 
 const serializeCharacter = (currentCharacter) => ({
   name: currentCharacter.name,
+  memorySlots: currentCharacter.memorySlots,
   memories: currentCharacter.memories,
   skills: currentCharacter.skills,
   resources: currentCharacter.resources,
@@ -192,6 +193,7 @@ const resetPlayForms = () => {
   elements.playResourceForm.reset();
   elements.playDiaryForm.reset();
   elements.playCharacterForm.reset();
+  elements.playMarkForm.reset();
 };
 
 const resetPromptState = () => {
@@ -466,7 +468,13 @@ const togglePendingTrait = (traitId) => {
   renderPlayLists();
 };
 
-const formatStatusTags = () => [];
+const formatStatusTags = (item, kind) => {
+  const tags = [];
+  if (kind === "resource" && item.stationary) tags.push("Stationary");
+  if (item.used) tags.push("Checked");
+  if (item.lost) tags.push("Struck");
+  return tags;
+};
 
 const getLostMemoryTags = (memory) => {
   if (memory.lostReason === "diary") return ["Lost with Diary"];
@@ -550,18 +558,6 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   titleGroup.append(title);
   titleRow.append(titleGroup);
 
-  titleRow.append(createInlineIconButton(
-    lost ? "Restore memory" : "Strike out memory",
-    "x",
-    "record-inline-button record-strike-toggle",
-    () => {
-      character.setMemoryLost(memoryIndex, !memory.lost);
-      markDirty();
-      render();
-    },
-    { pressed: lost },
-  ));
-
   body.append(titleRow);
   const details = document.createElement("div");
   details.hidden = collapsed;
@@ -573,6 +569,22 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
     const text = document.createElement("p");
     text.textContent = experience.text;
     experienceItem.append(text);
+    if (!lost) {
+      experienceItem.append(createInlineIconButton(
+        "Edit experience",
+        "edit",
+        "record-inline-button",
+        () => {
+          const experienceIndex = memory.experiences.findIndex((entry) => entry === experience);
+          const updatedText = window.prompt("Edit experience text", experience.text);
+          if (updatedText === null) return;
+          const didSave = character.updateMemoryExperience(memoryIndex, experienceIndex, updatedText);
+          if (!didSave) return;
+          markDirty();
+          render();
+        },
+      ));
+    }
     experienceList.append(experienceItem);
   });
   details.append(experienceList);
@@ -590,9 +602,9 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
     details.append(tags);
   }
 
+  const footer = document.createElement("div");
+  footer.className = "record-footer-actions";
   if (!lost && !memory.storedInDiary && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY) {
-    const footer = document.createElement("div");
-    footer.className = "record-footer-actions";
     if (character.diaryMemories.length < MAX_DIARY_MEMORIES) {
       footer.append(createButton("Move to Diary", "add-card-button memory-diary-button", () => {
         if (!window.confirm("Move this Memory to the Diary? This cannot be undone. The Memory can no longer gain new Experiences.")) return;
@@ -617,8 +629,19 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
       icon: "plus",
       title: "Add experience",
     }));
-    details.append(footer);
   }
+  footer.append(createInlineIconButton(
+    lost ? "Restore memory" : "Strike out memory",
+    "x",
+    "record-inline-button",
+    () => {
+      character.setMemoryLost(memoryIndex, !memory.lost);
+      markDirty();
+      render();
+    },
+    { pressed: lost },
+  ));
+  details.append(footer);
   body.append(details);
   item.append(body);
   return item;
@@ -699,40 +722,45 @@ const renderTraitList = (listElement, items, kind) => {
       toggleTagSelection();
     });
 
-    const bodyInner = document.createElement("div");
-    bodyInner.className = "record-body record-trait-layout";
+    const toggleChecked = () => {
+      if (kind === "mark") return;
+      const nextUsed = !item.used;
+      if (kind === "character") {
+        character.setCharacterUsed(index, nextUsed);
+        if (nextUsed) character.setCharacterLost(index, false);
+      }
+      if (kind === "skill") {
+        character.setSkillUsed(index, nextUsed);
+        if (nextUsed) character.setSkillLost(index, false);
+      }
+      if (kind === "resource") {
+        character.setResourceUsed(index, nextUsed);
+        if (nextUsed) character.setResourceLost(index, false);
+      }
+      markDirty();
+      render();
+    };
+    const toggleStruck = () => {
+      if (kind === "mark") return;
+      const nextLost = !item.lost;
+      if (kind === "character") {
+        character.setCharacterLost(index, nextLost);
+        if (nextLost) character.setCharacterUsed(index, false);
+      }
+      if (kind === "skill") {
+        character.setSkillLost(index, nextLost);
+        if (nextLost) character.setSkillUsed(index, false);
+      }
+      if (kind === "resource") {
+        character.setResourceLost(index, nextLost);
+        if (nextLost) character.setResourceUsed(index, false);
+      }
+      markDirty();
+      render();
+    };
 
-    const checkSlot = document.createElement("div");
-    checkSlot.className = "record-check-slot";
-    if (!item.lost) {
-      checkSlot.append(createInlineIconButton(
-        item.used ? `Uncheck ${kind}` : `Check ${kind}`,
-        item.used ? "square-check" : "square",
-        "record-inline-button record-check-toggle",
-        () => {
-          const nextUsed = !item.used;
-          if (kind === "character") {
-            character.setCharacterUsed(index, nextUsed);
-            if (nextUsed) character.setCharacterLost(index, false);
-          }
-          if (kind === "skill") {
-            character.setSkillUsed(index, nextUsed);
-            if (nextUsed) character.setSkillLost(index, false);
-          }
-          if (kind === "resource") {
-            character.setResourceUsed(index, nextUsed);
-            if (nextUsed) character.setResourceLost(index, false);
-          }
-          markDirty();
-          render();
-        },
-        { pressed: item.used },
-      ));
-    } else {
-      const checkPlaceholder = document.createElement("span");
-      checkPlaceholder.className = "record-inline-placeholder record-check-toggle";
-      checkSlot.append(checkPlaceholder);
-    }
+    const bodyInner = document.createElement("div");
+    bodyInner.className = "record-body";
 
     const contentColumn = document.createElement("div");
     contentColumn.className = "record-trait-content";
@@ -766,32 +794,6 @@ const renderTraitList = (listElement, items, kind) => {
     titleGroup.append(title);
     titleRow.append(titleGroup);
 
-    if (!item.used) {
-      titleRow.append(createInlineIconButton(
-        item.lost ? `Restore ${kind}` : `Strike out ${kind}`,
-        "x",
-        "record-inline-button record-strike-toggle",
-        () => {
-          const nextLost = !item.lost;
-          if (kind === "character") {
-            character.setCharacterLost(index, nextLost);
-            if (nextLost) character.setCharacterUsed(index, false);
-          }
-          if (kind === "skill") {
-            character.setSkillLost(index, nextLost);
-            if (nextLost) character.setSkillUsed(index, false);
-          }
-          if (kind === "resource") {
-            character.setResourceLost(index, nextLost);
-            if (nextLost) character.setResourceUsed(index, false);
-          }
-          markDirty();
-          render();
-        },
-        { pressed: item.lost },
-      ));
-    }
-
     contentColumn.append(titleRow);
     const details = document.createElement("div");
     details.hidden = hasSubitems ? collapsed : false;
@@ -814,7 +816,31 @@ const renderTraitList = (listElement, items, kind) => {
     }
     if (hasSubitems) contentColumn.append(details);
 
-    bodyInner.append(checkSlot, contentColumn);
+    const actionRow = document.createElement("div");
+    actionRow.className = "record-item-actions";
+    actionRow.append(
+      createInlineIconButton(selectedForExperience ? `Untag ${kind}` : `Tag ${kind}`, "sell", "record-inline-button", toggleTagSelection, { pressed: selectedForExperience }),
+      createInlineIconButton(`Edit ${kind}`, "edit", "record-inline-button", () => {
+        editingTrait = { kind, index };
+        activeModal = kind;
+        render();
+      }),
+    );
+    if (kind === "mark") {
+      actionRow.append(createInlineIconButton("Remove mark", "delete", "record-inline-button", () => {
+        character.removeMark(index);
+        markDirty();
+        render();
+      }));
+    } else {
+      actionRow.append(
+        createInlineIconButton(item.used ? `Uncheck ${kind}` : `Check ${kind}`, item.used ? "square-check" : "square", "record-inline-button", toggleChecked, { pressed: item.used }),
+        createInlineIconButton(item.lost ? `Restore ${kind}` : `Strike out ${kind}`, "x", "record-inline-button", toggleStruck, { pressed: item.lost }),
+      );
+    }
+
+    contentColumn.append(actionRow);
+    bodyInner.append(contentColumn);
     body.append(bodyInner);
 
     entry.append(body);
@@ -837,6 +863,7 @@ const renderFormState = (kind, item) => {
     elements.playResourceSubmit.textContent = item ? "Save resource" : "Add resource";
     elements.playResourceName.value = item?.name ?? "";
     elements.playResourceDescription.value = item?.description ?? "";
+    elements.playResourceStationary.checked = Boolean(item?.stationary);
   }
 
   if (kind === "diary") {
@@ -850,6 +877,14 @@ const renderFormState = (kind, item) => {
     elements.playCharacterName.value = item?.name ?? "";
     elements.playCharacterDescription.value = item?.description ?? "";
     elements.playCharacterType.value = item?.type ?? "mortal";
+  }
+
+  if (kind === "mark") {
+    elements.playMarkForm.hidden = activeModal !== "mark";
+    elements.playMarkTitle.textContent = item ? "Edit mark" : "Add mark";
+    elements.playMarkSubmit.textContent = item ? "Save mark" : "Add mark";
+    elements.playMarkName.value = item?.name ?? "";
+    elements.playMarkDescription.value = item?.description ?? "";
   }
 };
 
@@ -878,6 +913,10 @@ const syncActiveModal = () => {
   }
   if (activeModal === "character") {
     elements.playModalTitle.textContent = editingTrait?.kind === "character" ? "Edit character" : "Add character";
+    return;
+  }
+  if (activeModal === "mark") {
+    elements.playModalTitle.textContent = editingTrait?.kind === "mark" ? "Edit mark" : "Add mark";
   }
 };
 
@@ -888,25 +927,18 @@ const renderPlayLists = () => {
   renderTraitList(elements.playSkillList, character.skills, "skill");
   renderTraitList(elements.playResourceList, character.resources, "resource");
   renderTraitList(elements.playCharacterList, character.characters, "character");
-  renderRecords(
-    elements.playMarkList,
-    character.marks.map((item, index) => ({ title: item.name, text: item.description, index })),
-    null,
-    "No marks available.",
-  );
+  renderTraitList(elements.playMarkList, character.marks, "mark");
 
-  character.marks.forEach((item, index) => {
-    const entry = elements.playMarkList.children[index];
-    const traitId = item.id;
-    if (pendingExperienceTraitIds.has(traitId)) entry.classList.add("tag-target-active");
-    entry.addEventListener("click", () => togglePendingTrait(traitId));
-  });
+  elements.playName.textContent = character.name || "Unnamed Vampire";
+  elements.memorySlotsMeta.textContent = `Slots ${character.activeMemories.length}/${character.memorySlots}`;
+  elements.addMemoryButton.disabled = character.activeMemories.length >= character.memorySlots;
 
   renderPlayComposer();
   renderFormState("skill", editingTrait?.kind === "skill" ? character.skills[editingTrait.index] : null);
   renderFormState("resource", editingTrait?.kind === "resource" ? character.resources[editingTrait.index] : null);
   renderFormState("diary");
   renderFormState("character", editingTrait?.kind === "character" ? character.characters[editingTrait.index] : null);
+  renderFormState("mark", editingTrait?.kind === "mark" ? character.marks[editingTrait.index] : null);
 };
 
 const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
@@ -1121,7 +1153,6 @@ bindPlayEvents({
   persistCurrentCharacter,
   render,
   collapsedCards,
-  maxMemories: MAX_MEMORIES,
   setActiveModal: (value) => {
     activeModal = value;
   },
@@ -1160,6 +1191,7 @@ const initialize = () => {
     elements.addSkillButton,
     elements.addResourceButton,
     elements.addCharacterButton,
+    elements.addMarkButton,
   ].forEach((button) => {
     if (!button) return;
     button.replaceChildren(createMaterialIcon("plus"));

@@ -91,6 +91,16 @@ h2 {
   gap: 0.65rem;
 }
 
+.play-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.play-header h2 {
+  margin: 0;
+}
+
 .play-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(18rem, 1fr));
@@ -408,20 +418,6 @@ button:disabled {
 }
 
 
-.record-trait-layout {
-  display: grid;
-  grid-template-columns: 1.2rem minmax(0, 1fr);
-  gap: 0.45rem;
-  align-items: start;
-}
-
-.record-check-slot {
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding-top: 0.3rem;
-}
-
 .record-trait-content {
   min-width: 0;
   position: relative;
@@ -608,12 +604,18 @@ button:disabled {
 
 .record-footer-actions {
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto auto 1fr auto;
   align-items: center;
   width: 100%;
   column-gap: 0.45rem;
   margin-top: auto;
   padding-top: 0.35rem;
+}
+
+.record-item-actions {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
 }
 
 .memory-add-button {
@@ -629,6 +631,19 @@ button:disabled {
   justify-self: start;
 }
 
+.memory-slots-toolbar {
+  margin-top: 0.55rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.memory-slot-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
 .inline-form {
   margin-bottom: 0.8rem;
 }
@@ -638,6 +653,16 @@ button:disabled {
   border-radius: 0.65rem;
   padding: 0.8rem;
   background: rgba(20, 14, 14, 0.35);
+}
+
+.modal-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.modal-checkbox-row input[type="checkbox"] {
+  width: auto;
 }
 
 .experience-list {

@@ -30,6 +30,11 @@ import {
   updateDocumentTitle,
 } from "./navigation.js";
 import { parseRouteHash } from "./router.js";
+import { renderMenu as renderMenuView } from "./features/menu/rendering.js";
+import { renderCreation as renderCreationView, renderStep as renderStepView } from "./features/creation/rendering.js";
+import { bindCreationEvents } from "./features/creation/events.js";
+import { bindPlayEvents } from "./features/play/events.js";
+import { handleRouteChange as handleRouteChangeView } from "./route-handler.js";
 
 const STORAGE_KEY = "1000yo.vampires";
 const TEST_VAMPIRE_ID = "preset-test-vampire";
@@ -410,63 +415,22 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
   }
 };
 
-const renderMenu = () => {
-  const vampires = loadStoredVampires();
-  elements.vampireList.innerHTML = "";
-  elements.vampireList.hidden = vampires.length === 0;
-
-  for (const vampire of vampires) {
-    const item = document.createElement("li");
-    item.className = "record vampire-record";
-    item.tabIndex = 0;
-    item.role = "button";
-
-    const openVampire = () => {
-      loadCharacter(vampire);
-      resetCreationForms();
-      void startPlay(true);
-    };
-
-    item.addEventListener("click", () => {
-      openVampire();
-    });
-    item.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      openVampire();
-    });
-
-    const body = document.createElement("div");
-    body.className = "vampire-option";
-
-    const title = document.createElement("strong");
-    title.textContent = vampire.data?.name || "Unnamed Vampire";
-    body.append(title);
-
-    const actions = document.createElement("div");
-    actions.className = "menu-record-actions";
-    if (!vampire.isPreset) {
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.className = "menu-delete-control";
-      deleteButton.addEventListener("click", (event) => {
-        event.stopPropagation();
-        const displayName = vampire.data?.name || "this vampire";
-        if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
-        const remaining = loadStoredVampires().filter((entry) => entry.id !== vampire.id && entry.id !== TEST_VAMPIRE_ID);
-        persistStoredVampires(remaining);
-        if (selectedVampireId === vampire.id) selectedVampireId = "";
-        setScreen("menu", { updateRoute: true });
-        render();
-      });
-      deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
-      deleteButton.replaceChildren(createMaterialIcon("trash"));
-      actions.append(deleteButton);
-    }
-    item.append(body, actions);
-    elements.vampireList.append(item);
-  }
-};
+const renderMenu = () => renderMenuView({
+  elements,
+  loadStoredVampires,
+  loadCharacter,
+  resetCreationForms,
+  startPlay,
+  persistStoredVampires,
+  setScreen,
+  render,
+  getSelectedVampireId: () => selectedVampireId,
+  setSelectedVampireId: (value) => {
+    selectedVampireId = value;
+  },
+  testVampireId: TEST_VAMPIRE_ID,
+  createMaterialIcon,
+});
 
 const getMemoryRecords = (startIndex, endIndexExclusive) => character.memories
   .map((memory, index) => ({ memory, index }))
@@ -1018,33 +982,26 @@ const stepCanAdvance = [
 const isStepComplete = (stepIndex) => stepRequirements[stepIndex]();
 const canAdvanceFromStep = (stepIndex) => stepCanAdvance[stepIndex]();
 
-const renderStep = () => {
-  elements.stepPanels.forEach((panel, index) => {
-    panel.hidden = currentStep !== index;
-  });
-  elements.stepProgress.textContent = `${currentStep + 1}/${totalSteps}`;
-  elements.backButton.disabled = currentStep === 0;
-  elements.nextButton.textContent = currentStep === totalSteps - 1 ? "Save" : "Next";
-  elements.nextButton.disabled = !canAdvanceFromStep(currentStep);
-};
+const renderStep = () => renderStepView({
+  elements,
+  currentStep,
+  totalSteps,
+  canAdvanceFromStep,
+});
 
-const renderCreation = () => {
-  syncSelectedTraits(selectedLaterTraitIds);
-  syncSelectedTraits(selectedCurseTraitIds);
-  elements.nameInput.value = character.name;
-  renderMemoryList(elements.identityMemoryList, 0, 1);
-  renderCharacterList(elements.mortalList, "mortal");
-  renderDetailList(elements.skillList, character.skills, (index) => character.removeSkill(index));
-  renderDetailList(elements.resourceList, character.resources, (index) => character.removeResource(index));
-  renderMemoryList(elements.laterMemoryList, 1, 4);
-  renderCharacterList(elements.immortalList, "immortal");
-  renderDetailList(elements.markList, character.marks, (index) => character.removeMark(index));
-  renderMemoryList(elements.curseMemoryList, 4, 5);
-  renderTraitSelector(elements.memoryTraitsLater, selectedLaterTraitIds);
-  renderTraitSelector(elements.memoryTraitsCurse, selectedCurseTraitIds);
-  elements.saveConfirmation.hidden = !hasSavedSetup;
-  renderStep();
-};
+const renderCreation = () => renderCreationView({
+  character,
+  elements,
+  selectedLaterTraitIds,
+  selectedCurseTraitIds,
+  syncSelectedTraits,
+  renderMemoryList,
+  renderCharacterList,
+  renderDetailList,
+  renderTraitSelector,
+  hasSavedSetup,
+  renderStep,
+});
 
 const renderCollapsibleCards = () => {
   document.querySelectorAll("[data-card-key]").forEach((card) => {
@@ -1066,37 +1023,18 @@ const render = () => {
   renderCollapsibleCards();
 };
 
-const handleRouteChange = async () => {
-  const { screen, vampireId } = parseRouteHash(window.location.hash);
-  if (screen === "menu") {
-    setScreen("menu");
-    render();
-    return;
-  }
-  if (screen === "creation") {
-    if (!selectedVampireId) {
-      startNewVampire();
-      return;
-    }
-    setScreen("creation");
-    render();
-    return;
-  }
-  if (!vampireId) {
-    setScreen("menu", { updateRoute: true, replaceRoute: true });
-    render();
-    return;
-  }
-  const storedCharacter = loadStoredVampires().find((entry) => entry.id === vampireId);
-  if (!storedCharacter) {
-    setScreen("menu", { updateRoute: true, replaceRoute: true });
-    render();
-    return;
-  }
-  loadCharacter(storedCharacter);
-  resetCreationForms();
-  await startPlay(true);
-};
+const handleRouteChange = async () => handleRouteChangeView({
+  parseRouteHash,
+  getHash: () => window.location.hash,
+  setScreen,
+  render,
+  getSelectedVampireId: () => selectedVampireId,
+  startNewVampire,
+  loadStoredVampires,
+  loadCharacter,
+  resetCreationForms,
+  startPlay,
+});
 
 const saveIdentityStep = () => {
   markDirty();
@@ -1139,172 +1077,6 @@ const saveCurseMemoryStep = () => {
   return didSave;
 };
 
-elements.newVampireButton.addEventListener("click", () => startNewVampire());
-elements.nameInput.addEventListener("input", () => {
-  markDirty();
-  character.rename(elements.nameInput.value);
-  renderStep();
-});
-elements.identityMemoryInput.addEventListener("input", () => {
-  markDirty();
-  renderStep();
-});
-elements.memoryCurse.addEventListener("input", () => {
-  markDirty();
-  renderStep();
-});
-
-elements.mortalForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.addCharacter(elements.mortalName.value, elements.mortalDescription.value, "mortal")) {
-    markDirty();
-    elements.mortalForm.reset();
-    render();
-  }
-});
-
-elements.skillForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.addSkill(elements.skillName.value, elements.skillDescription.value)) {
-    markDirty();
-    elements.skillForm.reset();
-    render();
-  }
-});
-
-elements.resourceForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.addResource(elements.resourceName.value, elements.resourceDescription.value)) {
-    markDirty();
-    elements.resourceForm.reset();
-    render();
-  }
-});
-
-elements.memoryFormLater.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.memories.length < 1 || character.memories.length >= 4) return;
-  if (selectedLaterTraitIds.size < MIN_MEMORY_TRAITS) return;
-  if (character.addMemory(elements.memoryLater.value, getSelectedTraitLabels(selectedLaterTraitIds))) {
-    markDirty();
-    elements.memoryFormLater.reset();
-    selectedLaterTraitIds.clear();
-    render();
-  }
-});
-
-elements.immortalForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.addCharacter(elements.immortalName.value, elements.immortalDescription.value, "immortal")) {
-    markDirty();
-    elements.immortalForm.reset();
-    render();
-  }
-});
-
-elements.markForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.addMark(elements.markInput.value, elements.markDescription.value)) {
-    markDirty();
-    elements.markForm.reset();
-    render();
-  }
-});
-
-elements.memoryFormCurse.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.memories.length !== 4) return;
-  if (selectedCurseTraitIds.size < MIN_MEMORY_TRAITS) return;
-  if (character.addMemory(elements.memoryCurse.value, getSelectedTraitLabels(selectedCurseTraitIds))) {
-    markDirty();
-    elements.memoryFormCurse.reset();
-    selectedCurseTraitIds.clear();
-    render();
-  }
-});
-
-elements.backButton.addEventListener("click", () => {
-  currentStep = Math.max(0, currentStep - 1);
-  renderStep();
-});
-elements.nextButton.addEventListener("click", () => {
-  if (currentStep === 0) {
-    if (!saveIdentityStep()) return;
-    currentStep = 1;
-    render();
-    return;
-  }
-  if (currentStep === 5) {
-    if (!saveImmortalStep()) return;
-    currentStep = 6;
-    render();
-    return;
-  }
-  if (currentStep === 6) {
-    if (!saveMarkStep()) return;
-    currentStep = 7;
-    render();
-    return;
-  }
-  if (currentStep === 7) {
-    if (!saveCurseMemoryStep()) return;
-    hasSavedSetup = character.isReadyForPromptOne();
-    persistCurrentCharacter();
-    if (!hasSavedSetup) {
-      render();
-      return;
-    }
-    void startPlay();
-    return;
-  }
-  if (!isStepComplete(currentStep)) return;
-  currentStep = Math.min(totalSteps - 1, currentStep + 1);
-  render();
-});
-
-elements.promptButton.addEventListener("click", () => {
-  if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
-  const delta = rollDie(10) - rollDie(6);
-  const target = promptState.currentPrompt + delta;
-  advanceToNextPromptEntry(promptState, target);
-  collapseSettledRecords();
-  persistCurrentCharacter();
-  render();
-});
-
-elements.addMemoryButton.addEventListener("click", (event) => {
-  event.stopPropagation();
-  if (character.memories.length >= MAX_MEMORIES) return;
-  collapsedCards.delete("memories");
-  activeModal = "memory";
-  openExperienceComposer("new");
-  render();
-});
-
-elements.lostMemoriesToggle.addEventListener("click", () => {
-  if (collapsedCards.has("lost-memories")) collapsedCards.delete("lost-memories");
-  else collapsedCards.add("lost-memories");
-  renderPlayLists();
-});
-
-elements.playExperienceForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const memoryId = experienceComposer.target === "new" ? null : experienceComposer.target;
-  const didSave = character.addMemory(elements.playExperienceText.value, [...pendingExperienceTraitIds], memoryId);
-  if (!didSave) return;
-  markDirty();
-  closeExperienceComposer();
-  activeModal = null;
-  render();
-});
-
-elements.playExperienceCancel.addEventListener("click", (event) => {
-  event.stopPropagation();
-  closeExperienceComposer();
-  activeModal = null;
-  render();
-});
-
 const openTraitForm = (kind) => {
   collapsedCards.delete(kind === "character" ? "characters" : `${kind}s`);
   activeModal = kind;
@@ -1312,94 +1084,63 @@ const openTraitForm = (kind) => {
   render();
 };
 
-elements.addSkillButton.addEventListener("click", (event) => {
-  event.stopPropagation();
-  openTraitForm("skill");
-});
-elements.addResourceButton.addEventListener("click", (event) => {
-  event.stopPropagation();
-  openTraitForm("resource");
-});
-elements.addCharacterButton.addEventListener("click", (event) => {
-  event.stopPropagation();
-  openTraitForm("character");
-});
-
-elements.playSkillForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const didSave = editingTrait?.kind === "skill"
-    ? character.updateSkill(editingTrait.index, elements.playSkillName.value, elements.playSkillDescription.value)
-    : character.addSkill(elements.playSkillName.value, elements.playSkillDescription.value);
-  if (!didSave) return;
-  markDirty();
-  activeModal = null;
-  editingTrait = null;
-  elements.playSkillForm.reset();
-  render();
-});
-elements.playResourceForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const didSave = editingTrait?.kind === "resource"
-    ? character.updateResource(editingTrait.index, elements.playResourceName.value, elements.playResourceDescription.value)
-    : character.addResource(elements.playResourceName.value, elements.playResourceDescription.value);
-  if (!didSave) return;
-  markDirty();
-  activeModal = null;
-  editingTrait = null;
-  elements.playResourceForm.reset();
-  render();
-});
-elements.playDiaryForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (!pendingDiaryMemoryId) return;
-  const didSave = character.moveMemoryToDiary(pendingDiaryMemoryId, elements.playDiaryDescription.value);
-  if (!didSave) return;
-  markDirty();
-  activeModal = null;
-  pendingDiaryMemoryId = "";
-  elements.playDiaryForm.reset();
-  render();
-});
-elements.playCharacterForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const didSave = editingTrait?.kind === "character"
-    ? character.updateCharacter(editingTrait.index, elements.playCharacterName.value, elements.playCharacterDescription.value, elements.playCharacterType.value)
-    : character.addCharacter(elements.playCharacterName.value, elements.playCharacterDescription.value, elements.playCharacterType.value);
-  if (!didSave) return;
-  markDirty();
-  activeModal = null;
-  editingTrait = null;
-  elements.playCharacterForm.reset();
-  render();
+bindCreationEvents({
+  elements,
+  getCharacter: () => character,
+  markDirty,
+  render,
+  renderStep,
+  getSelectedTraitLabels,
+  selectedLaterTraitIds,
+  selectedCurseTraitIds,
+  minMemoryTraits: MIN_MEMORY_TRAITS,
+  saveIdentityStep,
+  saveImmortalStep,
+  saveMarkStep,
+  saveCurseMemoryStep,
+  getCurrentStep: () => currentStep,
+  setCurrentStep: (value) => {
+    currentStep = value;
+  },
+  totalSteps,
+  isStepComplete,
+  setHasSavedSetup: (value) => {
+    hasSavedSetup = value;
+  },
+  persistCurrentCharacter,
+  startPlay,
+  startNewVampire,
 });
 
-elements.playSkillCancel.addEventListener("click", (event) => {
-  event.stopPropagation();
-  activeModal = null;
-  editingTrait = editingTrait?.kind === "skill" ? null : editingTrait;
-  elements.playSkillForm.reset();
-  render();
-});
-elements.playResourceCancel.addEventListener("click", (event) => {
-  event.stopPropagation();
-  activeModal = null;
-  editingTrait = editingTrait?.kind === "resource" ? null : editingTrait;
-  elements.playResourceForm.reset();
-  render();
-});
-elements.playCharacterCancel.addEventListener("click", (event) => {
-  event.stopPropagation();
-  activeModal = null;
-  editingTrait = editingTrait?.kind === "character" ? null : editingTrait;
-  elements.playCharacterForm.reset();
-  render();
-});
-elements.playDiaryCancel.addEventListener("click", (event) => {
-  event.stopPropagation();
-  activeModal = null;
-  pendingDiaryMemoryId = "";
-  elements.playDiaryForm.reset();
-  render();
+bindPlayEvents({
+  elements,
+  promptState,
+  rollDie,
+  advanceToNextPromptEntry,
+  collapseSettledRecords,
+  persistCurrentCharacter,
+  render,
+  collapsedCards,
+  maxMemories: MAX_MEMORIES,
+  setActiveModal: (value) => {
+    activeModal = value;
+  },
+  openExperienceComposer,
+  getCharacter: () => character,
+  getExperienceComposer: () => experienceComposer,
+  pendingExperienceTraitIds,
+  markDirty,
+  closeExperienceComposer,
+  openTraitForm,
+  getEditingTrait: () => editingTrait,
+  setEditingTrait: (value) => {
+    editingTrait = value;
+  },
+  getActiveModal: () => activeModal,
+  setPendingDiaryMemoryId: (value) => {
+    pendingDiaryMemoryId = value;
+  },
+  getPendingDiaryMemoryId: () => pendingDiaryMemoryId,
 });
 
 const closeModalAndResetPlayForms = () => {

@@ -1,5 +1,5 @@
 :root {
-  font-family: "Helvetica Neue", Arial, sans-serif;
+  font-family: "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
   color: #f6eddc;
   background:
     radial-gradient(circle at top, rgba(167, 39, 51, 0.28), transparent 36%),
@@ -47,7 +47,8 @@ p {
 h1,
 h2,
 .wizard-title {
-  font-family: "Georgia", "Times New Roman", serif;
+  font-family: "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
+  font-weight: 500;
 }
 
 h1 {
@@ -160,11 +161,60 @@ h2 {
 }
 
 .card-title-row h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   margin-bottom: 0;
 }
 
+.material-icon,
+.card-heading-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.35rem;
+  height: 1.35rem;
+}
+
+.material-icon,
+.card-heading-icon {
+  color: #f6eddc;
+}
+
+img.material-icon {
+  filter: brightness(0) saturate(100%) invert(93%) sepia(20%) saturate(286%) hue-rotate(336deg) brightness(106%) contrast(97%);
+}
+
 .card-toggle-indicator {
-  display: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #d9cbb4;
+  transition: transform 160ms ease, color 160ms ease;
+}
+
+.card-toggle-indicator .material-icon {
+  width: 100%;
+  height: 100%;
+  color: inherit;
+}
+
+.card-toggle-indicator img.material-icon {
+  filter: brightness(0) saturate(100%) invert(84%) sepia(11%) saturate(533%) hue-rotate(337deg) brightness(96%) contrast(90%);
+}
+
+.section-heading[aria-expanded="true"] .card-toggle-indicator,
+.subcard-header[aria-expanded="true"] .card-toggle-indicator {
+  transform: rotate(180deg);
+}
+
+.section-heading:hover .card-toggle-indicator,
+.subcard-header:hover .card-toggle-indicator {
+  color: #fff5e2;
+}
+
+.section-heading:hover .card-toggle-indicator img.material-icon,
+.subcard-header:hover .card-toggle-indicator img.material-icon {
+  filter: brightness(0) saturate(100%) invert(97%) sepia(17%) saturate(323%) hue-rotate(304deg) brightness(107%) contrast(103%);
 }
 
 .wizard-title {
@@ -312,11 +362,9 @@ button:disabled {
   line-height: 1;
 }
 
-.lucide-icon {
+.icon-button .material-icon {
   width: 1rem;
   height: 1rem;
-  display: block;
-  stroke-width: 2;
 }
 
 .record-list,
@@ -476,11 +524,13 @@ button:disabled {
   flex: 0 0 auto;
 }
 
-.record-inline-button .lucide-icon,
-.memory-add-button .lucide-icon,
-.menu-delete-control .lucide-icon {
+.record-inline-button .material-icon,
+.memory-add-button .material-icon,
+.menu-delete-control .material-icon,
+.add-card-button .material-icon {
   width: 1rem;
   height: 1rem;
+  display: block;
 }
 
 .record-inline-button:hover {
@@ -714,7 +764,6 @@ button:disabled {
 .add-card-button {
   height: 2rem;
   width: 2rem;
-  font-size: 1.1rem;
   line-height: 1;
 }
 

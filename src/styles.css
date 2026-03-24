@@ -154,16 +154,14 @@ h2 {
   background: rgba(255, 255, 255, 0.03);
 }
 
-.play-static-heading {
-  cursor: default;
-}
-
-.play-static-heading:hover {
-  background: transparent;
-}
-
 .card-title-row {
   align-items: center;
+}
+
+.card-heading-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .card-title-row h2 {
@@ -632,16 +630,11 @@ button:disabled {
 }
 
 .memory-slots-toolbar {
-  margin-top: 0.55rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
+  display: none;
 }
 
 .memory-slot-actions {
-  display: flex;
-  gap: 0.35rem;
+  display: none;
 }
 
 .inline-form {

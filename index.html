@@ -157,13 +157,16 @@
         </div>
         <section class="play-grid">
           <article class="card play-card prompt-card" data-card-key="prompt">
-            <div class="section-heading play-static-heading">
+            <div class="section-heading" data-card-toggle>
               <div class="card-title-row">
                 <h2><span class="card-heading-icon" data-material-icon="sticky_note_2" aria-hidden="true"></span><span>Prompt</span></h2>
               </div>
+              <div class="card-heading-actions">
+                <button type="button" id="next-prompt-button" class="ghost-button small-button">Roll</button>
+                <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+              </div>
             </div>
             <div data-card-content>
-              <button type="button" id="next-prompt-button">Next prompt</button>
               <p id="prompt-text" class="prompt-text">Loading prompt data...</p>
             </div>
           </article>
@@ -172,6 +175,11 @@
             <div class="section-heading" data-card-toggle>
               <div class="card-title-row">
                 <h2><span class="card-heading-icon" data-material-icon="cognition" aria-hidden="true"></span><span>Memories</span></h2>
+              </div>
+              <div class="card-heading-actions">
+                <button type="button" id="decrease-memory-slots-button" class="ghost-button small-button" title="Remove memory slot">-</button>
+                <span id="memory-slots-meta" class="supporting">0/0</span>
+                <button type="button" id="increase-memory-slots-button" class="ghost-button small-button" title="Add memory slot">+</button>
                 <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
               </div>
             </div>
@@ -192,13 +200,6 @@
                 </button>
                 <ul id="play-lost-memory-list" class="record-list" hidden></ul>
               </section>
-              <div class="memory-slots-toolbar">
-                <span id="memory-slots-meta" class="supporting">Slots 0/0</span>
-                <div class="memory-slot-actions">
-                  <button type="button" id="decrease-memory-slots-button" class="ghost-button small-button" title="Remove memory slot">- Slot</button>
-                  <button type="button" id="increase-memory-slots-button" class="ghost-button small-button" title="Add memory slot">+ Slot</button>
-                </div>
-              </div>
               <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory"></button>
             </div>
           </article>

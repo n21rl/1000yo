@@ -569,22 +569,6 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
     const text = document.createElement("p");
     text.textContent = experience.text;
     experienceItem.append(text);
-    if (!lost) {
-      experienceItem.append(createInlineIconButton(
-        "Edit experience",
-        "edit",
-        "record-inline-button",
-        () => {
-          const experienceIndex = memory.experiences.findIndex((entry) => entry === experience);
-          const updatedText = window.prompt("Edit experience text", experience.text);
-          if (updatedText === null) return;
-          const didSave = character.updateMemoryExperience(memoryIndex, experienceIndex, updatedText);
-          if (!didSave) return;
-          markDirty();
-          render();
-        },
-      ));
-    }
     experienceList.append(experienceItem);
   });
   details.append(experienceList);
@@ -622,13 +606,22 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
         title: "Move to Diary",
       }));
     }
-    footer.append(createButton("Add experience", "add-card-button memory-add-button", () => {
-      openExperienceComposer(memory.id);
-      render();
-    }, {
-      icon: "plus",
-      title: "Add experience",
-    }));
+  }
+  if (!lost) {
+    footer.append(createInlineIconButton(
+      "Edit memory experiences",
+      "edit",
+      "record-inline-button",
+      () => {
+        memory.experiences.forEach((experience, experienceIndex) => {
+          const updatedText = window.prompt(`Edit experience ${experienceIndex + 1}`, experience.text);
+          if (updatedText === null) return;
+          character.updateMemoryExperience(memoryIndex, experienceIndex, updatedText);
+        });
+        markDirty();
+        render();
+      },
+    ));
   }
   footer.append(createInlineIconButton(
     lost ? "Restore memory" : "Strike out memory",
@@ -930,7 +923,7 @@ const renderPlayLists = () => {
   renderTraitList(elements.playMarkList, character.marks, "mark");
 
   elements.playName.textContent = character.name || "Unnamed Vampire";
-  elements.memorySlotsMeta.textContent = `Slots ${character.activeMemories.length}/${character.memorySlots}`;
+  elements.memorySlotsMeta.textContent = `${character.activeMemories.length}/${character.memorySlots}`;
   elements.addMemoryButton.disabled = character.activeMemories.length >= character.memorySlots;
 
   renderPlayComposer();
@@ -1040,7 +1033,7 @@ const renderCollapsibleCards = () => {
     const key = card.dataset.cardKey;
     const content = card.querySelector("[data-card-content]");
     const toggle = card.querySelector("[data-card-toggle]");
-    const collapsed = key === "prompt" ? false : collapsedCards.has(key);
+    const collapsed = collapsedCards.has(key);
     if (content) content.hidden = collapsed;
     if (toggle) toggle.setAttribute("aria-expanded", String(!collapsed));
   });

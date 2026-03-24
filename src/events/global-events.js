@@ -20,7 +20,7 @@ export const bindCardToggleEvents = (onToggleCard) => {
       if (interactive) return;
       const card = toggle.closest("[data-card-key]");
       const key = card?.dataset.cardKey;
-      if (!key || key === "prompt") return;
+      if (!key) return;
       onToggleCard(key);
     });
   });

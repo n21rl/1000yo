@@ -1,9 +1,6 @@
 import { restoreCampaignState } from "./campaign-state.js";
 import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
 import {
-  clampPromptIndex,
-  getPromptEntry,
-  hasPromptEntryForVisit,
   parsePromptDeck,
 } from "./prompt-deck.js";
 import {
@@ -20,6 +17,13 @@ import {
   bindHashChange,
   bindModalCloseEvents,
 } from "./events/global-events.js";
+import {
+  advanceToNextPromptEntry,
+  createPromptState,
+  ensurePromptVisit,
+  getPromptPanelViewModel,
+  normalizeLoadedPromptState,
+} from "./features/prompt-flow.js";
 import {
   applyScreenVisibility,
   getRouteForScreen,
@@ -47,13 +51,7 @@ let activeModal = null;
 const collapsedCards = new Set();
 const collapsedRecords = new Set();
 
-const promptState = {
-  deck: [],
-  isLoading: false,
-  loadError: "",
-  currentPrompt: 1,
-  visits: new Map(),
-};
+const promptState = createPromptState();
 
 const safeLocalStorage = {
   getItem(key) {
@@ -949,43 +947,10 @@ const renderPlayLists = () => {
 
 const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
 
-const moveToNextAvailablePrompt = (targetIndex) => {
-  if (!promptState.deck.length) return { prompt: 1, visit: 0 };
-  let nextIndex = clampPromptIndex(targetIndex, promptState.deck.length);
-  while (nextIndex <= promptState.deck.length) {
-    const prompt = promptState.deck[nextIndex - 1];
-    const visitCount = (promptState.visits.get(nextIndex) ?? 0) + 1;
-    if (hasPromptEntryForVisit(prompt, visitCount)) {
-      promptState.visits.set(nextIndex, visitCount);
-      promptState.currentPrompt = nextIndex;
-      return { prompt: nextIndex, visit: visitCount };
-    }
-    promptState.visits.set(nextIndex, visitCount);
-    nextIndex += 1;
-  }
-  return { prompt: promptState.currentPrompt, visit: promptState.visits.get(promptState.currentPrompt) ?? 1 };
-};
-
 const renderPromptPanel = () => {
-  if (promptState.isLoading) {
-    elements.promptButton.disabled = true;
-    elements.promptText.textContent = "Loading prompts...";
-    return;
-  }
-  if (promptState.loadError) {
-    elements.promptButton.disabled = true;
-    elements.promptText.textContent = promptState.loadError;
-    return;
-  }
-  if (!promptState.deck.length) {
-    elements.promptButton.disabled = true;
-    elements.promptText.textContent = "No prompt content is available.";
-    return;
-  }
-  const currentPrompt = promptState.deck[promptState.currentPrompt - 1];
-  const visitCount = promptState.visits.get(promptState.currentPrompt) ?? 1;
-  elements.promptButton.disabled = false;
-  elements.promptText.textContent = getPromptEntry(currentPrompt, visitCount) || "No remaining prompt entry at this position.";
+  const model = getPromptPanelViewModel(promptState);
+  elements.promptButton.disabled = model.disabled;
+  elements.promptText.textContent = model.text;
 };
 
 const loadPromptDeck = async () => {
@@ -1005,8 +970,7 @@ const loadPromptDeck = async () => {
   } finally {
     promptState.isLoading = false;
     if (promptState.deck.length) {
-      promptState.currentPrompt = clampPromptIndex(promptState.currentPrompt, promptState.deck.length);
-      if (!promptState.visits.has(promptState.currentPrompt)) promptState.visits.set(promptState.currentPrompt, 1);
+      normalizeLoadedPromptState(promptState);
       persistCurrentCharacter();
     }
     render();
@@ -1022,9 +986,7 @@ const startPlay = async (skipCreationGate = false) => {
   hasSavedSetup = true;
   persistCurrentCharacter();
   setScreen("play", { updateRoute: true });
-  if (!promptState.visits.size) {
-    promptState.currentPrompt = 1;
-    promptState.visits.set(1, 1);
+  if (ensurePromptVisit(promptState)) {
     persistCurrentCharacter();
   }
   render();
@@ -1303,8 +1265,8 @@ elements.nextButton.addEventListener("click", () => {
 elements.promptButton.addEventListener("click", () => {
   if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
   const delta = rollDie(10) - rollDie(6);
-  const target = clampPromptIndex(promptState.currentPrompt + delta, promptState.deck.length);
-  moveToNextAvailablePrompt(target);
+  const target = promptState.currentPrompt + delta;
+  advanceToNextPromptEntry(promptState, target);
   collapseSettledRecords();
   persistCurrentCharacter();
   render();

@@ -1,10 +1,44 @@
-import { restoreCampaignState, serializeCampaignState } from "./campaign-state.js";
+import { restoreCampaignState } from "./campaign-state.js";
 import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
+import {
+  parsePromptDeck,
+} from "./prompt-deck.js";
+import {
+  createStoredRecord,
+  getStoredVampires,
+  saveStoredVampires,
+  upsertVampireRecord,
+} from "./vampire-storage.js";
+import { getElements } from "./ui/elements.js";
+import { createMaterialIcon, hydrateStaticIcons } from "./ui/icons.js";
+import {
+  bindCardToggleEvents,
+  bindEscapeKeyHandler,
+  bindHashChange,
+  bindModalCloseEvents,
+} from "./events/global-events.js";
+import {
+  advanceToNextPromptEntry,
+  createPromptState,
+  ensurePromptVisit,
+  getPromptPanelViewModel,
+  normalizeLoadedPromptState,
+} from "./features/prompt-flow.js";
+import {
+  applyScreenVisibility,
+  getRouteForScreen,
+  updateDocumentTitle,
+} from "./navigation.js";
+import { parseRouteHash } from "./router.js";
+import { renderMenu as renderMenuView } from "./features/menu/rendering.js";
+import { renderCreation as renderCreationView, renderStep as renderStepView } from "./features/creation/rendering.js";
+import { bindCreationEvents } from "./features/creation/events.js";
+import { bindPlayEvents } from "./features/play/events.js";
+import { handleRouteChange as handleRouteChangeView } from "./route-handler.js";
 
 const STORAGE_KEY = "1000yo.vampires";
 const TEST_VAMPIRE_ID = "preset-test-vampire";
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
-const cleanPromptText = (value = "") => String(value).replace(/\s+/g, " ").trim();
 const MIN_MEMORY_TRAITS = 2;
 
 let character = new Character();
@@ -21,80 +55,8 @@ let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
 const collapsedRecords = new Set();
-const MATERIAL_ICON_NODES = {
-  add: [
-    ["path", { d: "M12 5v14" }],
-    ["path", { d: "M5 12h14" }],
-  ],
-  close: [
-    ["path", { d: "M18 6 6 18" }],
-    ["path", { d: "m6 6 12 12" }],
-  ],
-  check_box_outline_blank: [
-    ["rect", { x: "4", y: "4", width: "16", height: "16", rx: "2.5" }],
-  ],
-  check_box: [
-    ["rect", { x: "4", y: "4", width: "16", height: "16", rx: "2.5" }],
-    ["path", { d: "m8.5 12 2.5 2.5 4.5-5" }],
-  ],
-  menu_book: [
-    ["path", { d: "M6 5.5A2.5 2.5 0 0 1 8.5 3H20v17H8.5A2.5 2.5 0 0 0 6 22" }],
-    ["path", { d: "M6 5.5V22" }],
-    ["path", { d: "M9.5 7H16" }],
-  ],
-  book_2: [
-    ["path", { d: "M5 5.5A2.5 2.5 0 0 1 7.5 3H19v17H7.5A2.5 2.5 0 0 0 5 20" }],
-    ["path", { d: "M5 5.5V20" }],
-    ["path", { d: "M8.5 8H15" }],
-    ["path", { d: "M8.5 12H15" }],
-  ],
-  delete: [
-    ["path", { d: "M5 7h14" }],
-    ["path", { d: "M9 7V5h6v2" }],
-    ["path", { d: "M8 7l1 12h6l1-12" }],
-    ["path", { d: "M10 10.5v5.5" }],
-    ["path", { d: "M14 10.5v5.5" }],
-  ],
-  keyboard_arrow_down: [
-    ["path", { d: "m7 10 5 5 5-5" }],
-  ],
-  sticky_note_2: [
-    ["path", { d: "M6 4h12a2 2 0 0 1 2 2v12H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" }],
-    ["path", { d: "M14 4v5h5" }],
-  ],
-  cognition: [
-    ["path", { d: "M9.5 7a3.5 3.5 0 0 0-3.5 3.5c0 1 .42 1.9 1.1 2.54A3 3 0 0 0 9 18h1" }],
-    ["path", { d: "M14.5 7a3.5 3.5 0 0 1 3.5 3.5c0 1-.42 1.9-1.1 2.54A3 3 0 0 1 15 18h-1" }],
-    ["path", { d: "M12 6v12" }],
-    ["path", { d: "M9 10.5h6" }],
-    ["path", { d: "M9.5 14.5h5" }],
-  ],
-  person: [
-    ["circle", { cx: "12", cy: "8", r: "3" }],
-    ["path", { d: "M6 19a6 6 0 0 1 12 0" }],
-  ],
-  bolt: [
-    ["path", { d: "M13 3 6.5 13H11l-1 8 6.5-10H12z" }],
-  ],
-  deployed_code: [
-    ["path", { d: "m8.5 9-3 3 3 3" }],
-    ["path", { d: "m15.5 9 3 3-3 3" }],
-    ["path", { d: "M10 19h4" }],
-    ["path", { d: "M12 5v10" }],
-    ["path", { d: "M8 5h8" }],
-  ],
-  local_fire_department: [
-    ["path", { d: "M12 3c1.5 2.5 4.5 4.4 4.5 8.1A4.5 4.5 0 1 1 7.5 11c0-1.8.8-3.2 2.3-4.8.2 1.5 1 2.4 2.2 3.1C13 7.8 13 5.7 12 3z" }],
-  ],
-};
 
-const promptState = {
-  deck: [],
-  isLoading: false,
-  loadError: "",
-  currentPrompt: 1,
-  visits: new Map(),
-};
+const promptState = createPromptState();
 
 const safeLocalStorage = {
   getItem(key) {
@@ -116,106 +78,9 @@ const safeLocalStorage = {
   },
 };
 
-const elements = {
-  menuScreen: document.querySelector("#menu-screen"),
-  creationScreen: document.querySelector("#creation-screen"),
-  playScreen: document.querySelector("#play-screen"),
-  vampireList: document.querySelector("#vampire-list"),
-  newVampireButton: document.querySelector("#new-vampire-button"),
-  nameInput: document.querySelector("#name"),
-  identityMemoryInput: document.querySelector("#memory-identity"),
-  stepProgress: document.querySelector("#step-progress"),
-  stepPanels: [...document.querySelectorAll("[data-step-panel]")],
-  backButton: document.querySelector("#back-button"),
-  nextButton: document.querySelector("#next-button"),
-  saveConfirmation: document.querySelector("#save-confirmation"),
-  mortalForm: document.querySelector("#mortal-form"),
-  mortalName: document.querySelector("#mortal-name"),
-  mortalDescription: document.querySelector("#mortal-description"),
-  mortalList: document.querySelector("#mortal-list"),
-  skillForm: document.querySelector("#skill-form"),
-  skillName: document.querySelector("#skill-name"),
-  skillDescription: document.querySelector("#skill-description"),
-  skillList: document.querySelector("#skill-list"),
-  resourceForm: document.querySelector("#resource-form"),
-  resourceName: document.querySelector("#resource-name"),
-  resourceDescription: document.querySelector("#resource-description"),
-  resourceList: document.querySelector("#resource-list"),
-  memoryFormLater: document.querySelector("#memory-form-later"),
-  memoryLater: document.querySelector("#memory-later"),
-  memoryTraitsLater: document.querySelector("#memory-traits-later"),
-  laterMemoryList: document.querySelector("#later-memory-list"),
-  immortalForm: document.querySelector("#immortal-form"),
-  immortalName: document.querySelector("#immortal-name"),
-  immortalDescription: document.querySelector("#immortal-description"),
-  immortalList: document.querySelector("#immortal-list"),
-  markForm: document.querySelector("#mark-form"),
-  markInput: document.querySelector("#mark-input"),
-  markDescription: document.querySelector("#mark-description"),
-  markList: document.querySelector("#mark-list"),
-  memoryFormCurse: document.querySelector("#memory-form-curse"),
-  memoryCurse: document.querySelector("#memory-curse"),
-  memoryTraitsCurse: document.querySelector("#memory-traits-curse"),
-  curseMemoryList: document.querySelector("#curse-memory-list"),
-  identityMemoryList: document.querySelector("#identity-memory-list"),
-  playMemoryList: document.querySelector("#play-memory-list"),
-  diaryCard: document.querySelector("#diary-card"),
-  diaryDescription: document.querySelector("#diary-description"),
-  diaryMemoryList: document.querySelector("#diary-memory-list"),
-  lostMemoriesCard: document.querySelector("#lost-memories-card"),
-  lostMemoriesToggle: document.querySelector("#lost-memories-toggle"),
-  playLostMemoryList: document.querySelector("#play-lost-memory-list"),
-  playCharacterList: document.querySelector("#play-character-list"),
-  playSkillList: document.querySelector("#play-skill-list"),
-  playResourceList: document.querySelector("#play-resource-list"),
-  playMarkList: document.querySelector("#play-mark-list"),
-  promptButton: document.querySelector("#next-prompt-button"),
-  promptText: document.querySelector("#prompt-text"),
-  addMemoryButton: document.querySelector("#add-memory-button"),
-  playExperienceForm: document.querySelector("#play-experience-form"),
-  playExperienceFormTitle: document.querySelector("#play-experience-form-title"),
-  playExperienceText: document.querySelector("#play-experience-text"),
-  playSelectedTraits: document.querySelector("#play-selected-traits"),
-  playExperienceSubmit: document.querySelector("#play-experience-submit"),
-  playExperienceCancel: document.querySelector("#play-experience-cancel"),
-  playMemoryHint: document.querySelector("#play-memory-hint"),
-  addSkillButton: document.querySelector("#add-skill-button"),
-  playSkillForm: document.querySelector("#play-skill-form"),
-  playSkillTitle: document.querySelector("#play-skill-form-title"),
-  playSkillName: document.querySelector("#play-skill-name"),
-  playSkillDescription: document.querySelector("#play-skill-description"),
-  playSkillSubmit: document.querySelector("#play-skill-submit"),
-  playSkillCancel: document.querySelector("#play-skill-cancel"),
-  addResourceButton: document.querySelector("#add-resource-button"),
-  playResourceForm: document.querySelector("#play-resource-form"),
-  playResourceTitle: document.querySelector("#play-resource-form-title"),
-  playResourceName: document.querySelector("#play-resource-name"),
-  playResourceDescription: document.querySelector("#play-resource-description"),
-  playResourceSubmit: document.querySelector("#play-resource-submit"),
-  playResourceCancel: document.querySelector("#play-resource-cancel"),
-  playDiaryForm: document.querySelector("#play-diary-form"),
-  playDiaryDescription: document.querySelector("#play-diary-description"),
-  playDiarySubmit: document.querySelector("#play-diary-submit"),
-  playDiaryCancel: document.querySelector("#play-diary-cancel"),
-  addCharacterButton: document.querySelector("#add-character-button"),
-  playCharacterForm: document.querySelector("#play-character-form"),
-  playCharacterTitle: document.querySelector("#play-character-form-title"),
-  playCharacterName: document.querySelector("#play-character-name"),
-  playCharacterDescription: document.querySelector("#play-character-description"),
-  playCharacterType: document.querySelector("#play-character-type"),
-  playCharacterSubmit: document.querySelector("#play-character-submit"),
-  playCharacterCancel: document.querySelector("#play-character-cancel"),
-  playTraitModal: document.querySelector("#play-trait-modal"),
-  playModalTitle: document.querySelector("#play-modal-title"),
-};
+const elements = getElements();
 
 const totalSteps = elements.stepPanels.length;
-const SCREEN_TITLES = {
-  menu: "Start Menu",
-  creation: "Vampire Creation",
-  play: "Play",
-};
-
 const createTestVampireRecord = () => {
   const testCharacter = new Character("Test Vampire");
   testCharacter.addMemory("Memory 1");
@@ -258,49 +123,36 @@ const createTestVampireRecord = () => {
   };
 };
 
-const getStoredVampires = () => {
-  try {
-    const rawValue = safeLocalStorage.getItem(STORAGE_KEY);
-    const parsed = rawValue ? JSON.parse(rawValue) : [];
-    const stored = Array.isArray(parsed) ? parsed : [];
-    if (!stored.some((entry) => entry?.id === TEST_VAMPIRE_ID)) stored.unshift(createTestVampireRecord());
-    return stored;
-  } catch (error) {
-    console.error(error);
-    return [createTestVampireRecord()];
-  }
-};
+const loadStoredVampires = () => getStoredVampires(
+  safeLocalStorage,
+  STORAGE_KEY,
+  TEST_VAMPIRE_ID,
+  createTestVampireRecord,
+);
 
-const saveStoredVampires = (vampires) => safeLocalStorage.setItem(STORAGE_KEY, JSON.stringify(vampires));
+const persistStoredVampires = (vampires) => saveStoredVampires(safeLocalStorage, STORAGE_KEY, vampires);
 
-const serializeCharacter = () => ({
-  name: character.name,
-  memories: character.memories,
-  skills: character.skills,
-  resources: character.resources,
-  characters: character.characters,
-  marks: character.marks,
-  diary: character.diary,
-});
-
-const createStoredRecord = () => ({
-  id: selectedVampireId || crypto.randomUUID(),
-  updatedAt: new Date().toISOString(),
-  isComplete: character.isReadyForPromptOne(),
-  data: serializeCharacter(),
-  campaign: serializeCampaignState(promptState),
+const serializeCharacter = (currentCharacter) => ({
+  name: currentCharacter.name,
+  memories: currentCharacter.memories,
+  skills: currentCharacter.skills,
+  resources: currentCharacter.resources,
+  characters: currentCharacter.characters,
+  marks: currentCharacter.marks,
+  diary: currentCharacter.diary,
 });
 
 const persistCurrentCharacter = () => {
   selectedVampireId = selectedVampireId || crypto.randomUUID();
-  const vampires = getStoredVampires();
-  const record = createStoredRecord();
-  const existingIndex = vampires.findIndex((entry) => entry.id === record.id);
-
-  if (existingIndex >= 0) vampires.splice(existingIndex, 1, record);
-  else vampires.push(record);
-
-  saveStoredVampires(vampires);
+  const vampires = loadStoredVampires();
+  const record = createStoredRecord({
+    selectedVampireId,
+    character,
+    promptState,
+    serializeCharacter,
+  });
+  const nextVampires = upsertVampireRecord(vampires, record);
+  persistStoredVampires(nextVampires);
 };
 
 const resetPlayState = () => {
@@ -347,26 +199,13 @@ const resetPromptState = () => {
   promptState.visits = new Map();
 };
 
-const getRouteForScreen = (screen) => {
-  if (screen === "creation") return "#/create";
-  if (screen === "play" && selectedVampireId) return `#/play/${selectedVampireId}`;
-  return "#/menu";
-};
-
-const updateDocumentTitle = () => {
-  const title = SCREEN_TITLES[currentScreen] ?? "1000yo";
-  document.title = `${title} · 1000yo`;
-};
-
 const setScreen = (screen, { updateRoute = false, replaceRoute = false } = {}) => {
   currentScreen = screen;
-  elements.menuScreen.hidden = currentScreen !== "menu";
-  elements.creationScreen.hidden = currentScreen !== "creation";
-  elements.playScreen.hidden = currentScreen !== "play";
-  updateDocumentTitle();
+  applyScreenVisibility(currentScreen, elements);
+  updateDocumentTitle(currentScreen);
 
   if (updateRoute) {
-    const nextRoute = getRouteForScreen(screen);
+    const nextRoute = getRouteForScreen(screen, selectedVampireId);
     if (window.location.hash !== nextRoute) {
       if (replaceRoute) window.location.replace(nextRoute);
       else window.location.hash = nextRoute;
@@ -466,58 +305,6 @@ const collapseSettledRecords = () => {
   });
   character.characters.forEach((item) => {
     if (item.used || item.lost) setRecordCollapsed("character", item.id, true);
-  });
-};
-
-const resolveMaterialIconName = (name) => ({
-  plus: "add",
-  x: "close",
-  square: "check_box_outline_blank",
-  "square-check": "check_box",
-  notebook: "book_2",
-  trash: "delete",
-})[name] ?? name;
-
-const createMaterialFallbackIcon = (name, classNames = []) => {
-  const resolvedName = resolveMaterialIconName(name);
-  const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-  svg.setAttribute("viewBox", "0 0 24 24");
-  svg.setAttribute("fill", "none");
-  svg.setAttribute("stroke", "currentColor");
-  svg.setAttribute("stroke-width", "2");
-  svg.setAttribute("stroke-linecap", "round");
-  svg.setAttribute("stroke-linejoin", "round");
-  svg.setAttribute("aria-hidden", "true");
-  svg.classList.add("material-icon", ...classNames);
-  const nodes = MATERIAL_ICON_NODES[resolvedName] ?? [];
-  nodes.forEach(([tagName, attributes]) => {
-    const node = document.createElementNS("http://www.w3.org/2000/svg", tagName);
-    Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value));
-    svg.append(node);
-  });
-  return svg;
-};
-
-const createMaterialIcon = (name, classNames = []) => {
-  const resolvedName = resolveMaterialIconName(name);
-  const img = document.createElement("img");
-  img.classList.add("material-icon", ...classNames);
-  img.alt = "";
-  img.setAttribute("aria-hidden", "true");
-  img.decoding = "async";
-  img.loading = "lazy";
-  img.src = `https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/${resolvedName}/default/24px.svg`;
-  img.addEventListener("error", () => {
-    img.replaceWith(createMaterialFallbackIcon(resolvedName, classNames));
-  }, { once: true });
-  return img;
-};
-
-const hydrateStaticIcons = () => {
-  document.querySelectorAll("[data-material-icon]").forEach((element) => {
-    const iconName = element.dataset.materialIcon;
-    if (!iconName) return;
-    element.replaceChildren(createMaterialIcon(iconName));
   });
 };
 
@@ -628,63 +415,22 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
   }
 };
 
-const renderMenu = () => {
-  const vampires = getStoredVampires();
-  elements.vampireList.innerHTML = "";
-  elements.vampireList.hidden = vampires.length === 0;
-
-  for (const vampire of vampires) {
-    const item = document.createElement("li");
-    item.className = "record vampire-record";
-    item.tabIndex = 0;
-    item.role = "button";
-
-    const openVampire = () => {
-      loadCharacter(vampire);
-      resetCreationForms();
-      void startPlay(true);
-    };
-
-    item.addEventListener("click", () => {
-      openVampire();
-    });
-    item.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      event.preventDefault();
-      openVampire();
-    });
-
-    const body = document.createElement("div");
-    body.className = "vampire-option";
-
-    const title = document.createElement("strong");
-    title.textContent = vampire.data?.name || "Unnamed Vampire";
-    body.append(title);
-
-    const actions = document.createElement("div");
-    actions.className = "menu-record-actions";
-    if (!vampire.isPreset) {
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.className = "menu-delete-control";
-      deleteButton.addEventListener("click", (event) => {
-        event.stopPropagation();
-        const displayName = vampire.data?.name || "this vampire";
-        if (!window.confirm(`Delete ${displayName}? This cannot be undone.`)) return;
-        const remaining = getStoredVampires().filter((entry) => entry.id !== vampire.id && entry.id !== TEST_VAMPIRE_ID);
-        saveStoredVampires(remaining);
-        if (selectedVampireId === vampire.id) selectedVampireId = "";
-        setScreen("menu", { updateRoute: true });
-        render();
-      });
-      deleteButton.ariaLabel = `Delete ${vampire.data?.name || "saved vampire"}`;
-      deleteButton.replaceChildren(createMaterialIcon("trash"));
-      actions.append(deleteButton);
-    }
-    item.append(body, actions);
-    elements.vampireList.append(item);
-  }
-};
+const renderMenu = () => renderMenuView({
+  elements,
+  loadStoredVampires,
+  loadCharacter,
+  resetCreationForms,
+  startPlay,
+  persistStoredVampires,
+  setScreen,
+  render,
+  getSelectedVampireId: () => selectedVampireId,
+  setSelectedVampireId: (value) => {
+    selectedVampireId = value;
+  },
+  testVampireId: TEST_VAMPIRE_ID,
+  createMaterialIcon,
+});
 
 const getMemoryRecords = (startIndex, endIndexExclusive) => character.memories
   .map((memory, index) => ({ memory, index }))
@@ -1163,109 +909,12 @@ const renderPlayLists = () => {
   renderFormState("character", editingTrait?.kind === "character" ? character.characters[editingTrait.index] : null);
 };
 
-const parseCsv = (csvText = "") => {
-  const rows = [];
-  let row = [];
-  let field = "";
-  let inQuotes = false;
-  const source = String(csvText).replace(/^\uFEFF/, "");
-
-  for (let index = 0; index < source.length; index += 1) {
-    const char = source[index];
-    if (inQuotes) {
-      if (char === '"') {
-        if (source[index + 1] === '"') {
-          field += '"';
-          index += 1;
-        } else inQuotes = false;
-      } else field += char;
-      continue;
-    }
-    if (char === '"') {
-      inQuotes = true;
-      continue;
-    }
-    if (char === ',') {
-      row.push(field);
-      field = "";
-      continue;
-    }
-    if (char === "\n") {
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = "";
-      continue;
-    }
-    if (char === "\r") continue;
-    field += char;
-  }
-
-  row.push(field);
-  rows.push(row);
-  return rows.filter((candidate) => candidate.some((value) => cleanText(value)));
-};
-
-const parsePromptDeck = (csvText) => {
-  const rows = parseCsv(csvText);
-  if (!rows.length) return [];
-  const [firstRow, ...remainingRows] = rows;
-  const hasHeader = firstRow.slice(0, 3).map((value) => cleanPromptText(value).toLowerCase()).join("|") === "a|b|c";
-  const dataRows = hasHeader ? remainingRows : rows;
-  return dataRows
-    .map((row) => ({ a: cleanPromptText(row[0] ?? ""), b: cleanPromptText(row[1] ?? ""), c: cleanPromptText(row[2] ?? "") }))
-    .filter((prompt) => Boolean(prompt.a || prompt.b || prompt.c));
-};
-
-const getPromptEntry = (prompt, visitCount) => {
-  if (!prompt) return "";
-  if (visitCount === 1) return prompt.a;
-  if (visitCount === 2) return prompt.b;
-  if (visitCount === 3) return prompt.c;
-  return "";
-};
-
-const hasPromptEntryForVisit = (prompt, visitCount) => Boolean(getPromptEntry(prompt, visitCount));
 const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
-const clampPromptIndex = (index) => (!promptState.deck.length ? 1 : Math.max(1, Math.min(index, promptState.deck.length)));
-
-const moveToNextAvailablePrompt = (targetIndex) => {
-  if (!promptState.deck.length) return { prompt: 1, visit: 0 };
-  let nextIndex = clampPromptIndex(targetIndex);
-  while (nextIndex <= promptState.deck.length) {
-    const prompt = promptState.deck[nextIndex - 1];
-    const visitCount = (promptState.visits.get(nextIndex) ?? 0) + 1;
-    if (hasPromptEntryForVisit(prompt, visitCount)) {
-      promptState.visits.set(nextIndex, visitCount);
-      promptState.currentPrompt = nextIndex;
-      return { prompt: nextIndex, visit: visitCount };
-    }
-    promptState.visits.set(nextIndex, visitCount);
-    nextIndex += 1;
-  }
-  return { prompt: promptState.currentPrompt, visit: promptState.visits.get(promptState.currentPrompt) ?? 1 };
-};
 
 const renderPromptPanel = () => {
-  if (promptState.isLoading) {
-    elements.promptButton.disabled = true;
-    elements.promptText.textContent = "Loading prompts...";
-    return;
-  }
-  if (promptState.loadError) {
-    elements.promptButton.disabled = true;
-    elements.promptText.textContent = promptState.loadError;
-    return;
-  }
-  if (!promptState.deck.length) {
-    elements.promptButton.disabled = true;
-    elements.promptText.textContent = "No prompt content is available.";
-    return;
-  }
-  const currentPrompt = promptState.deck[promptState.currentPrompt - 1];
-  const visitCount = promptState.visits.get(promptState.currentPrompt) ?? 1;
-  elements.promptButton.disabled = false;
-  elements.promptText.textContent = getPromptEntry(currentPrompt, visitCount) || "No remaining prompt entry at this position.";
+  const model = getPromptPanelViewModel(promptState);
+  elements.promptButton.disabled = model.disabled;
+  elements.promptText.textContent = model.text;
 };
 
 const loadPromptDeck = async () => {
@@ -1285,8 +934,7 @@ const loadPromptDeck = async () => {
   } finally {
     promptState.isLoading = false;
     if (promptState.deck.length) {
-      promptState.currentPrompt = clampPromptIndex(promptState.currentPrompt);
-      if (!promptState.visits.has(promptState.currentPrompt)) promptState.visits.set(promptState.currentPrompt, 1);
+      normalizeLoadedPromptState(promptState);
       persistCurrentCharacter();
     }
     render();
@@ -1302,9 +950,7 @@ const startPlay = async (skipCreationGate = false) => {
   hasSavedSetup = true;
   persistCurrentCharacter();
   setScreen("play", { updateRoute: true });
-  if (!promptState.visits.size) {
-    promptState.currentPrompt = 1;
-    promptState.visits.set(1, 1);
+  if (ensurePromptVisit(promptState)) {
     persistCurrentCharacter();
   }
   render();
@@ -1336,33 +982,26 @@ const stepCanAdvance = [
 const isStepComplete = (stepIndex) => stepRequirements[stepIndex]();
 const canAdvanceFromStep = (stepIndex) => stepCanAdvance[stepIndex]();
 
-const renderStep = () => {
-  elements.stepPanels.forEach((panel, index) => {
-    panel.hidden = currentStep !== index;
-  });
-  elements.stepProgress.textContent = `${currentStep + 1}/${totalSteps}`;
-  elements.backButton.disabled = currentStep === 0;
-  elements.nextButton.textContent = currentStep === totalSteps - 1 ? "Save" : "Next";
-  elements.nextButton.disabled = !canAdvanceFromStep(currentStep);
-};
+const renderStep = () => renderStepView({
+  elements,
+  currentStep,
+  totalSteps,
+  canAdvanceFromStep,
+});
 
-const renderCreation = () => {
-  syncSelectedTraits(selectedLaterTraitIds);
-  syncSelectedTraits(selectedCurseTraitIds);
-  elements.nameInput.value = character.name;
-  renderMemoryList(elements.identityMemoryList, 0, 1);
-  renderCharacterList(elements.mortalList, "mortal");
-  renderDetailList(elements.skillList, character.skills, (index) => character.removeSkill(index));
-  renderDetailList(elements.resourceList, character.resources, (index) => character.removeResource(index));
-  renderMemoryList(elements.laterMemoryList, 1, 4);
-  renderCharacterList(elements.immortalList, "immortal");
-  renderDetailList(elements.markList, character.marks, (index) => character.removeMark(index));
-  renderMemoryList(elements.curseMemoryList, 4, 5);
-  renderTraitSelector(elements.memoryTraitsLater, selectedLaterTraitIds);
-  renderTraitSelector(elements.memoryTraitsCurse, selectedCurseTraitIds);
-  elements.saveConfirmation.hidden = !hasSavedSetup;
-  renderStep();
-};
+const renderCreation = () => renderCreationView({
+  character,
+  elements,
+  selectedLaterTraitIds,
+  selectedCurseTraitIds,
+  syncSelectedTraits,
+  renderMemoryList,
+  renderCharacterList,
+  renderDetailList,
+  renderTraitSelector,
+  hasSavedSetup,
+  renderStep,
+});
 
 const renderCollapsibleCards = () => {
   document.querySelectorAll("[data-card-key]").forEach((card) => {
@@ -1384,47 +1023,18 @@ const render = () => {
   renderCollapsibleCards();
 };
 
-const parseRoute = () => {
-  const hash = window.location.hash || "#/menu";
-  const match = hash.match(/^#\/([a-z]+)(?:\/([^/]+))?$/i);
-  const route = match?.[1]?.toLowerCase() ?? "menu";
-  const routeId = match?.[2] ?? "";
-  if (route === "create") return { screen: "creation", vampireId: "" };
-  if (route === "play") return { screen: "play", vampireId: routeId };
-  return { screen: "menu", vampireId: "" };
-};
-
-const handleRouteChange = async () => {
-  const { screen, vampireId } = parseRoute();
-  if (screen === "menu") {
-    setScreen("menu");
-    render();
-    return;
-  }
-  if (screen === "creation") {
-    if (!selectedVampireId) {
-      startNewVampire();
-      return;
-    }
-    setScreen("creation");
-    render();
-    return;
-  }
-  if (!vampireId) {
-    setScreen("menu", { updateRoute: true, replaceRoute: true });
-    render();
-    return;
-  }
-  const storedCharacter = getStoredVampires().find((entry) => entry.id === vampireId);
-  if (!storedCharacter) {
-    setScreen("menu", { updateRoute: true, replaceRoute: true });
-    render();
-    return;
-  }
-  loadCharacter(storedCharacter);
-  resetCreationForms();
-  await startPlay(true);
-};
+const handleRouteChange = async () => handleRouteChangeView({
+  parseRouteHash,
+  getHash: () => window.location.hash,
+  setScreen,
+  render,
+  getSelectedVampireId: () => selectedVampireId,
+  startNewVampire,
+  loadStoredVampires,
+  loadCharacter,
+  resetCreationForms,
+  startPlay,
+});
 
 const saveIdentityStep = () => {
   markDirty();
@@ -1467,172 +1077,6 @@ const saveCurseMemoryStep = () => {
   return didSave;
 };
 
-elements.newVampireButton.addEventListener("click", () => startNewVampire());
-elements.nameInput.addEventListener("input", () => {
-  markDirty();
-  character.rename(elements.nameInput.value);
-  renderStep();
-});
-elements.identityMemoryInput.addEventListener("input", () => {
-  markDirty();
-  renderStep();
-});
-elements.memoryCurse.addEventListener("input", () => {
-  markDirty();
-  renderStep();
-});
-
-elements.mortalForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.addCharacter(elements.mortalName.value, elements.mortalDescription.value, "mortal")) {
-    markDirty();
-    elements.mortalForm.reset();
-    render();
-  }
-});
-
-elements.skillForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.addSkill(elements.skillName.value, elements.skillDescription.value)) {
-    markDirty();
-    elements.skillForm.reset();
-    render();
-  }
-});
-
-elements.resourceForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.addResource(elements.resourceName.value, elements.resourceDescription.value)) {
-    markDirty();
-    elements.resourceForm.reset();
-    render();
-  }
-});
-
-elements.memoryFormLater.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.memories.length < 1 || character.memories.length >= 4) return;
-  if (selectedLaterTraitIds.size < MIN_MEMORY_TRAITS) return;
-  if (character.addMemory(elements.memoryLater.value, getSelectedTraitLabels(selectedLaterTraitIds))) {
-    markDirty();
-    elements.memoryFormLater.reset();
-    selectedLaterTraitIds.clear();
-    render();
-  }
-});
-
-elements.immortalForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.addCharacter(elements.immortalName.value, elements.immortalDescription.value, "immortal")) {
-    markDirty();
-    elements.immortalForm.reset();
-    render();
-  }
-});
-
-elements.markForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.addMark(elements.markInput.value, elements.markDescription.value)) {
-    markDirty();
-    elements.markForm.reset();
-    render();
-  }
-});
-
-elements.memoryFormCurse.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (character.memories.length !== 4) return;
-  if (selectedCurseTraitIds.size < MIN_MEMORY_TRAITS) return;
-  if (character.addMemory(elements.memoryCurse.value, getSelectedTraitLabels(selectedCurseTraitIds))) {
-    markDirty();
-    elements.memoryFormCurse.reset();
-    selectedCurseTraitIds.clear();
-    render();
-  }
-});
-
-elements.backButton.addEventListener("click", () => {
-  currentStep = Math.max(0, currentStep - 1);
-  renderStep();
-});
-elements.nextButton.addEventListener("click", () => {
-  if (currentStep === 0) {
-    if (!saveIdentityStep()) return;
-    currentStep = 1;
-    render();
-    return;
-  }
-  if (currentStep === 5) {
-    if (!saveImmortalStep()) return;
-    currentStep = 6;
-    render();
-    return;
-  }
-  if (currentStep === 6) {
-    if (!saveMarkStep()) return;
-    currentStep = 7;
-    render();
-    return;
-  }
-  if (currentStep === 7) {
-    if (!saveCurseMemoryStep()) return;
-    hasSavedSetup = character.isReadyForPromptOne();
-    persistCurrentCharacter();
-    if (!hasSavedSetup) {
-      render();
-      return;
-    }
-    void startPlay();
-    return;
-  }
-  if (!isStepComplete(currentStep)) return;
-  currentStep = Math.min(totalSteps - 1, currentStep + 1);
-  render();
-});
-
-elements.promptButton.addEventListener("click", () => {
-  if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
-  const delta = rollDie(10) - rollDie(6);
-  const target = clampPromptIndex(promptState.currentPrompt + delta);
-  moveToNextAvailablePrompt(target);
-  collapseSettledRecords();
-  persistCurrentCharacter();
-  render();
-});
-
-elements.addMemoryButton.addEventListener("click", (event) => {
-  event.stopPropagation();
-  if (character.memories.length >= MAX_MEMORIES) return;
-  collapsedCards.delete("memories");
-  activeModal = "memory";
-  openExperienceComposer("new");
-  render();
-});
-
-elements.lostMemoriesToggle.addEventListener("click", () => {
-  if (collapsedCards.has("lost-memories")) collapsedCards.delete("lost-memories");
-  else collapsedCards.add("lost-memories");
-  renderPlayLists();
-});
-
-elements.playExperienceForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const memoryId = experienceComposer.target === "new" ? null : experienceComposer.target;
-  const didSave = character.addMemory(elements.playExperienceText.value, [...pendingExperienceTraitIds], memoryId);
-  if (!didSave) return;
-  markDirty();
-  closeExperienceComposer();
-  activeModal = null;
-  render();
-});
-
-elements.playExperienceCancel.addEventListener("click", (event) => {
-  event.stopPropagation();
-  closeExperienceComposer();
-  activeModal = null;
-  render();
-});
-
 const openTraitForm = (kind) => {
   collapsedCards.delete(kind === "character" ? "characters" : `${kind}s`);
   activeModal = kind;
@@ -1640,132 +1084,76 @@ const openTraitForm = (kind) => {
   render();
 };
 
-elements.addSkillButton.addEventListener("click", (event) => {
-  event.stopPropagation();
-  openTraitForm("skill");
-});
-elements.addResourceButton.addEventListener("click", (event) => {
-  event.stopPropagation();
-  openTraitForm("resource");
-});
-elements.addCharacterButton.addEventListener("click", (event) => {
-  event.stopPropagation();
-  openTraitForm("character");
-});
-
-elements.playSkillForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const didSave = editingTrait?.kind === "skill"
-    ? character.updateSkill(editingTrait.index, elements.playSkillName.value, elements.playSkillDescription.value)
-    : character.addSkill(elements.playSkillName.value, elements.playSkillDescription.value);
-  if (!didSave) return;
-  markDirty();
-  activeModal = null;
-  editingTrait = null;
-  elements.playSkillForm.reset();
-  render();
-});
-elements.playResourceForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const didSave = editingTrait?.kind === "resource"
-    ? character.updateResource(editingTrait.index, elements.playResourceName.value, elements.playResourceDescription.value)
-    : character.addResource(elements.playResourceName.value, elements.playResourceDescription.value);
-  if (!didSave) return;
-  markDirty();
-  activeModal = null;
-  editingTrait = null;
-  elements.playResourceForm.reset();
-  render();
-});
-elements.playDiaryForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  if (!pendingDiaryMemoryId) return;
-  const didSave = character.moveMemoryToDiary(pendingDiaryMemoryId, elements.playDiaryDescription.value);
-  if (!didSave) return;
-  markDirty();
-  activeModal = null;
-  pendingDiaryMemoryId = "";
-  elements.playDiaryForm.reset();
-  render();
-});
-elements.playCharacterForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  const didSave = editingTrait?.kind === "character"
-    ? character.updateCharacter(editingTrait.index, elements.playCharacterName.value, elements.playCharacterDescription.value, elements.playCharacterType.value)
-    : character.addCharacter(elements.playCharacterName.value, elements.playCharacterDescription.value, elements.playCharacterType.value);
-  if (!didSave) return;
-  markDirty();
-  activeModal = null;
-  editingTrait = null;
-  elements.playCharacterForm.reset();
-  render();
+bindCreationEvents({
+  elements,
+  getCharacter: () => character,
+  markDirty,
+  render,
+  renderStep,
+  getSelectedTraitLabels,
+  selectedLaterTraitIds,
+  selectedCurseTraitIds,
+  minMemoryTraits: MIN_MEMORY_TRAITS,
+  saveIdentityStep,
+  saveImmortalStep,
+  saveMarkStep,
+  saveCurseMemoryStep,
+  getCurrentStep: () => currentStep,
+  setCurrentStep: (value) => {
+    currentStep = value;
+  },
+  totalSteps,
+  isStepComplete,
+  setHasSavedSetup: (value) => {
+    hasSavedSetup = value;
+  },
+  persistCurrentCharacter,
+  startPlay,
+  startNewVampire,
 });
 
-elements.playSkillCancel.addEventListener("click", (event) => {
-  event.stopPropagation();
-  activeModal = null;
-  editingTrait = editingTrait?.kind === "skill" ? null : editingTrait;
-  elements.playSkillForm.reset();
-  render();
-});
-elements.playResourceCancel.addEventListener("click", (event) => {
-  event.stopPropagation();
-  activeModal = null;
-  editingTrait = editingTrait?.kind === "resource" ? null : editingTrait;
-  elements.playResourceForm.reset();
-  render();
-});
-elements.playCharacterCancel.addEventListener("click", (event) => {
-  event.stopPropagation();
-  activeModal = null;
-  editingTrait = editingTrait?.kind === "character" ? null : editingTrait;
-  elements.playCharacterForm.reset();
-  render();
-});
-elements.playDiaryCancel.addEventListener("click", (event) => {
-  event.stopPropagation();
-  activeModal = null;
-  pendingDiaryMemoryId = "";
-  elements.playDiaryForm.reset();
-  render();
-});
-
-document.querySelectorAll("[data-modal-close]").forEach((target) => {
-  target.addEventListener("click", () => {
-    activeModal = null;
-    closeExperienceComposer();
-    editingTrait = null;
-    pendingDiaryMemoryId = "";
-    resetPlayForms();
-    render();
-  });
+bindPlayEvents({
+  elements,
+  promptState,
+  rollDie,
+  advanceToNextPromptEntry,
+  collapseSettledRecords,
+  persistCurrentCharacter,
+  render,
+  collapsedCards,
+  maxMemories: MAX_MEMORIES,
+  setActiveModal: (value) => {
+    activeModal = value;
+  },
+  openExperienceComposer,
+  getCharacter: () => character,
+  getExperienceComposer: () => experienceComposer,
+  pendingExperienceTraitIds,
+  markDirty,
+  closeExperienceComposer,
+  openTraitForm,
+  getEditingTrait: () => editingTrait,
+  setEditingTrait: (value) => {
+    editingTrait = value;
+  },
+  getActiveModal: () => activeModal,
+  setPendingDiaryMemoryId: (value) => {
+    pendingDiaryMemoryId = value;
+  },
+  getPendingDiaryMemoryId: () => pendingDiaryMemoryId,
 });
 
-document.addEventListener("keydown", (event) => {
-  if (event.key !== "Escape" || activeModal === null) return;
+const closeModalAndResetPlayForms = () => {
   activeModal = null;
   closeExperienceComposer();
   editingTrait = null;
   pendingDiaryMemoryId = "";
   resetPlayForms();
   render();
-});
-
-document.querySelectorAll("[data-card-toggle]").forEach((toggle) => {
-  toggle.addEventListener("click", (event) => {
-    const interactive = event.target.closest("button, input, textarea, select, label");
-    if (interactive) return;
-    const card = toggle.closest("[data-card-key]");
-    const key = card?.dataset.cardKey;
-    if (!key || key === "prompt") return;
-    if (collapsedCards.has(key)) collapsedCards.delete(key);
-    else collapsedCards.add(key);
-    renderCollapsibleCards();
-  });
-});
+};
 
 const initialize = () => {
-  const vampires = getStoredVampires();
+  const vampires = loadStoredVampires();
   selectedVampireId = vampires[0]?.id ?? "";
   [
     elements.addMemoryButton,
@@ -1777,7 +1165,14 @@ const initialize = () => {
     button.replaceChildren(createMaterialIcon("plus"));
   });
   hydrateStaticIcons();
-  window.addEventListener("hashchange", () => {
+  bindModalCloseEvents(closeModalAndResetPlayForms);
+  bindEscapeKeyHandler(() => activeModal !== null, closeModalAndResetPlayForms);
+  bindCardToggleEvents((key) => {
+    if (collapsedCards.has(key)) collapsedCards.delete(key);
+    else collapsedCards.add(key);
+    renderCollapsibleCards();
+  });
+  bindHashChange(() => {
     void handleRouteChange();
   });
   void handleRouteChange();

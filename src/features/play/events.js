@@ -111,10 +111,15 @@ export const bindPlayEvents = ({
   elements.playSkillForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const editingTrait = getEditingTrait();
+    const isEditing = editingTrait?.kind === "skill";
     const didSave = editingTrait?.kind === "skill"
       ? getCharacter().updateSkill(editingTrait.index, elements.playSkillName.value, elements.playSkillDescription.value)
       : getCharacter().addSkill(elements.playSkillName.value, elements.playSkillDescription.value);
     if (!didSave) return;
+    if (!isEditing) {
+      const createdId = getCharacter().skills.at(-1)?.id;
+      if (createdId) pendingExperienceTraitIds.add(createdId);
+    }
     markDirty();
     setActiveModal(null);
     setEditingTrait(null);
@@ -124,6 +129,7 @@ export const bindPlayEvents = ({
   elements.playResourceForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const editingTrait = getEditingTrait();
+    const isEditing = editingTrait?.kind === "resource";
     const didSave = editingTrait?.kind === "resource"
       ? getCharacter().updateResource(
         editingTrait.index,
@@ -133,6 +139,10 @@ export const bindPlayEvents = ({
       )
       : getCharacter().addResource(elements.playResourceName.value, elements.playResourceDescription.value);
     if (!didSave) return;
+    if (!isEditing) {
+      const createdId = getCharacter().resources.at(-1)?.id;
+      if (createdId) pendingExperienceTraitIds.add(createdId);
+    }
     markDirty();
     setActiveModal(null);
     setEditingTrait(null);
@@ -154,10 +164,15 @@ export const bindPlayEvents = ({
   elements.playCharacterForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const editingTrait = getEditingTrait();
+    const isEditing = editingTrait?.kind === "character";
     const didSave = editingTrait?.kind === "character"
       ? getCharacter().updateCharacter(editingTrait.index, elements.playCharacterName.value, elements.playCharacterDescription.value, elements.playCharacterType.value)
       : getCharacter().addCharacter(elements.playCharacterName.value, elements.playCharacterDescription.value, elements.playCharacterType.value);
     if (!didSave) return;
+    if (!isEditing) {
+      const createdId = getCharacter().characters.at(-1)?.id;
+      if (createdId) pendingExperienceTraitIds.add(createdId);
+    }
     markDirty();
     setActiveModal(null);
     setEditingTrait(null);
@@ -167,10 +182,15 @@ export const bindPlayEvents = ({
   elements.playMarkForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const editingTrait = getEditingTrait();
+    const isEditing = editingTrait?.kind === "mark";
     const didSave = editingTrait?.kind === "mark"
       ? getCharacter().updateMark(editingTrait.index, elements.playMarkName.value, elements.playMarkDescription.value)
       : getCharacter().addMark(elements.playMarkName.value, elements.playMarkDescription.value);
     if (!didSave) return;
+    if (!isEditing) {
+      const createdId = getCharacter().marks.at(-1)?.id;
+      if (createdId) pendingExperienceTraitIds.add(createdId);
+    }
     markDirty();
     setActiveModal(null);
     setEditingTrait(null);

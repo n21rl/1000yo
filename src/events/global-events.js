@@ -17,10 +17,11 @@ export const bindCardToggleEvents = (onToggleCard) => {
   document.querySelectorAll("[data-card-toggle]").forEach((toggle) => {
     toggle.addEventListener("click", (event) => {
       const interactive = event.target.closest("button, input, textarea, select, label");
-      if (interactive) return;
+      const chevronButton = event.target.closest("[data-card-chevron]");
+      if (interactive && !chevronButton) return;
       const card = toggle.closest("[data-card-key]");
       const key = card?.dataset.cardKey;
-      if (!key || key === "prompt") return;
+      if (!key) return;
       onToggleCard(key);
     });
   });

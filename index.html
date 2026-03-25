@@ -151,16 +151,38 @@
       </section>
 
       <section id="play-screen" class="play-layout" hidden>
+        <div class="play-header">
+          <h2><span id="play-name">Unnamed Vampire</span></h2>
+          <button type="button" id="edit-play-name-button" class="ghost-button small-button">Edit name</button>
+        </div>
         <section class="play-grid">
           <article class="card play-card prompt-card" data-card-key="prompt">
-            <div class="section-heading play-static-heading">
+            <div class="section-heading" data-card-toggle>
               <div class="card-title-row">
                 <h2><span class="card-heading-icon" data-material-icon="sticky_note_2" aria-hidden="true"></span><span>Prompt</span></h2>
               </div>
+              <div class="card-heading-actions">
+                <button type="button" id="next-prompt-button" class="ghost-button small-button" aria-label="Roll prompt">
+                  <span data-material-icon="casino" aria-hidden="true"></span>
+                </button>
+                <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle prompt card">
+                  <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+                </button>
+              </div>
             </div>
             <div data-card-content>
-              <button type="button" id="next-prompt-button">Next prompt</button>
               <p id="prompt-text" class="prompt-text">Loading prompt data...</p>
+              <form id="play-experience-form" class="stack compact-form inline-form">
+                <h3 id="play-experience-form-title" class="modal-form-title">Add memory</h3>
+                <p id="play-memory-hint" class="supporting"></p>
+                <label for="play-experience-text">Current experience</label>
+                <textarea id="play-experience-text" rows="3" placeholder="Write a short experience for this prompt"></textarea>
+                <div id="play-selected-traits" class="record-tags"></div>
+                <div class="form-actions">
+                  <button type="submit" id="play-experience-submit">Save</button>
+                  <button type="button" class="ghost-button" id="play-experience-cancel">Cancel</button>
+                </div>
+              </form>
             </div>
           </article>
 
@@ -168,7 +190,13 @@
             <div class="section-heading" data-card-toggle>
               <div class="card-title-row">
                 <h2><span class="card-heading-icon" data-material-icon="cognition" aria-hidden="true"></span><span>Memories</span></h2>
-                <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+              </div>
+              <div class="card-heading-actions">
+                <button type="button" id="decrease-memory-slots-button" class="ghost-button small-button" title="Remove memory slot">-</button>
+                <button type="button" id="increase-memory-slots-button" class="ghost-button small-button" title="Add memory slot">+</button>
+                <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle memories card">
+                  <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+                </button>
               </div>
             </div>
             <div data-card-content>
@@ -189,16 +217,22 @@
                 <ul id="play-lost-memory-list" class="record-list" hidden></ul>
               </section>
               <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory"></button>
+              <p id="memory-slots-meta" class="supporting memory-slots-counter">0/0</p>
             </div>
           </article>
 
           <article id="diary-card" class="card play-card" data-card-key="diary" hidden>
-            <div class="section-heading play-static-heading">
+            <div class="section-heading" data-card-toggle>
               <div class="card-title-row">
                 <h2><span class="card-heading-icon" data-material-icon="book_2" aria-hidden="true"></span><span>Diary</span></h2>
               </div>
+              <div class="card-heading-actions">
+                <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle diary card">
+                  <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+                </button>
+              </div>
             </div>
-            <div>
+            <div data-card-content>
               <p id="diary-description" class="supporting"></p>
               <ul id="diary-memory-list" class="record-list"></ul>
             </div>
@@ -209,12 +243,16 @@
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
                   <h2><span class="card-heading-icon" data-material-icon="person" aria-hidden="true"></span><span>Characters</span></h2>
-                  <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+                </div>
+                <div class="card-heading-actions">
+                  <button type="button" id="add-character-button" class="add-card-button" title="Add character" aria-label="Add character"></button>
+                  <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle characters card">
+                    <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+                  </button>
                 </div>
               </div>
               <div data-card-content hidden>
                 <ul id="play-character-list" class="record-list"></ul>
-                <button type="button" id="add-character-button" class="add-card-button" title="Add character" aria-label="Add character"></button>
               </div>
             </article>
 
@@ -222,12 +260,16 @@
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
                   <h2><span class="card-heading-icon" data-material-icon="bolt" aria-hidden="true"></span><span>Skills</span></h2>
-                  <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+                </div>
+                <div class="card-heading-actions">
+                  <button type="button" id="add-skill-button" class="add-card-button" title="Add skill" aria-label="Add skill"></button>
+                  <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle skills card">
+                    <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+                  </button>
                 </div>
               </div>
               <div data-card-content hidden>
                 <ul id="play-skill-list" class="record-list"></ul>
-                <button type="button" id="add-skill-button" class="add-card-button" title="Add skill" aria-label="Add skill"></button>
               </div>
             </article>
 
@@ -235,12 +277,16 @@
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
                   <h2><span class="card-heading-icon" data-material-icon="deployed_code" aria-hidden="true"></span><span>Resources</span></h2>
-                  <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+                </div>
+                <div class="card-heading-actions">
+                  <button type="button" id="add-resource-button" class="add-card-button" title="Add resource" aria-label="Add resource"></button>
+                  <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle resources card">
+                    <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+                  </button>
                 </div>
               </div>
               <div data-card-content hidden>
                 <ul id="play-resource-list" class="record-list"></ul>
-                <button type="button" id="add-resource-button" class="add-card-button" title="Add resource" aria-label="Add resource"></button>
               </div>
             </article>
 
@@ -248,7 +294,12 @@
               <div class="section-heading" data-card-toggle>
                 <div class="card-title-row">
                   <h2><span class="card-heading-icon" data-material-icon="local_fire_department" aria-hidden="true"></span><span>Marks</span></h2>
-                  <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+                </div>
+                <div class="card-heading-actions">
+                  <button type="button" id="add-mark-button" class="add-card-button" title="Add mark" aria-label="Add mark"></button>
+                  <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle marks card">
+                    <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+                  </button>
                 </div>
               </div>
               <div data-card-content hidden>
@@ -266,18 +317,6 @@
         <div class="modal-header">
           <h3 id="play-modal-title">Add item</h3>
         </div>
-
-        <form id="play-experience-form" class="stack compact-form modal-form" hidden>
-          <h3 id="play-experience-form-title" class="modal-form-title">Add memory</h3>
-          <p id="play-memory-hint" class="supporting"></p>
-          <label for="play-experience-text">Current experience</label>
-          <textarea id="play-experience-text" rows="3" placeholder="Write a short experience for this prompt"></textarea>
-          <div id="play-selected-traits" class="record-tags"></div>
-          <div class="form-actions">
-            <button type="submit" id="play-experience-submit">Save</button>
-            <button type="button" class="ghost-button" id="play-experience-cancel">Cancel</button>
-          </div>
-        </form>
 
         <form id="play-character-form" class="stack compact-form modal-form" hidden>
           <h3 id="play-character-form-title" class="modal-form-title">Add character</h3>
@@ -314,9 +353,22 @@
           <input id="play-resource-name" placeholder="Enter resource name" />
           <label for="play-resource-description">Description</label>
           <textarea id="play-resource-description" rows="2" placeholder="Why this resource matters"></textarea>
+          <label class="modal-checkbox-row"><input type="checkbox" id="play-resource-stationary" /> Stationary resource</label>
           <div class="form-actions">
             <button type="submit" id="play-resource-submit">Add resource</button>
             <button type="button" class="ghost-button" id="play-resource-cancel">Cancel</button>
+          </div>
+        </form>
+
+        <form id="play-mark-form" class="stack compact-form modal-form" hidden>
+          <h3 id="play-mark-form-title" class="modal-form-title">Add mark</h3>
+          <label for="play-mark-name">Mark</label>
+          <input id="play-mark-name" placeholder="Enter mark name" />
+          <label for="play-mark-description">Description</label>
+          <textarea id="play-mark-description" rows="2" placeholder="Describe the mark"></textarea>
+          <div class="form-actions">
+            <button type="submit" id="play-mark-submit">Add mark</button>
+            <button type="button" class="ghost-button" id="play-mark-cancel">Cancel</button>
           </div>
         </form>
 

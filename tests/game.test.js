@@ -53,6 +53,14 @@ test("Character limits current memory slots to five", () => {
   assert.equal(character.memories.length, 5);
 });
 
+test("Character supports adding and removing memory slots with validation", () => {
+  const character = new Character("Aster");
+  for (let index = 0; index < 5; index += 1) character.addMemory(`Experience ${index + 1}`);
+  assert.equal(character.setMemorySlots(6), true);
+  assert.equal(character.addMemory("Experience 6"), true);
+  assert.equal(character.setMemorySlots(5), false);
+});
+
 test("Character appends experiences to existing memories up to three each", () => {
   const character = new Character("Aster");
 
@@ -153,7 +161,14 @@ test("Character stores stable IDs plus optional descriptions and status flags fo
   assert.match(character.marks[0].id, /^mark-/);
   assert.deepEqual(character.skills, [{ id: character.skills[0].id, name: "Swordplay", description: "", used: true, lost: false }]);
   assert.deepEqual(character.resources, [
-    { id: character.resources[0].id, name: "A warhorse", description: "A mount kept ready for flight.", used: false, lost: true },
+    {
+      id: character.resources[0].id,
+      name: "A warhorse",
+      description: "A mount kept ready for flight.",
+      used: false,
+      lost: true,
+      stationary: false,
+    },
   ]);
   assert.deepEqual(character.characters, [
     {
@@ -168,6 +183,16 @@ test("Character stores stable IDs plus optional descriptions and status flags fo
   assert.deepEqual(character.marks, [
     { id: character.marks[0].id, name: "Broken neck", description: "Always hidden beneath high collars." },
   ]);
+});
+
+test("Character can update mark text and resource stationary state", () => {
+  const character = new Character("Aster");
+  character.addMark("Scars", "Old battle scars.");
+  character.addResource("Castle", "A crumbling seat.");
+  assert.equal(character.updateMark(0, "Scars", "Freshly reopened."), true);
+  assert.equal(character.updateResource(0, "Castle", "A crumbling seat.", true), true);
+  assert.equal(character.marks[0].description, "Freshly reopened.");
+  assert.equal(character.resources[0].stationary, true);
 });
 
 test("Character migrates legacy experience trait labels to stable trait IDs", () => {

@@ -573,6 +573,22 @@ button:disabled {
   color: #efe0c0;
 }
 
+.record-chevron-toggle {
+  color: #d9cbb4;
+}
+
+.record-chevron-toggle .material-icon {
+  transition: transform 160ms ease;
+}
+
+.record-chevron-toggle[aria-pressed="true"] {
+  color: #d9cbb4;
+}
+
+.record-chevron-toggle[aria-pressed="true"] .material-icon {
+  transform: rotate(180deg);
+}
+
 .record-check-toggle {
   width: 1.9rem;
   height: 1.9rem;

@@ -55,6 +55,7 @@ let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
 const collapsedRecords = new Set();
+const INITIAL_COLLAPSED_CARD_KEYS = ["prompt", "memories", "diary", "characters", "skills", "resources", "marks"];
 
 const promptState = createPromptState();
 
@@ -599,9 +600,9 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   titleActions.append(createInlineIconButton(
     collapsed ? "Expand memory" : "Collapse memory",
     "keyboard_arrow_down",
-    "record-inline-button",
+    "record-inline-button record-chevron-toggle",
     toggleMemoryCollapsed,
-    { pressed: collapsed },
+    { pressed: !collapsed },
   ));
   titleRow.append(titleActions);
 
@@ -775,14 +776,11 @@ const renderTraitList = (listElement, items, kind) => {
 
     const actionRow = document.createElement("div");
     actionRow.className = "record-item-actions";
-    actionRow.append(
-      createInlineIconButton(selectedForExperience ? `Untag ${kind}` : `Tag ${kind}`, "sell", "record-inline-button", toggleTagSelection, { pressed: selectedForExperience }),
-      createInlineIconButton(`Edit ${kind}`, "edit", "record-inline-button", () => {
-        editingTrait = { kind, index };
-        activeModal = kind;
-        render();
-      }),
-    );
+    actionRow.append(createInlineIconButton(`Edit ${kind}`, "edit", "record-inline-button", () => {
+      editingTrait = { kind, index };
+      activeModal = kind;
+      render();
+    }));
     if (kind === "mark") {
       actionRow.append(createInlineIconButton("Remove mark", "delete", "record-inline-button", () => {
         character.removeMark(index);
@@ -798,9 +796,9 @@ const renderTraitList = (listElement, items, kind) => {
     actionRow.append(createInlineIconButton(
       collapsed ? `Expand ${kind}` : `Collapse ${kind}`,
       "keyboard_arrow_down",
-      "record-inline-button",
+      "record-inline-button record-chevron-toggle",
       toggleTraitCollapsed,
-      { pressed: collapsed },
+      { pressed: !collapsed },
     ));
     titleRow.append(actionRow);
 
@@ -1172,6 +1170,7 @@ const closeModalAndResetPlayForms = () => {
 const initialize = () => {
   const vampires = loadStoredVampires();
   selectedVampireId = vampires[0]?.id ?? "";
+  INITIAL_COLLAPSED_CARD_KEYS.forEach((key) => collapsedCards.add(key));
   [
     elements.addMemoryButton,
     elements.addSkillButton,

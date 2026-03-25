@@ -172,6 +172,17 @@
             </div>
             <div data-card-content>
               <p id="prompt-text" class="prompt-text">Loading prompt data...</p>
+              <form id="play-experience-form" class="stack compact-form inline-form">
+                <h3 id="play-experience-form-title" class="modal-form-title">Add memory</h3>
+                <p id="play-memory-hint" class="supporting"></p>
+                <label for="play-experience-text">Current experience</label>
+                <textarea id="play-experience-text" rows="3" placeholder="Write a short experience for this prompt"></textarea>
+                <div id="play-selected-traits" class="record-tags"></div>
+                <div class="form-actions">
+                  <button type="submit" id="play-experience-submit">Save</button>
+                  <button type="button" class="ghost-button" id="play-experience-cancel">Cancel</button>
+                </div>
+              </form>
             </div>
           </article>
 
@@ -306,18 +317,6 @@
         <div class="modal-header">
           <h3 id="play-modal-title">Add item</h3>
         </div>
-
-        <form id="play-experience-form" class="stack compact-form modal-form" hidden>
-          <h3 id="play-experience-form-title" class="modal-form-title">Add memory</h3>
-          <p id="play-memory-hint" class="supporting"></p>
-          <label for="play-experience-text">Current experience</label>
-          <textarea id="play-experience-text" rows="3" placeholder="Write a short experience for this prompt"></textarea>
-          <div id="play-selected-traits" class="record-tags"></div>
-          <div class="form-actions">
-            <button type="submit" id="play-experience-submit">Save</button>
-            <button type="button" class="ghost-button" id="play-experience-cancel">Cancel</button>
-          </div>
-        </form>
 
         <form id="play-character-form" class="stack compact-form modal-form" hidden>
           <h3 id="play-character-form-title" class="modal-form-title">Add character</h3>

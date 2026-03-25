@@ -35,7 +35,6 @@ export const bindPlayEvents = ({
     event.stopPropagation();
     if (getCharacter().activeMemories.length >= getCharacter().memorySlots) return;
     collapsedCards.delete("memories");
-    setActiveModal("memory");
     openExperienceComposer("new");
     render();
   });
@@ -61,7 +60,6 @@ export const bindPlayEvents = ({
   elements.playExperienceCancel.addEventListener("click", (event) => {
     event.stopPropagation();
     closeExperienceComposer();
-    setActiveModal(null);
     render();
   });
 

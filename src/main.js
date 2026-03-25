@@ -50,7 +50,7 @@ const selectedLaterTraitIds = new Set();
 const selectedCurseTraitIds = new Set();
 const pendingExperienceTraitIds = new Set();
 let editingTrait = null;
-let experienceComposer = { open: false, target: "new" };
+let experienceComposer = { open: true, target: "new" };
 let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
@@ -160,7 +160,7 @@ const persistCurrentCharacter = () => {
 const resetPlayState = () => {
   pendingExperienceTraitIds.clear();
   editingTrait = null;
-  experienceComposer = { open: false, target: "new" };
+  experienceComposer = { open: true, target: "new" };
   activeModal = null;
   pendingDiaryMemoryId = "";
 };
@@ -498,23 +498,19 @@ const renderSelectedTraitPills = () => {
 };
 
 const openExperienceComposer = (target = "new") => {
-  activeModal = "memory";
   experienceComposer = { open: true, target };
-  elements.playExperienceForm.hidden = false;
 };
 
 const closeExperienceComposer = () => {
-  experienceComposer = { open: false, target: "new" };
+  experienceComposer = { open: true, target: "new" };
   pendingExperienceTraitIds.clear();
   elements.playExperienceForm.reset();
-  elements.playExperienceForm.hidden = true;
 };
 
 const renderPlayComposer = () => {
   const targetMemoryId = experienceComposer.target === "new" ? null : experienceComposer.target;
   const targetIndex = targetMemoryId === null ? null : character.memories.findIndex((memory) => memory.id === targetMemoryId);
   const isNewMemory = experienceComposer.target === "new";
-  elements.playExperienceForm.hidden = activeModal !== "memory" || !experienceComposer.open;
   elements.playExperienceSubmit.textContent = isNewMemory ? "Add memory" : "Add experience";
   if (isNewMemory) {
     elements.playMemoryHint.textContent = `This will create a new memory (${character.memories.length}/${MAX_MEMORIES}).`;
@@ -571,6 +567,16 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
     ));
   }
   if (!lost) {
+    titleActions.append(createInlineIconButton(
+      experienceComposer.target === memory.id ? "Untarget memory" : "Target memory",
+      "add",
+      "record-inline-button",
+      () => {
+        openExperienceComposer(experienceComposer.target === memory.id ? "new" : memory.id);
+        render();
+      },
+      { pressed: experienceComposer.target === memory.id },
+    ));
     titleActions.append(createInlineIconButton(
       "Edit memory experiences",
       "edit",
@@ -776,11 +782,14 @@ const renderTraitList = (listElement, items, kind) => {
 
     const actionRow = document.createElement("div");
     actionRow.className = "record-item-actions";
-    actionRow.append(createInlineIconButton(`Edit ${kind}`, "edit", "record-inline-button", () => {
-      editingTrait = { kind, index };
-      activeModal = kind;
-      render();
-    }));
+    actionRow.append(
+      createInlineIconButton(selectedForExperience ? `Untag ${kind}` : `Tag ${kind}`, "sell", "record-inline-button", toggleTagSelection, { pressed: selectedForExperience }),
+      createInlineIconButton(`Edit ${kind}`, "edit", "record-inline-button", () => {
+        editingTrait = { kind, index };
+        activeModal = kind;
+        render();
+      }),
+    );
     if (kind === "mark") {
       actionRow.append(createInlineIconButton("Remove mark", "delete", "record-inline-button", () => {
         character.removeMark(index);
@@ -874,15 +883,6 @@ const renderFormState = (kind, item) => {
 
 const syncActiveModal = () => {
   elements.playTraitModal.hidden = activeModal === null;
-  if (activeModal === "memory") {
-    const memoryIndex = experienceComposer.target === "new"
-      ? null
-      : character.memories.findIndex((memory) => memory.id === experienceComposer.target);
-    elements.playModalTitle.textContent = experienceComposer.target === "new"
-      ? "Add memory"
-      : `Add experience to Memory ${memoryIndex + 1}`;
-    return;
-  }
   if (activeModal === "skill") {
     elements.playModalTitle.textContent = editingTrait?.kind === "skill" ? "Edit skill" : "Add skill";
     return;

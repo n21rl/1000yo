@@ -704,21 +704,10 @@ const renderTraitList = (listElement, items, kind) => {
 
     const body = document.createElement("div");
     body.className = "record-select";
-    body.tabIndex = 0;
-    body.role = "button";
-    const toggleTagSelection = () => {
-      togglePendingTrait(traitId);
+    const tagCurrentExperience = () => {
+      if (!experienceComposer.open) return;
+      pendingExperienceTraitIds.add(traitId);
     };
-    body.addEventListener("click", (event) => {
-      if (event.target.closest(".record-inline-button")) return;
-      toggleTagSelection();
-    });
-    body.addEventListener("keydown", (event) => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      if (event.target.closest(".record-inline-button")) return;
-      event.preventDefault();
-      toggleTagSelection();
-    });
 
     const toggleChecked = () => {
       if (kind === "mark") return;
@@ -735,6 +724,7 @@ const renderTraitList = (listElement, items, kind) => {
         character.setResourceUsed(index, nextUsed);
         if (nextUsed) character.setResourceLost(index, false);
       }
+      if (nextUsed) tagCurrentExperience();
       markDirty();
       render();
     };
@@ -753,6 +743,7 @@ const renderTraitList = (listElement, items, kind) => {
         character.setResourceLost(index, nextLost);
         if (nextLost) character.setResourceUsed(index, false);
       }
+      if (nextLost) tagCurrentExperience();
       markDirty();
       render();
     };
@@ -782,14 +773,11 @@ const renderTraitList = (listElement, items, kind) => {
 
     const actionRow = document.createElement("div");
     actionRow.className = "record-item-actions";
-    actionRow.append(
-      createInlineIconButton(selectedForExperience ? `Untag ${kind}` : `Tag ${kind}`, "sell", "record-inline-button", toggleTagSelection, { pressed: selectedForExperience }),
-      createInlineIconButton(`Edit ${kind}`, "edit", "record-inline-button", () => {
-        editingTrait = { kind, index };
-        activeModal = kind;
-        render();
-      }),
-    );
+    actionRow.append(createInlineIconButton(`Edit ${kind}`, "edit", "record-inline-button", () => {
+      editingTrait = { kind, index };
+      activeModal = kind;
+      render();
+    }));
     if (kind === "mark") {
       actionRow.append(createInlineIconButton("Remove mark", "delete", "record-inline-button", () => {
         character.removeMark(index);

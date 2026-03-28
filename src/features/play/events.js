@@ -33,8 +33,8 @@ export const bindPlayEvents = ({
   elements.addMemoryButton.addEventListener("click", (event) => {
     event.stopPropagation();
     const character = getCharacter();
-    if (!window.confirm("5 memory slots is the standard limit. Are you sure you want to add one?")) return;
     if (character.activeMemories.length >= character.memorySlots) {
+      if (character.memorySlots >= 5 && !window.confirm("5 memory slots is the standard limit. Are you sure you want to add one?")) return;
       const didAddSlot = character.setMemorySlots(character.memorySlots + 1);
       if (!didAddSlot) {
         window.alert("Unable to add a new memory slot.");
@@ -107,7 +107,7 @@ export const bindPlayEvents = ({
     render();
   });
   elements.increaseMemorySlotsButton.addEventListener("click", () => {
-    if (!window.confirm("5 memory slots is the standard limit. Are you sure you want to add one more slot?")) return;
+    if (getCharacter().memorySlots >= 5 && !window.confirm("5 memory slots is the standard limit. Are you sure you want to add one more slot?")) return;
     const didSave = getCharacter().setMemorySlots(getCharacter().memorySlots + 1);
     if (!didSave) return;
     markDirty();

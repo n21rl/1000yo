@@ -243,8 +243,22 @@ img.material-icon {
 }
 
 .memory-slots-counter {
-  margin: 0.45rem 0 0;
+  margin: 0.25rem 0 0;
   text-align: right;
+}
+
+.memory-slots-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.55rem;
+}
+
+.memory-slots-actions button {
+  width: auto;
+  min-width: 0;
+  height: auto;
+  padding: 0.35rem 0.65rem;
 }
 
 .wizard-title {
@@ -699,6 +713,10 @@ button:disabled {
 
 .modal-checkbox-row input[type="checkbox"] {
   width: auto;
+}
+
+.memory-experience-row {
+  margin-bottom: 0.25rem;
 }
 
 .experience-list {

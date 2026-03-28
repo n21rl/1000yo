@@ -192,6 +192,18 @@ export class Character {
     return true;
   }
 
+  updateMemoryExperiences(memoryIndex, texts = []) {
+    const memory = this.memories[memoryIndex];
+    if (!memory) return false;
+    if (!Array.isArray(texts) || texts.length !== memory.experiences.length) return false;
+    const cleanedTexts = texts.map((text) => cleanText(text));
+    if (cleanedTexts.some((text) => !text)) return false;
+    cleanedTexts.forEach((text, experienceIndex) => {
+      memory.experiences[experienceIndex].text = text;
+    });
+    return true;
+  }
+
   removeMemory(index) {
     return this.#removeAt(this.memories, index);
   }

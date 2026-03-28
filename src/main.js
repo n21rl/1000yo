@@ -1,5 +1,5 @@
 import { restoreCampaignState } from "./campaign-state.js";
-import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
+import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY } from "./game.js";
 import {
   parsePromptDeck,
 } from "./prompt-deck.js";
@@ -50,7 +50,7 @@ const selectedLaterTraitIds = new Set();
 const selectedCurseTraitIds = new Set();
 const pendingExperienceTraitIds = new Set();
 let editingTrait = null;
-let experienceComposer = { open: true, target: "new" };
+let experienceComposer = { open: true, target: null };
 let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
@@ -160,7 +160,7 @@ const persistCurrentCharacter = () => {
 const resetPlayState = () => {
   pendingExperienceTraitIds.clear();
   editingTrait = null;
-  experienceComposer = { open: true, target: "new" };
+  experienceComposer = { open: true, target: null };
   activeModal = null;
   pendingDiaryMemoryId = "";
 };
@@ -499,29 +499,27 @@ const renderSelectedTraitPills = () => {
   });
 };
 
-const openExperienceComposer = (target = "new") => {
+const openExperienceComposer = (target = null) => {
   experienceComposer = { open: true, target };
 };
 
 const closeExperienceComposer = () => {
-  experienceComposer = { open: true, target: "new" };
+  experienceComposer = { open: true, target: null };
   pendingExperienceTraitIds.clear();
   elements.playExperienceForm.reset();
 };
 
 const renderPlayComposer = () => {
-  const targetMemoryId = experienceComposer.target === "new" ? null : experienceComposer.target;
+  const targetMemoryId = experienceComposer.target;
   const targetIndex = targetMemoryId === null ? null : character.memories.findIndex((memory) => memory.id === targetMemoryId);
-  const isNewMemory = experienceComposer.target === "new";
-  elements.playExperienceSubmit.textContent = isNewMemory ? "Add memory" : "Add experience";
-  if (isNewMemory) {
-    elements.playMemoryHint.textContent = `This will create a new memory (${character.memories.length}/${MAX_MEMORIES}).`;
-  } else {
-    const memory = character.memories[targetIndex];
-    elements.playMemoryHint.textContent = memory
-      ? `This memory has ${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY} experiences.`
-      : "Select a memory to continue.";
-  }
+  const memory = targetIndex === null ? null : character.memories[targetIndex];
+  const hasTarget = Boolean(memory);
+  elements.playExperienceFormTitle.textContent = "Add experience";
+  elements.playExperienceSubmit.textContent = "Add experience";
+  elements.playExperienceSubmit.disabled = !hasTarget;
+  elements.playMemoryHint.textContent = hasTarget
+    ? `Target: Memory ${targetIndex + 1} (${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY} experiences).`
+    : "Select a memory target to add an experience.";
   renderSelectedTraitPills();
 };
 
@@ -574,7 +572,7 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
       experienceComposer.target === memory.id ? "radio_button_checked" : "radio_button_unchecked",
       "record-inline-button",
       () => {
-        openExperienceComposer(experienceComposer.target === memory.id ? "new" : memory.id);
+        openExperienceComposer(experienceComposer.target === memory.id ? null : memory.id);
         render();
       },
       { pressed: experienceComposer.target === memory.id },
@@ -1155,7 +1153,6 @@ bindPlayEvents({
   setActiveModal: (value) => {
     activeModal = value;
   },
-  openExperienceComposer,
   getCharacter: () => character,
   getExperienceComposer: () => experienceComposer,
   pendingExperienceTraitIds,

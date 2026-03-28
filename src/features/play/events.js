@@ -8,7 +8,6 @@ export const bindPlayEvents = ({
   render,
   collapsedCards,
   setActiveModal,
-  openExperienceComposer,
   getCharacter,
   getExperienceComposer,
   pendingExperienceTraitIds,
@@ -33,10 +32,7 @@ export const bindPlayEvents = ({
 
   elements.addMemoryButton.addEventListener("click", (event) => {
     event.stopPropagation();
-    if (getCharacter().activeMemories.length >= getCharacter().memorySlots) return;
-    collapsedCards.delete("memories");
-    openExperienceComposer("new");
-    render();
+    window.alert("Create memories during character setup. In play, prompts can only add experiences to selected memories.");
   });
 
   elements.lostMemoriesToggle.addEventListener("click", () => {
@@ -48,7 +44,11 @@ export const bindPlayEvents = ({
   elements.playExperienceForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const experienceComposer = getExperienceComposer();
-    const memoryId = experienceComposer.target === "new" ? null : experienceComposer.target;
+    const memoryId = experienceComposer.target;
+    if (!memoryId) {
+      window.alert("Select a memory target before adding an experience.");
+      return;
+    }
     const didSave = getCharacter().addMemory(elements.playExperienceText.value, [...pendingExperienceTraitIds], memoryId);
     if (!didSave) return;
     markDirty();

@@ -1081,8 +1081,15 @@ const renderCollapsibleCards = () => {
   });
 };
 
+const renderHero = () => {
+  const vampireName = character.name || "Unnamed Vampire";
+  elements.heroTitle.textContent = currentScreen === "play" ? vampireName : "1000yo";
+  elements.editHeroNameButton.hidden = currentScreen !== "play";
+};
+
 const render = () => {
   setScreen(currentScreen);
+  renderHero();
   renderMenu();
   renderCreation();
   renderPlayLists();

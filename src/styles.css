@@ -37,6 +37,12 @@ select {
   padding: 0.5rem 0 0.35rem;
 }
 
+.hero-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 h1,
 h2,
 h3,

@@ -9,7 +9,10 @@
   <body>
     <main class="app">
       <section class="hero">
-        <h1>Thousand Year Old Vampire</h1>
+        <div class="hero-title-row">
+          <h1 id="hero-title">1000yo</h1>
+          <button type="button" id="edit-hero-name-button" class="ghost-button small-button" hidden>Edit</button>
+        </div>
       </section>
 
       <section id="menu-screen" class="card menu-screen">
@@ -153,7 +156,6 @@
       <section id="play-screen" class="play-layout" hidden>
         <div class="play-header">
           <h2><span id="play-name">Unnamed Vampire</span></h2>
-          <button type="button" id="edit-play-name-button" class="ghost-button small-button">Edit name</button>
         </div>
         <section class="play-grid">
           <article class="card play-card prompt-card" data-card-key="prompt">

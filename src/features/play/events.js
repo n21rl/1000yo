@@ -34,7 +34,7 @@ export const bindPlayEvents = ({
     event.stopPropagation();
     const character = getCharacter();
     if (character.activeMemories.length >= character.memorySlots) {
-      if (!window.confirm("No free memory slots. Add a new slot first?")) return;
+      if (!window.confirm("5 memory slots is the standard limit. Are you sure you want to add one more slot?")) return;
       const didAddSlot = character.setMemorySlots(character.memorySlots + 1);
       if (!didAddSlot) {
         window.alert("Unable to add a new memory slot.");
@@ -107,7 +107,7 @@ export const bindPlayEvents = ({
     render();
   });
   elements.increaseMemorySlotsButton.addEventListener("click", () => {
-    if (!window.confirm("Add a memory slot?")) return;
+    if (!window.confirm("5 memory slots is the standard limit. Are you sure you want to add one more slot?")) return;
     const didSave = getCharacter().setMemorySlots(getCharacter().memorySlots + 1);
     if (!didSave) return;
     markDirty();
@@ -115,15 +115,27 @@ export const bindPlayEvents = ({
   });
   elements.decreaseMemorySlotsButton.addEventListener("click", () => {
     const memories = getCharacter().memories;
-    const removableIndex = [...memories.keys()].reverse().find((index) => {
-      const memory = memories[index];
-      return memory && !memory.lost && !memory.storedInDiary;
-    });
-    if (removableIndex === undefined) {
+    const removableMemories = memories
+      .map((memory, index) => ({ memory, index }))
+      .filter(({ memory }) => memory && !memory.lost && !memory.storedInDiary);
+    if (!removableMemories.length) {
       window.alert("No active memory available to remove.");
       return;
     }
-    if (!window.confirm("Remove this memory?")) return;
+    const options = removableMemories.map(({ index }) => `Memory ${index + 1}`).join(", ");
+    const selected = window.prompt(`Which memory should be removed?\n${options}`, `${removableMemories.at(-1).index + 1}`);
+    if (selected === null) return;
+    const selectedNumber = Number.parseInt(selected, 10);
+    if (!Number.isFinite(selectedNumber)) {
+      window.alert("Enter a valid memory number.");
+      return;
+    }
+    const removableIndex = removableMemories.find(({ index }) => index + 1 === selectedNumber)?.index;
+    if (removableIndex === undefined) {
+      window.alert("That memory cannot be removed.");
+      return;
+    }
+    if (!window.confirm(`Remove Memory ${selectedNumber}?`)) return;
     const didSave = getCharacter().removeMemory(removableIndex);
     if (!didSave) {
       window.alert("Unable to remove memory.");

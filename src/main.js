@@ -517,14 +517,52 @@ const renderPlayComposer = () => {
   elements.playExperienceFormTitle.textContent = "Add experience";
   elements.playExperienceSubmit.textContent = "Add experience";
   elements.playExperienceSubmit.disabled = !hasTarget;
-  elements.playMemoryHint.textContent = hasTarget
-    ? `Target: Memory ${targetIndex + 1} (${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY} experiences).`
-    : "Select a memory target to add an experience.";
+  elements.playMemoryHint.innerHTML = "";
+  elements.playMemoryHint.classList.toggle("play-memory-warning", !hasTarget);
+  elements.playMemoryHint.classList.toggle("play-memory-target", hasTarget);
+  if (hasTarget) {
+    const chip = document.createElement("span");
+    chip.className = "memory-target-chip";
+    const label = document.createElement("span");
+    label.textContent = `Current target: Memory ${targetIndex + 1} (${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY})`;
+    const actions = document.createElement("span");
+    actions.className = "memory-target-chip-actions";
+    const clearButton = createInlineIconButton(
+      "Clear target",
+      "close",
+      "record-inline-button memory-target-chip-button",
+      () => {
+        openExperienceComposer(null);
+        render();
+      },
+    );
+    actions.append(clearButton);
+    const targetMemoryElement = document.getElementById(`play-memory-${memory.id}`);
+    if (targetMemoryElement) {
+      actions.append(createInlineIconButton(
+        "Jump to memory",
+        "south",
+        "record-inline-button memory-target-chip-button",
+        () => targetMemoryElement.scrollIntoView({ behavior: "smooth", block: "center" }),
+      ));
+    }
+    chip.append(label, actions);
+    elements.playMemoryHint.append(chip);
+  } else {
+    const warning = document.createElement("span");
+    warning.className = "play-memory-warning-inline";
+    warning.append(
+      createMaterialIcon("warning", ["warning-inline-icon"]),
+      document.createTextNode("No target selected. Choose a memory before adding an experience."),
+    );
+    elements.playMemoryHint.append(warning);
+  }
   renderSelectedTraitPills();
 };
 
 const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   const item = document.createElement("li");
+  item.id = `play-memory-${memory.id}`;
   item.className = lost ? "record play-memory lost" : "record play-memory";
   if (memory.lost) setRecordCollapsed("memory", memory.id, true);
   const collapsed = isRecordCollapsed("memory", memory.id);

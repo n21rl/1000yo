@@ -78,6 +78,20 @@ test("Character appends experiences to existing memories up to three each", () =
   ]);
 });
 
+test("Character can update all experiences in a memory at once", () => {
+  const character = new Character("Aster");
+  assert.equal(character.addMemory("First"), true);
+  const memoryId = character.memories[0].id;
+  assert.equal(character.addMemory("Second", [], memoryId), true);
+
+  assert.equal(character.updateMemoryExperiences(0, [" Updated first ", "Updated second"]), true);
+  assert.deepEqual(character.memories[0].experiences.map((experience) => experience.text), [
+    "Updated first",
+    "Updated second",
+  ]);
+  assert.equal(character.updateMemoryExperiences(0, [""]), false);
+});
+
 test("Character creates a diary on first move and freezes diary memories", () => {
   const character = new Character("Aster");
   assert.equal(character.addMemory("First"), true);

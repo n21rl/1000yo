@@ -963,7 +963,6 @@ const renderPlayLists = () => {
   renderTraitList(elements.playCharacterList, character.characters, "character");
   renderTraitList(elements.playMarkList, character.marks, "mark");
 
-  elements.playName.textContent = character.name || "Unnamed Vampire";
   elements.memorySlotsMeta.textContent = `${character.activeMemories.length}/${character.memorySlots}`;
   elements.addMemoryButton.disabled = false;
 

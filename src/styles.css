@@ -97,16 +97,6 @@ h2 {
   gap: 0.65rem;
 }
 
-.play-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.play-header h2 {
-  margin: 0;
-}
-
 .play-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(18rem, 1fr));
@@ -397,6 +387,17 @@ button:disabled {
 .small-button {
   min-width: 0;
   padding: 0.35rem 0.5rem;
+}
+
+.icon-only-button {
+  width: 2rem;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border-radius: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .symbolic-button {

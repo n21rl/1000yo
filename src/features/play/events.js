@@ -106,7 +106,7 @@ export const bindPlayEvents = ({
     markDirty();
     render();
   };
-  [elements.editPlayNameButton, elements.editHeroNameButton].forEach((button) => {
+  [elements.editHeroNameButton].forEach((button) => {
     if (!button) return;
     button.addEventListener("click", handleEditName);
   });

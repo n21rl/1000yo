@@ -4,8 +4,6 @@ export const ELEMENT_SELECTORS = {
   playScreen: "#play-screen",
   heroTitle: "#hero-title",
   editHeroNameButton: "#edit-hero-name-button",
-  playName: "#play-name",
-  editPlayNameButton: "#edit-play-name-button",
   memorySlotsMeta: "#memory-slots-meta",
   increaseMemorySlotsButton: "#increase-memory-slots-button",
   decreaseMemorySlotsButton: "#decrease-memory-slots-button",

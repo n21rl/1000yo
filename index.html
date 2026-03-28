@@ -192,6 +192,8 @@
                 <h2><span class="card-heading-icon" data-material-icon="cognition" aria-hidden="true"></span><span>Memories</span></h2>
               </div>
               <div class="card-heading-actions">
+                <button type="button" id="decrease-memory-slots-button" class="ghost-button small-button" aria-label="Remove memory">-</button>
+                <button type="button" id="add-memory-button" class="ghost-button small-button" aria-label="Add memory">+</button>
                 <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle memories card">
                   <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
                 </button>
@@ -214,9 +216,7 @@
                 </button>
                 <ul id="play-lost-memory-list" class="record-list" hidden></ul>
               </section>
-              <button type="button" id="add-memory-button" class="add-card-button" title="Add memory" aria-label="Add memory"></button>
               <div class="memory-slots-actions">
-                <button type="button" id="decrease-memory-slots-button" class="ghost-button">Remove slot</button>
                 <button type="button" id="increase-memory-slots-button" class="ghost-button">Add slot</button>
               </div>
               <p id="memory-slots-meta" class="supporting memory-slots-counter">0/0</p>

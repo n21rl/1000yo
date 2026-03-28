@@ -8,7 +8,6 @@ export const bindPlayEvents = ({
   render,
   collapsedCards,
   setActiveModal,
-  openExperienceComposer,
   getCharacter,
   getExperienceComposer,
   pendingExperienceTraitIds,
@@ -43,8 +42,14 @@ export const bindPlayEvents = ({
       }
       markDirty();
     }
+    const nextMemory = window.prompt("Add a memory", "");
+    if (nextMemory === null) return;
+    const didSave = character.addMemory(nextMemory, []);
+    if (!didSave) return;
     collapsedCards.delete("memories");
-    openExperienceComposer({ mode: "memory", target: null });
+    closeExperienceComposer();
+    setActiveModal(null);
+    markDirty();
     render();
   });
 
@@ -57,8 +62,8 @@ export const bindPlayEvents = ({
   elements.playExperienceForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const experienceComposer = getExperienceComposer();
-    const memoryId = experienceComposer.mode === "memory" ? null : experienceComposer.target;
-    if (experienceComposer.mode !== "memory" && !memoryId) {
+    const memoryId = experienceComposer.target;
+    if (!memoryId) {
       window.alert("Select a memory target before adding an experience.");
       return;
     }
@@ -109,12 +114,19 @@ export const bindPlayEvents = ({
     render();
   });
   elements.decreaseMemorySlotsButton.addEventListener("click", () => {
-    const target = getCharacter().memorySlots - 1;
-    if (target < 1) return;
-    if (!window.confirm("Remove a memory slot? This can block new memories until slots are free.")) return;
-    const didSave = getCharacter().setMemorySlots(target);
+    const memories = getCharacter().memories;
+    const removableIndex = [...memories.keys()].reverse().find((index) => {
+      const memory = memories[index];
+      return memory && !memory.lost && !memory.storedInDiary;
+    });
+    if (removableIndex === undefined) {
+      window.alert("No active memory available to remove.");
+      return;
+    }
+    if (!window.confirm("Remove this memory?")) return;
+    const didSave = getCharacter().removeMemory(removableIndex);
     if (!didSave) {
-      window.alert("Cannot remove a slot while active memories exceed the target slot count.");
+      window.alert("Unable to remove memory.");
       return;
     }
     markDirty();

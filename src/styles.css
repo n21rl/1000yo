@@ -698,6 +698,55 @@ button:disabled {
   margin-bottom: 0.8rem;
 }
 
+.play-memory-target,
+.play-memory-warning {
+  margin-bottom: 0.55rem;
+}
+
+.memory-target-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.3rem 0.48rem;
+  border: 1px solid rgba(201, 163, 112, 0.65);
+  border-radius: 999px;
+  background: rgba(92, 58, 41, 0.3);
+  color: #f6eddc;
+  font-size: 0.82rem;
+}
+
+.memory-target-chip-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+}
+
+.memory-target-chip-button {
+  width: 1.35rem;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+}
+
+.play-memory-warning-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.55rem;
+  border: 1px solid rgba(179, 66, 62, 0.8);
+  border-radius: 0.5rem;
+  background: rgba(126, 37, 35, 0.28);
+  color: #ffd8cf;
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
+.warning-inline-icon {
+  width: 0.95rem;
+  height: 0.95rem;
+  display: block;
+}
+
 .compact-form {
   border: 1px solid rgba(158, 122, 106, 0.25);
   border-radius: 0.65rem;

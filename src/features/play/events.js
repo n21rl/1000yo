@@ -8,7 +8,6 @@ export const bindPlayEvents = ({
   render,
   collapsedCards,
   setActiveModal,
-  openExperienceComposer,
   getCharacter,
   getExperienceComposer,
   pendingExperienceTraitIds,
@@ -33,9 +32,24 @@ export const bindPlayEvents = ({
 
   elements.addMemoryButton.addEventListener("click", (event) => {
     event.stopPropagation();
-    if (getCharacter().activeMemories.length >= getCharacter().memorySlots) return;
+    const character = getCharacter();
+    if (character.activeMemories.length >= character.memorySlots) {
+      if (character.memorySlots >= 5 && !window.confirm("5 memory slots is the standard limit. Are you sure you want to add one?")) return;
+      const didAddSlot = character.setMemorySlots(character.memorySlots + 1);
+      if (!didAddSlot) {
+        window.alert("Unable to add a new memory slot.");
+        return;
+      }
+      markDirty();
+    }
+    const nextMemory = window.prompt("Add a memory", "");
+    if (nextMemory === null) return;
+    const didSave = character.addMemory(nextMemory, []);
+    if (!didSave) return;
     collapsedCards.delete("memories");
-    openExperienceComposer("new");
+    closeExperienceComposer();
+    setActiveModal(null);
+    markDirty();
     render();
   });
 
@@ -48,7 +62,11 @@ export const bindPlayEvents = ({
   elements.playExperienceForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const experienceComposer = getExperienceComposer();
-    const memoryId = experienceComposer.target === "new" ? null : experienceComposer.target;
+    const memoryId = experienceComposer.target;
+    if (!memoryId) {
+      window.alert("Select a memory target before adding an experience.");
+      return;
+    }
     const didSave = getCharacter().addMemory(elements.playExperienceText.value, [...pendingExperienceTraitIds], memoryId);
     if (!didSave) return;
     markDirty();
@@ -88,20 +106,32 @@ export const bindPlayEvents = ({
     markDirty();
     render();
   });
-  elements.increaseMemorySlotsButton.addEventListener("click", () => {
-    if (!window.confirm("Add a memory slot?")) return;
-    const didSave = getCharacter().setMemorySlots(getCharacter().memorySlots + 1);
-    if (!didSave) return;
-    markDirty();
-    render();
-  });
   elements.decreaseMemorySlotsButton.addEventListener("click", () => {
-    const target = getCharacter().memorySlots - 1;
-    if (target < 1) return;
-    if (!window.confirm("Remove a memory slot? This can block new memories until slots are free.")) return;
-    const didSave = getCharacter().setMemorySlots(target);
+    const memories = getCharacter().memories;
+    const removableMemories = memories
+      .map((memory, index) => ({ memory, index }))
+      .filter(({ memory }) => memory && !memory.lost && !memory.storedInDiary);
+    if (!removableMemories.length) {
+      window.alert("No active memory available to remove.");
+      return;
+    }
+    const options = removableMemories.map(({ index }) => `Memory ${index + 1}`).join(", ");
+    const selected = window.prompt(`Which memory should be removed?\n${options}`, `${removableMemories.at(-1).index + 1}`);
+    if (selected === null) return;
+    const selectedNumber = Number.parseInt(selected, 10);
+    if (!Number.isFinite(selectedNumber)) {
+      window.alert("Enter a valid memory number.");
+      return;
+    }
+    const removableIndex = removableMemories.find(({ index }) => index + 1 === selectedNumber)?.index;
+    if (removableIndex === undefined) {
+      window.alert("That memory cannot be removed.");
+      return;
+    }
+    if (!window.confirm(`Remove Memory ${selectedNumber}?`)) return;
+    const didSave = getCharacter().removeMemory(removableIndex);
     if (!didSave) {
-      window.alert("Cannot remove a slot while active memories exceed the target slot count.");
+      window.alert("Unable to remove memory.");
       return;
     }
     markDirty();
@@ -159,6 +189,21 @@ export const bindPlayEvents = ({
     setActiveModal(null);
     setPendingDiaryMemoryId("");
     elements.playDiaryForm.reset();
+    render();
+  });
+  elements.playMemoryForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const editingTrait = getEditingTrait();
+    if (editingTrait?.kind !== "memory") return;
+    const values = [...elements.playMemoryExperienceFields.querySelectorAll("textarea")]
+      .map((input) => input.value);
+    const didSave = getCharacter().updateMemoryExperiences(editingTrait.index, values);
+    if (!didSave) return;
+    markDirty();
+    setActiveModal(null);
+    setEditingTrait(null);
+    elements.playMemoryForm.reset();
+    elements.playMemoryExperienceFields.replaceChildren();
     render();
   });
   elements.playCharacterForm.addEventListener("submit", (event) => {
@@ -227,6 +272,15 @@ export const bindPlayEvents = ({
     setActiveModal(null);
     setPendingDiaryMemoryId("");
     elements.playDiaryForm.reset();
+    render();
+  });
+  elements.playMemoryCancel.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setActiveModal(null);
+    const editingTrait = getEditingTrait();
+    setEditingTrait(editingTrait?.kind === "memory" ? null : editingTrait);
+    elements.playMemoryForm.reset();
+    elements.playMemoryExperienceFields.replaceChildren();
     render();
   });
   elements.playMarkCancel.addEventListener("click", (event) => {

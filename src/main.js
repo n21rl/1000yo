@@ -1,5 +1,5 @@
 import { restoreCampaignState } from "./campaign-state.js";
-import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_MEMORIES } from "./game.js";
+import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY } from "./game.js";
 import {
   parsePromptDeck,
 } from "./prompt-deck.js";
@@ -50,7 +50,7 @@ const selectedLaterTraitIds = new Set();
 const selectedCurseTraitIds = new Set();
 const pendingExperienceTraitIds = new Set();
 let editingTrait = null;
-let experienceComposer = { open: true, target: "new" };
+let experienceComposer = { open: true, target: null };
 let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
@@ -160,7 +160,7 @@ const persistCurrentCharacter = () => {
 const resetPlayState = () => {
   pendingExperienceTraitIds.clear();
   editingTrait = null;
-  experienceComposer = { open: true, target: "new" };
+  experienceComposer = { open: true, target: null };
   activeModal = null;
   pendingDiaryMemoryId = "";
 };
@@ -193,6 +193,8 @@ const resetPlayForms = () => {
   elements.playSkillForm.reset();
   elements.playResourceForm.reset();
   elements.playDiaryForm.reset();
+  elements.playMemoryForm.reset();
+  elements.playMemoryExperienceFields.replaceChildren();
   elements.playCharacterForm.reset();
   elements.playMarkForm.reset();
 };
@@ -497,29 +499,27 @@ const renderSelectedTraitPills = () => {
   });
 };
 
-const openExperienceComposer = (target = "new") => {
+const openExperienceComposer = (target = null) => {
   experienceComposer = { open: true, target };
 };
 
 const closeExperienceComposer = () => {
-  experienceComposer = { open: true, target: "new" };
+  experienceComposer = { open: true, target: null };
   pendingExperienceTraitIds.clear();
   elements.playExperienceForm.reset();
 };
 
 const renderPlayComposer = () => {
-  const targetMemoryId = experienceComposer.target === "new" ? null : experienceComposer.target;
+  const targetMemoryId = experienceComposer.target;
   const targetIndex = targetMemoryId === null ? null : character.memories.findIndex((memory) => memory.id === targetMemoryId);
-  const isNewMemory = experienceComposer.target === "new";
-  elements.playExperienceSubmit.textContent = isNewMemory ? "Add memory" : "Add experience";
-  if (isNewMemory) {
-    elements.playMemoryHint.textContent = `This will create a new memory (${character.memories.length}/${MAX_MEMORIES}).`;
-  } else {
-    const memory = character.memories[targetIndex];
-    elements.playMemoryHint.textContent = memory
-      ? `This memory has ${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY} experiences.`
-      : "Select a memory to continue.";
-  }
+  const memory = targetIndex === null ? null : character.memories[targetIndex];
+  const hasTarget = Boolean(memory);
+  elements.playExperienceFormTitle.textContent = "Add experience";
+  elements.playExperienceSubmit.textContent = "Add experience";
+  elements.playExperienceSubmit.disabled = !hasTarget;
+  elements.playMemoryHint.textContent = hasTarget
+    ? `Target: Memory ${targetIndex + 1} (${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY} experiences).`
+    : "Select a memory target to add an experience.";
   renderSelectedTraitPills();
 };
 
@@ -569,10 +569,10 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   if (!lost) {
     titleActions.append(createInlineIconButton(
       experienceComposer.target === memory.id ? "Untarget memory" : "Target memory",
-      "add",
+      experienceComposer.target === memory.id ? "radio_button_checked" : "radio_button_unchecked",
       "record-inline-button",
       () => {
-        openExperienceComposer(experienceComposer.target === memory.id ? "new" : memory.id);
+        openExperienceComposer(experienceComposer.target === memory.id ? null : memory.id);
         render();
       },
       { pressed: experienceComposer.target === memory.id },
@@ -582,12 +582,8 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
       "edit",
       "record-inline-button",
       () => {
-        memory.experiences.forEach((experience, experienceIndex) => {
-          const updatedText = window.prompt(`Edit experience ${experienceIndex + 1}`, experience.text);
-          if (updatedText === null) return;
-          character.updateMemoryExperience(memoryIndex, experienceIndex, updatedText);
-        });
-        markDirty();
+        editingTrait = { kind: "memory", index: memoryIndex };
+        activeModal = "memory";
         render();
       },
     ));
@@ -851,6 +847,30 @@ const renderFormState = (kind, item) => {
     elements.playDiaryForm.hidden = activeModal !== "diary";
   }
 
+  if (kind === "memory") {
+    elements.playMemoryForm.hidden = activeModal !== "memory";
+    const memory = editingTrait?.kind === "memory" ? character.memories[editingTrait.index] : null;
+    elements.playMemoryTitle.textContent = memory ? "Edit memory experiences" : "Edit memory";
+    elements.playMemorySubmit.textContent = "Save memory";
+    elements.playMemoryExperienceFields.replaceChildren();
+    if (!memory) return;
+    memory.experiences.forEach((experience, experienceIndex) => {
+      const row = document.createElement("div");
+      row.className = "stack memory-experience-row";
+      const label = document.createElement("label");
+      const inputId = `play-memory-experience-${experienceIndex}`;
+      label.setAttribute("for", inputId);
+      label.textContent = `Experience ${experienceIndex + 1}`;
+      const input = document.createElement("textarea");
+      input.id = inputId;
+      input.name = "memory-experience";
+      input.rows = 2;
+      input.value = experience.text;
+      row.append(label, input);
+      elements.playMemoryExperienceFields.append(row);
+    });
+  }
+
   if (kind === "character") {
     elements.playCharacterForm.hidden = activeModal !== "character";
     elements.playCharacterTitle.textContent = item ? "Edit character" : "Add character";
@@ -883,6 +903,10 @@ const syncActiveModal = () => {
     elements.playModalTitle.textContent = "Create Diary";
     return;
   }
+  if (activeModal === "memory") {
+    elements.playModalTitle.textContent = "Edit memory";
+    return;
+  }
   if (activeModal === "character") {
     elements.playModalTitle.textContent = editingTrait?.kind === "character" ? "Edit character" : "Add character";
     return;
@@ -903,12 +927,13 @@ const renderPlayLists = () => {
 
   elements.playName.textContent = character.name || "Unnamed Vampire";
   elements.memorySlotsMeta.textContent = `${character.activeMemories.length}/${character.memorySlots}`;
-  elements.addMemoryButton.disabled = character.activeMemories.length >= character.memorySlots;
+  elements.addMemoryButton.disabled = false;
 
   renderPlayComposer();
   renderFormState("skill", editingTrait?.kind === "skill" ? character.skills[editingTrait.index] : null);
   renderFormState("resource", editingTrait?.kind === "resource" ? character.resources[editingTrait.index] : null);
   renderFormState("diary");
+  renderFormState("memory");
   renderFormState("character", editingTrait?.kind === "character" ? character.characters[editingTrait.index] : null);
   renderFormState("mark", editingTrait?.kind === "mark" ? character.marks[editingTrait.index] : null);
 };
@@ -1128,7 +1153,6 @@ bindPlayEvents({
   setActiveModal: (value) => {
     activeModal = value;
   },
-  openExperienceComposer,
   getCharacter: () => character,
   getExperienceComposer: () => experienceComposer,
   pendingExperienceTraitIds,

@@ -50,7 +50,7 @@ const selectedLaterTraitIds = new Set();
 const selectedCurseTraitIds = new Set();
 const pendingExperienceTraitIds = new Set();
 let editingTrait = null;
-let experienceComposer = { open: true, target: null };
+let experienceComposer = { open: true, target: null, mode: "experience" };
 let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
@@ -160,7 +160,7 @@ const persistCurrentCharacter = () => {
 const resetPlayState = () => {
   pendingExperienceTraitIds.clear();
   editingTrait = null;
-  experienceComposer = { open: true, target: null };
+  experienceComposer = { open: true, target: null, mode: "experience" };
   activeModal = null;
   pendingDiaryMemoryId = "";
 };
@@ -499,12 +499,12 @@ const renderSelectedTraitPills = () => {
   });
 };
 
-const openExperienceComposer = (target = null) => {
-  experienceComposer = { open: true, target };
+const openExperienceComposer = ({ target = null, mode = "experience" } = {}) => {
+  experienceComposer = { open: true, target, mode };
 };
 
 const closeExperienceComposer = () => {
-  experienceComposer = { open: true, target: null };
+  experienceComposer = { open: true, target: null, mode: "experience" };
   pendingExperienceTraitIds.clear();
   elements.playExperienceForm.reset();
 };
@@ -513,13 +513,18 @@ const renderPlayComposer = () => {
   const targetMemoryId = experienceComposer.target;
   const targetIndex = targetMemoryId === null ? null : character.memories.findIndex((memory) => memory.id === targetMemoryId);
   const memory = targetIndex === null ? null : character.memories[targetIndex];
+  const isCreatingMemory = experienceComposer.mode === "memory";
   const hasTarget = Boolean(memory);
-  elements.playExperienceFormTitle.textContent = "Add experience";
-  elements.playExperienceSubmit.textContent = "Add experience";
-  elements.playExperienceSubmit.disabled = !hasTarget;
-  elements.playMemoryHint.textContent = hasTarget
-    ? `Target: Memory ${targetIndex + 1} (${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY} experiences).`
-    : "Select a memory target to add an experience.";
+  elements.playExperienceFormTitle.textContent = isCreatingMemory ? "Add memory" : "Add experience";
+  elements.playExperienceSubmit.textContent = isCreatingMemory ? "Add memory" : "Add experience";
+  elements.playExperienceSubmit.disabled = !isCreatingMemory && !hasTarget;
+  if (isCreatingMemory) {
+    elements.playMemoryHint.textContent = `Create a new memory (${character.activeMemories.length}/${character.memorySlots} active slots used).`;
+  } else {
+    elements.playMemoryHint.textContent = hasTarget
+      ? `Target: Memory ${targetIndex + 1} (${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY} experiences).`
+      : "Select a memory target to add an experience.";
+  }
   renderSelectedTraitPills();
 };
 
@@ -572,7 +577,10 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
       experienceComposer.target === memory.id ? "radio_button_checked" : "radio_button_unchecked",
       "record-inline-button",
       () => {
-        openExperienceComposer(experienceComposer.target === memory.id ? null : memory.id);
+        openExperienceComposer({
+          target: experienceComposer.target === memory.id ? null : memory.id,
+          mode: "experience",
+        });
         render();
       },
       { pressed: experienceComposer.target === memory.id },
@@ -927,7 +935,7 @@ const renderPlayLists = () => {
 
   elements.playName.textContent = character.name || "Unnamed Vampire";
   elements.memorySlotsMeta.textContent = `${character.activeMemories.length}/${character.memorySlots}`;
-  elements.addMemoryButton.disabled = character.activeMemories.length >= character.memorySlots;
+  elements.addMemoryButton.disabled = false;
 
   renderPlayComposer();
   renderFormState("skill", editingTrait?.kind === "skill" ? character.skills[editingTrait.index] : null);
@@ -1153,6 +1161,7 @@ bindPlayEvents({
   setActiveModal: (value) => {
     activeModal = value;
   },
+  openExperienceComposer,
   getCharacter: () => character,
   getExperienceComposer: () => experienceComposer,
   pendingExperienceTraitIds,

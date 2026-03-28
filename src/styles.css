@@ -40,7 +40,12 @@ select {
 .hero-title-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.6rem;
+}
+
+.hero-title-row h1 {
+  margin-bottom: 0;
 }
 
 h1,
@@ -387,17 +392,6 @@ button:disabled {
 .small-button {
   min-width: 0;
   padding: 0.35rem 0.5rem;
-}
-
-.icon-only-button {
-  width: 2rem;
-  min-width: 2rem;
-  height: 2rem;
-  padding: 0;
-  border-radius: 0.55rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .symbolic-button {

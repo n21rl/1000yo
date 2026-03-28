@@ -193,6 +193,8 @@ const resetPlayForms = () => {
   elements.playSkillForm.reset();
   elements.playResourceForm.reset();
   elements.playDiaryForm.reset();
+  elements.playMemoryForm.reset();
+  elements.playMemoryExperienceFields.replaceChildren();
   elements.playCharacterForm.reset();
   elements.playMarkForm.reset();
 };
@@ -569,7 +571,7 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
   if (!lost) {
     titleActions.append(createInlineIconButton(
       experienceComposer.target === memory.id ? "Untarget memory" : "Target memory",
-      "add",
+      experienceComposer.target === memory.id ? "radio_button_checked" : "radio_button_unchecked",
       "record-inline-button",
       () => {
         openExperienceComposer(experienceComposer.target === memory.id ? "new" : memory.id);
@@ -582,12 +584,8 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
       "edit",
       "record-inline-button",
       () => {
-        memory.experiences.forEach((experience, experienceIndex) => {
-          const updatedText = window.prompt(`Edit experience ${experienceIndex + 1}`, experience.text);
-          if (updatedText === null) return;
-          character.updateMemoryExperience(memoryIndex, experienceIndex, updatedText);
-        });
-        markDirty();
+        editingTrait = { kind: "memory", index: memoryIndex };
+        activeModal = "memory";
         render();
       },
     ));
@@ -851,6 +849,30 @@ const renderFormState = (kind, item) => {
     elements.playDiaryForm.hidden = activeModal !== "diary";
   }
 
+  if (kind === "memory") {
+    elements.playMemoryForm.hidden = activeModal !== "memory";
+    const memory = editingTrait?.kind === "memory" ? character.memories[editingTrait.index] : null;
+    elements.playMemoryTitle.textContent = memory ? "Edit memory experiences" : "Edit memory";
+    elements.playMemorySubmit.textContent = "Save memory";
+    elements.playMemoryExperienceFields.replaceChildren();
+    if (!memory) return;
+    memory.experiences.forEach((experience, experienceIndex) => {
+      const row = document.createElement("div");
+      row.className = "stack memory-experience-row";
+      const label = document.createElement("label");
+      const inputId = `play-memory-experience-${experienceIndex}`;
+      label.setAttribute("for", inputId);
+      label.textContent = `Experience ${experienceIndex + 1}`;
+      const input = document.createElement("textarea");
+      input.id = inputId;
+      input.name = "memory-experience";
+      input.rows = 2;
+      input.value = experience.text;
+      row.append(label, input);
+      elements.playMemoryExperienceFields.append(row);
+    });
+  }
+
   if (kind === "character") {
     elements.playCharacterForm.hidden = activeModal !== "character";
     elements.playCharacterTitle.textContent = item ? "Edit character" : "Add character";
@@ -883,6 +905,10 @@ const syncActiveModal = () => {
     elements.playModalTitle.textContent = "Create Diary";
     return;
   }
+  if (activeModal === "memory") {
+    elements.playModalTitle.textContent = "Edit memory";
+    return;
+  }
   if (activeModal === "character") {
     elements.playModalTitle.textContent = editingTrait?.kind === "character" ? "Edit character" : "Add character";
     return;
@@ -909,6 +935,7 @@ const renderPlayLists = () => {
   renderFormState("skill", editingTrait?.kind === "skill" ? character.skills[editingTrait.index] : null);
   renderFormState("resource", editingTrait?.kind === "resource" ? character.resources[editingTrait.index] : null);
   renderFormState("diary");
+  renderFormState("memory");
   renderFormState("character", editingTrait?.kind === "character" ? character.characters[editingTrait.index] : null);
   renderFormState("mark", editingTrait?.kind === "mark" ? character.marks[editingTrait.index] : null);
 };

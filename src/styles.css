@@ -715,6 +715,10 @@ button:disabled {
   width: auto;
 }
 
+.memory-experience-row {
+  margin-bottom: 0.25rem;
+}
+
 .experience-list {
   list-style: square;
   list-style-position: outside;

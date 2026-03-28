@@ -161,6 +161,21 @@ export const bindPlayEvents = ({
     elements.playDiaryForm.reset();
     render();
   });
+  elements.playMemoryForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const editingTrait = getEditingTrait();
+    if (editingTrait?.kind !== "memory") return;
+    const values = [...elements.playMemoryExperienceFields.querySelectorAll("textarea")]
+      .map((input) => input.value);
+    const didSave = getCharacter().updateMemoryExperiences(editingTrait.index, values);
+    if (!didSave) return;
+    markDirty();
+    setActiveModal(null);
+    setEditingTrait(null);
+    elements.playMemoryForm.reset();
+    elements.playMemoryExperienceFields.replaceChildren();
+    render();
+  });
   elements.playCharacterForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const editingTrait = getEditingTrait();
@@ -227,6 +242,15 @@ export const bindPlayEvents = ({
     setActiveModal(null);
     setPendingDiaryMemoryId("");
     elements.playDiaryForm.reset();
+    render();
+  });
+  elements.playMemoryCancel.addEventListener("click", (event) => {
+    event.stopPropagation();
+    setActiveModal(null);
+    const editingTrait = getEditingTrait();
+    setEditingTrait(editingTrait?.kind === "memory" ? null : editingTrait);
+    elements.playMemoryForm.reset();
+    elements.playMemoryExperienceFields.replaceChildren();
     render();
   });
   elements.playMarkCancel.addEventListener("click", (event) => {

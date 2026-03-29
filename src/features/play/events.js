@@ -97,7 +97,7 @@ export const bindPlayEvents = ({
     event.stopPropagation();
     openTraitForm("mark");
   });
-  elements.editPlayNameButton.addEventListener("click", (event) => {
+  const handleEditName = (event) => {
     event.stopPropagation();
     const nextName = window.prompt("Edit vampire name", getCharacter().name);
     if (nextName === null) return;
@@ -105,6 +105,10 @@ export const bindPlayEvents = ({
     if (!didSave) return;
     markDirty();
     render();
+  };
+  [elements.editHeroNameButton].forEach((button) => {
+    if (!button) return;
+    button.addEventListener("click", handleEditName);
   });
   elements.decreaseMemorySlotsButton.addEventListener("click", () => {
     const memories = getCharacter().memories;

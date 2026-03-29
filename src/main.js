@@ -485,18 +485,30 @@ const getLostMemoryTags = (memory) => {
   return [];
 };
 
-const renderSelectedTraitPills = () => {
-  elements.playSelectedTraits.innerHTML = "";
-  const selected = getTraitGroups()
-    .flatMap((group) => group.options)
-    .filter((option) => pendingExperienceTraitIds.has(option.id));
-  if (!selected.length) return;
-  selected.forEach((option) => {
-    const pill = document.createElement("span");
-    pill.className = "record-tag selected-trait";
-    pill.append(createMaterialIcon(option.icon, ["record-tag-icon"]), document.createTextNode(option.value));
-    elements.playSelectedTraits.append(pill);
-  });
+const renderComposerColumn = (title, values = [], highlighted = false) => {
+  const column = document.createElement("div");
+  column.className = highlighted ? "composer-column composer-column-highlighted" : "composer-column";
+  const heading = document.createElement("strong");
+  heading.textContent = title;
+  column.append(heading);
+
+  const valueWrap = document.createElement("div");
+  valueWrap.className = "record-tags";
+  if (!values.length) {
+    const empty = document.createElement("span");
+    empty.className = "record-tag";
+    empty.textContent = "None";
+    valueWrap.append(empty);
+  } else {
+    values.forEach((value) => {
+      const tag = document.createElement("span");
+      tag.className = highlighted ? "record-tag selected-trait" : "record-tag";
+      tag.textContent = value;
+      valueWrap.append(tag);
+    });
+  }
+  column.append(valueWrap);
+  return column;
 };
 
 const openExperienceComposer = (target = null) => {
@@ -517,47 +529,37 @@ const renderPlayComposer = () => {
   elements.playExperienceFormTitle.textContent = "Add experience";
   elements.playExperienceSubmit.textContent = "Add experience";
   elements.playExperienceSubmit.disabled = !hasTarget;
-  elements.playMemoryHint.innerHTML = "";
-  elements.playMemoryHint.classList.toggle("play-memory-warning", !hasTarget);
-  elements.playMemoryHint.classList.toggle("play-memory-target", hasTarget);
-  if (hasTarget) {
-    const chip = document.createElement("span");
-    chip.className = "memory-target-chip";
-    const label = document.createElement("span");
-    label.textContent = `Current target: Memory ${targetIndex + 1} (${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY})`;
-    const actions = document.createElement("span");
-    actions.className = "memory-target-chip-actions";
-    const clearButton = createInlineIconButton(
-      "Clear target",
-      "close",
-      "record-inline-button memory-target-chip-button",
-      () => {
-        openExperienceComposer(null);
-        render();
-      },
-    );
-    actions.append(clearButton);
-    const targetMemoryElement = document.getElementById(`play-memory-${memory.id}`);
-    if (targetMemoryElement) {
-      actions.append(createInlineIconButton(
-        "Jump to memory",
-        "south",
-        "record-inline-button memory-target-chip-button",
-        () => targetMemoryElement.scrollIntoView({ behavior: "smooth", block: "center" }),
-      ));
-    }
-    chip.append(label, actions);
-    elements.playMemoryHint.append(chip);
-  } else {
-    const warning = document.createElement("span");
-    warning.className = "play-memory-warning-inline";
-    warning.append(
-      createMaterialIcon("warning", ["warning-inline-icon"]),
-      document.createTextNode("No target selected. Choose a memory before adding an experience."),
-    );
-    elements.playMemoryHint.append(warning);
-  }
-  renderSelectedTraitPills();
+  const usedTraits = getTraitGroups()
+    .flatMap((group) => group.options)
+    .filter((option) => {
+      const collection = [
+        ...character.characters,
+        ...character.skills,
+        ...character.resources,
+      ];
+      return collection.some((item) => item.id === option.id && item.used);
+    })
+    .map((option) => option.value);
+  const lostTraits = getTraitGroups()
+    .flatMap((group) => group.options)
+    .filter((option) => {
+      const collection = [
+        ...character.characters,
+        ...character.skills,
+        ...character.resources,
+      ];
+      return collection.some((item) => item.id === option.id && item.lost);
+    })
+    .map((option) => option.value);
+
+  const targetLabel = hasTarget
+    ? [`Memory ${targetIndex + 1} (${memory.experiences.length}/${MAX_EXPERIENCES_PER_MEMORY})`]
+    : [];
+  elements.playComposerColumns.replaceChildren(
+    renderComposerColumn("Targeted memory", targetLabel, true),
+    renderComposerColumn("Used", usedTraits),
+    renderComposerColumn("Lost", lostTraits),
+  );
 };
 
 const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
@@ -742,6 +744,9 @@ const renderTraitList = (listElement, items, kind) => {
       if (!experienceComposer.open) return;
       pendingExperienceTraitIds.add(traitId);
     };
+    const toggleCurrentExperienceSelection = () => {
+      togglePendingTrait(traitId);
+    };
 
     const toggleChecked = () => {
       if (kind === "mark") return;
@@ -794,7 +799,7 @@ const renderTraitList = (listElement, items, kind) => {
 
     const tags = formatStatusTags(item, kind);
     if (kind === "character") tags.unshift(item.type === "mortal" ? "Mortal" : "Immortal");
-    if (selectedForExperience) tags.unshift("Tagged");
+    if (selectedForExperience) tags.unshift("Included");
     const hasSubitems = Boolean(item.description || tags.length);
     const toggleTraitCollapsed = () => {
       toggleRecordCollapsed(kind, item.id);
@@ -807,6 +812,13 @@ const renderTraitList = (listElement, items, kind) => {
 
     const actionRow = document.createElement("div");
     actionRow.className = "record-item-actions";
+    actionRow.append(createInlineIconButton(
+      selectedForExperience ? "Remove from current experience" : "Include in current experience",
+      selectedForExperience ? "radio_button_checked" : "radio_button_unchecked",
+      "record-inline-button",
+      toggleCurrentExperienceSelection,
+      { pressed: selectedForExperience },
+    ));
     actionRow.append(createInlineIconButton(`Edit ${kind}`, "edit", "record-inline-button", () => {
       editingTrait = { kind, index };
       activeModal = kind;
@@ -847,7 +859,7 @@ const renderTraitList = (listElement, items, kind) => {
       tagWrap.className = "record-tags";
       tags.forEach((label) => {
         const tag = document.createElement("span");
-        tag.className = label === "Tagged" ? "record-tag selected-trait" : "record-tag";
+        tag.className = label === "Included" ? "record-tag selected-trait" : "record-tag";
         tag.textContent = label;
         tagWrap.append(tag);
       });
@@ -963,7 +975,6 @@ const renderPlayLists = () => {
   renderTraitList(elements.playCharacterList, character.characters, "character");
   renderTraitList(elements.playMarkList, character.marks, "mark");
 
-  elements.playName.textContent = character.name || "Unnamed Vampire";
   elements.memorySlotsMeta.textContent = `${character.activeMemories.length}/${character.memorySlots}`;
   elements.addMemoryButton.disabled = false;
 
@@ -1081,8 +1092,15 @@ const renderCollapsibleCards = () => {
   });
 };
 
+const renderHero = () => {
+  const vampireName = character.name || "Unnamed Vampire";
+  elements.heroTitle.textContent = currentScreen === "play" ? vampireName : "1000yo";
+  elements.editHeroNameButton.hidden = currentScreen !== "play";
+};
+
 const render = () => {
   setScreen(currentScreen);
+  renderHero();
   renderMenu();
   renderCreation();
   renderPlayLists();

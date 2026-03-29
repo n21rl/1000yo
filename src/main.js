@@ -521,6 +521,12 @@ const closeExperienceComposer = () => {
   elements.playExperienceForm.reset();
 };
 
+const updatePlayExperienceActionState = ({ hasTarget = false } = {}) => {
+  const hasDraft = Boolean(elements.playExperienceText.value.trim()) || pendingExperienceTraitIds.size > 0;
+  elements.playExperienceSubmit.disabled = !hasTarget || !hasDraft;
+  elements.playExperienceCancel.disabled = !hasDraft;
+};
+
 const renderPlayComposer = () => {
   const targetMemoryId = experienceComposer.target;
   const targetIndex = targetMemoryId === null ? null : character.memories.findIndex((memory) => memory.id === targetMemoryId);
@@ -528,7 +534,7 @@ const renderPlayComposer = () => {
   const hasTarget = Boolean(memory);
   elements.playExperienceFormTitle.textContent = "Add experience";
   elements.playExperienceSubmit.textContent = "Add experience";
-  elements.playExperienceSubmit.disabled = !hasTarget;
+  updatePlayExperienceActionState({ hasTarget });
   const usedTraits = getTraitGroups()
     .flatMap((group) => group.options)
     .filter((option) => {
@@ -1224,6 +1230,7 @@ bindPlayEvents({
     pendingDiaryMemoryId = value;
   },
   getPendingDiaryMemoryId: () => pendingDiaryMemoryId,
+  updatePlayExperienceActionState,
 });
 
 const closeModalAndResetPlayForms = () => {

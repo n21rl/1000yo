@@ -564,7 +564,7 @@ const renderPlayComposer = () => {
     : [];
   elements.playComposerColumns.replaceChildren(
     renderComposerColumn("Targeted memory", targetLabel, true),
-    renderComposerColumn("Selected traits", getSelectedTraitNames()),
+    renderComposerColumn("For current experience", getSelectedTraitNames()),
     renderComposerColumn("Used", usedTraits),
     renderComposerColumn("Lost", lostTraits),
   );
@@ -752,6 +752,9 @@ const renderTraitList = (listElement, items, kind) => {
       if (!experienceComposer.open) return;
       pendingExperienceTraitIds.add(traitId);
     };
+    const toggleCurrentExperienceSelection = () => {
+      togglePendingTrait(traitId);
+    };
 
     const toggleChecked = () => {
       if (kind === "mark") return;
@@ -804,7 +807,7 @@ const renderTraitList = (listElement, items, kind) => {
 
     const tags = formatStatusTags(item, kind);
     if (kind === "character") tags.unshift(item.type === "mortal" ? "Mortal" : "Immortal");
-    if (selectedForExperience) tags.unshift("Selected");
+    if (selectedForExperience) tags.unshift("Included");
     const hasSubitems = Boolean(item.description || tags.length);
     const toggleTraitCollapsed = () => {
       toggleRecordCollapsed(kind, item.id);
@@ -817,6 +820,13 @@ const renderTraitList = (listElement, items, kind) => {
 
     const actionRow = document.createElement("div");
     actionRow.className = "record-item-actions";
+    actionRow.append(createInlineIconButton(
+      selectedForExperience ? "Remove from current experience" : "Include in current experience",
+      selectedForExperience ? "radio_button_checked" : "radio_button_unchecked",
+      "record-inline-button",
+      toggleCurrentExperienceSelection,
+      { pressed: selectedForExperience },
+    ));
     actionRow.append(createInlineIconButton(`Edit ${kind}`, "edit", "record-inline-button", () => {
       editingTrait = { kind, index };
       activeModal = kind;
@@ -857,7 +867,7 @@ const renderTraitList = (listElement, items, kind) => {
       tagWrap.className = "record-tags";
       tags.forEach((label) => {
         const tag = document.createElement("span");
-        tag.className = label === "Selected" ? "record-tag selected-trait" : "record-tag";
+        tag.className = label === "Included" ? "record-tag selected-trait" : "record-tag";
         tag.textContent = label;
         tagWrap.append(tag);
       });

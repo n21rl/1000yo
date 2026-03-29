@@ -564,7 +564,7 @@ const renderPlayComposer = () => {
     : [];
   elements.playComposerColumns.replaceChildren(
     renderComposerColumn("Targeted memory", targetLabel, true),
-    renderComposerColumn("Tagged", getSelectedTraitNames()),
+    renderComposerColumn("Selected traits", getSelectedTraitNames()),
     renderComposerColumn("Used", usedTraits),
     renderComposerColumn("Lost", lostTraits),
   );
@@ -804,7 +804,7 @@ const renderTraitList = (listElement, items, kind) => {
 
     const tags = formatStatusTags(item, kind);
     if (kind === "character") tags.unshift(item.type === "mortal" ? "Mortal" : "Immortal");
-    if (selectedForExperience) tags.unshift("Tagged");
+    if (selectedForExperience) tags.unshift("Selected");
     const hasSubitems = Boolean(item.description || tags.length);
     const toggleTraitCollapsed = () => {
       toggleRecordCollapsed(kind, item.id);
@@ -857,7 +857,7 @@ const renderTraitList = (listElement, items, kind) => {
       tagWrap.className = "record-tags";
       tags.forEach((label) => {
         const tag = document.createElement("span");
-        tag.className = label === "Tagged" ? "record-tag selected-trait" : "record-tag";
+        tag.className = label === "Selected" ? "record-tag selected-trait" : "record-tag";
         tag.textContent = label;
         tagWrap.append(tag);
       });

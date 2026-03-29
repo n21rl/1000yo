@@ -485,13 +485,6 @@ const getLostMemoryTags = (memory) => {
   return [];
 };
 
-const getSelectedTraitNames = () => {
-  const selected = getTraitGroups()
-    .flatMap((group) => group.options)
-    .filter((option) => pendingExperienceTraitIds.has(option.id));
-  return selected.map((entry) => entry.value);
-};
-
 const renderComposerColumn = (title, values = [], highlighted = false) => {
   const column = document.createElement("div");
   column.className = highlighted ? "composer-column composer-column-highlighted" : "composer-column";
@@ -564,7 +557,6 @@ const renderPlayComposer = () => {
     : [];
   elements.playComposerColumns.replaceChildren(
     renderComposerColumn("Targeted memory", targetLabel, true),
-    renderComposerColumn("For current experience", getSelectedTraitNames()),
     renderComposerColumn("Used", usedTraits),
     renderComposerColumn("Lost", lostTraits),
   );

@@ -19,6 +19,7 @@ export const bindPlayEvents = ({
   getActiveModal,
   setPendingDiaryMemoryId,
   getPendingDiaryMemoryId,
+  updatePlayExperienceActionState,
 }) => {
   elements.promptButton.addEventListener("click", () => {
     if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
@@ -57,6 +58,12 @@ export const bindPlayEvents = ({
     if (collapsedCards.has("lost-memories")) collapsedCards.delete("lost-memories");
     else collapsedCards.add("lost-memories");
     render();
+  });
+
+
+  elements.playExperienceText.addEventListener("input", () => {
+    const { target } = getExperienceComposer();
+    updatePlayExperienceActionState({ hasTarget: Boolean(target) });
   });
 
   elements.playExperienceForm.addEventListener("submit", (event) => {

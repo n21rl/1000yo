@@ -518,6 +518,32 @@ button:disabled {
   justify-content: flex-end;
 }
 
+
+.form-actions-equal {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+  align-items: stretch;
+}
+
+.form-actions-equal button {
+  width: 100%;
+}
+
+.prompt-card .composer-column .record-tags {
+  overflow-x: auto;
+}
+
+@media (min-width: 721px) {
+  .prompt-card .composer-column .record-tags {
+    flex-wrap: nowrap;
+  }
+
+  .prompt-card .composer-column .record-tag {
+    white-space: nowrap;
+  }
+}
+
 .play-card .record {
   align-items: flex-start;
   gap: 0.45rem;
@@ -697,6 +723,7 @@ button:disabled {
 
 .inline-form {
   margin-bottom: 0.8rem;
+  gap: 0.55rem;
 }
 
 .composer-columns {
@@ -828,7 +855,7 @@ button:disabled {
   .section-heading,
   .record,
   .wizard-nav,
-  .form-actions {
+  .form-actions:not(.form-actions-equal) {
     flex-direction: column;
   }
 

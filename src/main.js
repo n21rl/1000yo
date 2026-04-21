@@ -516,7 +516,7 @@ const openExperienceComposer = (target = null) => {
 };
 
 const closeExperienceComposer = () => {
-  experienceComposer = { open: true, target: null };
+  experienceComposer = { open: false, target: null };
   pendingExperienceTraitIds.clear();
   elements.playExperienceForm.reset();
 };

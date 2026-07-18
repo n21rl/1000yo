@@ -55,7 +55,7 @@ let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
 const collapsedRecords = new Set();
-const INITIAL_COLLAPSED_CARD_KEYS = ["prompt", "memories", "diary", "characters", "skills", "resources", "marks"];
+const INITIAL_COLLAPSED_CARD_KEYS = ["diary", "characters", "skills", "resources", "marks"];
 
 const promptState = createPromptState();
 

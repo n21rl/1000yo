@@ -1,0 +1,347 @@
+<meta charset="utf-8">
+<title>1000yo — Nocturne Broadsheet</title>
+<style>
+  :root {
+    --ground: #0f0d0a;
+    --ground-raised: #17140f;
+    --bone: #ece4d2;
+    --bone-dim: #a89b81;
+    --blood: #9c2b2b;
+    --blood-bright: #c2453f;
+    --ochre: #b4863f;
+    --rule: rgba(236, 228, 210, 0.22);
+    --font-serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; background: var(--ground); }
+
+  body {
+    font-family: var(--font-serif);
+    color: var(--bone);
+    padding: 3rem 1.25rem 5rem;
+    line-height: 1.6;
+  }
+
+  .sheet {
+    max-width: 46rem;
+    margin: 0 auto;
+  }
+
+  .glyph {
+    width: 2.6rem;
+    height: 2.6rem;
+    margin: 0 auto 1rem;
+    position: relative;
+  }
+
+  .glyph::before,
+  .glyph::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-left: 0.95rem solid transparent;
+    border-right: 0.95rem solid transparent;
+    transform: translateX(-50%);
+  }
+
+  .glyph::before {
+    top: 0;
+    border-top: 1.15rem solid var(--ochre);
+  }
+
+  .glyph::after {
+    bottom: 0;
+    border-bottom: 1.15rem solid var(--ochre);
+  }
+
+  header.masthead {
+    text-align: center;
+    margin-bottom: 2.2rem;
+  }
+
+  .rule-pair {
+    height: 0.5rem;
+    border-top: 3px solid var(--bone);
+    border-bottom: 1px solid var(--bone);
+    margin-top: 0.9rem;
+  }
+
+  .rule-pair.tight { margin-top: 0.6rem; margin-bottom: 1.6rem; }
+
+  h1 {
+    font-size: clamp(2.2rem, 7vw, 3.4rem);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin: 0;
+    text-wrap: balance;
+  }
+
+  .deck {
+    text-align: center;
+    font-style: italic;
+    color: var(--bone-dim);
+    font-size: 0.98rem;
+    margin-top: 0.5rem;
+    letter-spacing: 0.02em;
+  }
+
+  .pull-quote {
+    padding: 1.8rem 0;
+    text-align: center;
+    border-top: 3px solid var(--bone);
+    border-bottom: 3px solid var(--bone);
+    margin-bottom: 2.4rem;
+  }
+
+  .pull-quote .kicker {
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin-bottom: 0.9rem;
+  }
+
+  .pull-quote p {
+    font-size: 1.55rem;
+    line-height: 1.5;
+    margin: 0 auto;
+    max-width: 34rem;
+    text-wrap: balance;
+  }
+
+  .pull-quote .roll {
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    font-style: italic;
+    color: var(--bone-dim);
+  }
+
+  section.column {
+    margin-bottom: 2.4rem;
+  }
+
+  .col-head {
+    font-size: 0.74rem;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .col-head::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule);
+  }
+
+  ol.roll {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: mem;
+  }
+
+  ol.roll > li {
+    counter-increment: mem;
+    display: grid;
+    grid-template-columns: 2rem 1fr;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-top: 1px solid var(--rule);
+    position: relative;
+  }
+
+  ol.roll > li:first-child { border-top: none; }
+
+  ol.roll > li::before {
+    content: counter(mem, upper-roman);
+    font-size: 0.95rem;
+    color: var(--bone-dim);
+    font-style: italic;
+  }
+
+  .roll-entry strong {
+    display: block;
+    font-size: 1.14rem;
+    margin-bottom: 0.3rem;
+    letter-spacing: 0.01em;
+  }
+
+  .roll-entry span {
+    display: block;
+    color: var(--bone-dim);
+    font-size: 0.94rem;
+  }
+
+  .roll-entry.lost {
+    background-image: repeating-linear-gradient(45deg, transparent 0 6px, rgba(156,43,43,0.35) 6px 7px),
+                       repeating-linear-gradient(-45deg, transparent 0 6px, rgba(156,43,43,0.2) 6px 7px);
+    padding: 0.6rem 0.7rem;
+    margin: -0.2rem -0.7rem 0;
+  }
+
+  .roll-entry.lost strong { color: var(--blood-bright); }
+  .roll-entry.lost span { text-decoration: line-through; text-decoration-color: var(--blood); }
+
+  .classifieds {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 2rem;
+  }
+
+  .classifieds .col {
+    padding: 1.2rem 1.4rem;
+    border-left: 1px solid var(--rule);
+  }
+
+  .classifieds .col:first-child { border-left: none; }
+
+  .classifieds h4 {
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ochre);
+    margin: 0 0 0.7rem;
+  }
+
+  .classifieds .entry {
+    font-size: 0.9rem;
+    margin-bottom: 0.55rem;
+  }
+
+  .classifieds .entry.struck { text-decoration: line-through; color: var(--bone-dim); }
+
+  .obituary {
+    border-top: 3px double var(--bone);
+    border-bottom: 3px double var(--bone);
+    padding: 1.3rem 0;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .obituary p {
+    margin: 0;
+    font-style: italic;
+    color: var(--bone-dim);
+    font-size: 0.98rem;
+  }
+
+  .obituary strong { color: var(--bone); font-style: normal; }
+
+  footer.colophon {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.78rem;
+    color: var(--bone-dim);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-variant-numeric: tabular-nums;
+  }
+
+  footer.colophon .frac {
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--bone);
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 2rem 0.9rem 3rem; }
+    .classifieds { grid-template-columns: 1fr; }
+    .classifieds .col { border-left: none; border-top: 1px solid var(--rule); }
+    .classifieds .col:first-child { border-top: none; }
+  }
+</style>
+
+<div class="sheet">
+  <header class="masthead">
+    <div class="glyph"></div>
+    <h1>Wilhelmina Thorn</h1>
+    <div class="rule-pair"></div>
+    <div class="deck">a chronicle kept against the dark, folio the seventh</div>
+  </header>
+
+  <div class="pull-quote">
+    <span class="kicker">The Prompt, As Drawn</span>
+    <p>In your blood-hunger, you destroy someone close to you. Kill a mortal Character. Create a mortal if none are available. Take the skill Bloodthirsty.</p>
+    <div class="roll">d10 &minus; d6 &middot; advanced four folios &middot; first visit</div>
+  </div>
+
+  <section class="column">
+    <div class="col-head">Memories Kept</div>
+    <ol class="roll">
+      <li>
+        <div class="roll-entry">
+          <strong>The Turning</strong>
+          <span>Woke beneath the church floor, hands still folded as they had buried me.</span>
+          <span>The priest who dug me free did not survive the dawn.</span>
+        </div>
+      </li>
+      <li>
+        <div class="roll-entry">
+          <strong>The Ossuary</strong>
+          <span>Three winters beneath Marien's Kirche, feeding on what the plague had left.</span>
+        </div>
+      </li>
+      <li>
+        <div class="roll-entry">
+          <strong>Cabal Initiation</strong>
+          <span>They called it a rite. I called it drowning, and drowning again.</span>
+        </div>
+      </li>
+      <li>
+        <div class="roll-entry lost">
+          <strong>A Debt of Blood</strong>
+          <span>Reiner forgave me the theft. I have never forgiven myself.</span>
+        </div>
+      </li>
+      <li>
+        <div class="roll-entry">
+          <strong>The Long Sleep</strong>
+          <span>A century passed as a single held breath.</span>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <div class="classifieds">
+    <div class="col">
+      <h4>Skills</h4>
+      <div class="entry">Bloodthirsty</div>
+      <div class="entry struck">Belly on the Ground</div>
+      <div class="entry">Grave&#8209;Tongue</div>
+    </div>
+    <div class="col">
+      <h4>Resources</h4>
+      <div class="entry">The Ossuary <em>(stationary)</em></div>
+      <div class="entry">Servitor of the Lineage</div>
+    </div>
+    <div class="col">
+      <h4>Marks</h4>
+      <div class="entry">Eyes Like Coins</div>
+    </div>
+  </div>
+
+  <div class="obituary">
+    <p><strong>The Iron Box</strong> &mdash; one memory laid to rest within, beyond further hand.</p>
+  </div>
+
+  <footer class="colophon">
+    <span>Memories in Hand</span>
+    <span class="frac">V&frasl;V</span>
+    <span>Diary I&frasl;IV</span>
+  </footer>
+</div>

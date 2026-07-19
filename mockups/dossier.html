@@ -1,0 +1,385 @@
+<meta charset="utf-8">
+<title>1000yo — Subject Dossier</title>
+<style>
+  :root {
+    --paper: #edeae1;
+    --paper-raised: #f6f4ee;
+    --ink: #26282c;
+    --ink-soft: #5b5f66;
+    --case-red: #9c3b2e;
+    --tab-blue: #445a6b;
+    --void: #1b1c1f;
+    --line: #c7c2b4;
+    --font-display: Rockwell, "Courier New", ui-monospace, monospace;
+    --font-body: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-mono: "SFMono-Regular", Consolas, "Courier New", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body { margin: 0; background: #d9d4c4; }
+
+  body {
+    font-family: var(--font-body);
+    color: var(--ink);
+    padding: 2.5rem 1.25rem 4rem;
+    line-height: 1.55;
+  }
+
+  .file {
+    max-width: 50rem;
+    margin: 0 auto;
+    background: var(--paper);
+    box-shadow: 0 30px 60px -24px rgba(10,10,8,0.5);
+    border: 1px solid var(--line);
+  }
+
+  .tab-strip {
+    display: flex;
+    gap: 0.4rem;
+    padding: 0 1.5rem;
+    transform: translateY(1px);
+  }
+
+  .tab-strip span {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.08em;
+    color: #eee9dd;
+    background: var(--tab-blue);
+    padding: 0.4rem 0.9rem 0.5rem;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .tab-strip span.active { background: var(--void); }
+
+  .file-header {
+    background: var(--void);
+    color: #eee9dd;
+    padding: 1.6rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .file-header .case-no {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    letter-spacing: 0.1em;
+    color: #b7c6cf;
+    margin-bottom: 0.4rem;
+  }
+
+  .file-header h1 {
+    font-family: var(--font-display);
+    font-size: 1.9rem;
+    font-weight: 700;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+
+  .file-header .status {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.14em;
+    border: 1px solid var(--case-red);
+    color: #e2a89c;
+    padding: 0.35rem 0.7rem;
+    text-transform: uppercase;
+  }
+
+  .body-pad { padding: 2rem 2rem 2.5rem; }
+
+  .field-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 0.6rem;
+  }
+
+  .incident {
+    position: relative;
+    border: 1px solid var(--line);
+    background: var(--paper-raised);
+    padding: 1.5rem 1.6rem 1.4rem;
+    margin-bottom: 2.2rem;
+  }
+
+  .incident::before,
+  .incident::after,
+  .corner-tl, .corner-br {
+    content: "";
+    position: absolute;
+    width: 0.9rem;
+    height: 0.9rem;
+    border: 2px solid var(--ink-soft);
+  }
+  .incident::before { top: -1px; left: -1px; border-right: none; border-bottom: none; }
+  .incident::after { bottom: -1px; right: -1px; border-left: none; border-top: none; }
+
+  .stamp {
+    position: absolute;
+    top: 1rem;
+    right: 1.3rem;
+    font-family: var(--font-display);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    color: var(--case-red);
+    border: 2px solid var(--case-red);
+    padding: 0.2rem 0.5rem;
+    transform: rotate(-6deg);
+    opacity: 0.75;
+  }
+
+  .incident p {
+    font-size: 1.08rem;
+    margin: 0.6rem 0 0;
+    max-width: 40rem;
+  }
+
+  .incident .roll-note {
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--ink-soft);
+    margin-top: 1rem;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2.2rem;
+  }
+
+  .mem-card {
+    position: relative;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    padding: 1.1rem 1rem 1rem;
+  }
+
+  .mem-card::before {
+    content: "";
+    position: absolute;
+    top: 0.55rem;
+    left: 50%;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--paper);
+    box-shadow: -1.4rem 0 0 var(--paper), 1.4rem 0 0 var(--paper);
+    border: 1px solid var(--line);
+    transform: translateX(-50%);
+  }
+
+  .mem-card .fid {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.08em;
+    margin-top: 0.6rem;
+  }
+
+  .mem-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    margin: 0.3rem 0 0.5rem;
+  }
+
+  .mem-card ul {
+    margin: 0;
+    padding: 0 0 0 1rem;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+  }
+
+  .mem-card li { margin-bottom: 0.3rem; }
+
+  .badge {
+    position: absolute;
+    bottom: 0.7rem;
+    right: 0.7rem;
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+    padding: 0.15rem 0.4rem;
+    border: 1px solid;
+    transform: rotate(-4deg);
+    text-transform: uppercase;
+  }
+
+  .badge.active { color: #3c6e4f; border-color: #3c6e4f; }
+  .badge.filed { color: var(--ink-soft); border-color: var(--ink-soft); }
+
+  .filing-row {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 2.2rem;
+  }
+
+  .file-tab {
+    font-family: var(--font-mono);
+    font-size: 0.74rem;
+    background: var(--paper-raised);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--tab-blue);
+    padding: 0.55rem 0.8rem;
+    min-width: 9rem;
+  }
+
+  .file-tab.struck { opacity: 0.55; text-decoration: line-through; border-top-color: var(--ink-soft); }
+  .file-tab.mark { border-top-color: var(--case-red); }
+
+  .file-tab .code {
+    display: block;
+    font-size: 0.62rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.2rem;
+  }
+
+  .evidence-bag {
+    border: 2px dashed var(--line);
+    padding: 1.1rem 1.3rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+
+  .evidence-bag p { margin: 0; font-size: 0.92rem; }
+  .evidence-bag .seal-text {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    color: var(--case-red);
+    text-transform: uppercase;
+  }
+
+  .gauge-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    border-top: 1px solid var(--line);
+    padding-top: 1.2rem;
+  }
+
+  .ticks { display: flex; gap: 0.3rem; }
+  .tick { width: 1.4rem; height: 0.5rem; border: 1px solid var(--ink-soft); }
+  .tick.filled { background: var(--tab-blue); border-color: var(--tab-blue); }
+
+  @media (max-width: 720px) {
+    .card-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  @media (max-width: 520px) {
+    body { padding: 1.25rem 0.6rem 3rem; }
+    .body-pad { padding: 1.5rem 1.1rem 2rem; }
+    .card-grid { grid-template-columns: 1fr; }
+    .file-header h1 { font-size: 1.5rem; }
+  }
+</style>
+
+<div class="file">
+  <div class="tab-strip">
+    <span class="active">SUBJECT</span>
+    <span>MEMORY</span>
+    <span>ASSOC.</span>
+  </div>
+  <div class="file-header">
+    <div>
+      <div class="case-no">CASE FILE NO. 0714 &mdash; SUBJECT: NOSFERATU CLASS</div>
+      <h1>THORN, WILHELMINA</h1>
+    </div>
+    <span class="status">ACTIVE SURVEILLANCE</span>
+  </div>
+
+  <div class="body-pad">
+    <div class="incident">
+      <span class="stamp">TRANSCRIBED</span>
+      <div class="field-label">Incident Excerpt &mdash; Prompt 07</div>
+      <p>In your blood-hunger, you destroy someone close to you. Kill a mortal Character. Create a mortal if none are available. Take the skill Bloodthirsty.</p>
+      <div class="roll-note">ROLL: d10&minus;d6 &rarr; advance 4 &nbsp;|&nbsp; VISIT: 1st</div>
+    </div>
+
+    <div class="field-label">Memory Inventory &mdash; 5 of 5 Filed</div>
+    <div class="card-grid">
+      <div class="mem-card">
+        <div class="fid">MEM&#8209;001</div>
+        <h3>The Turning</h3>
+        <ul>
+          <li>Woke beneath the church floor, hands still folded.</li>
+          <li>The priest who freed me did not see dawn.</li>
+        </ul>
+        <span class="badge active">ACTIVE</span>
+      </div>
+      <div class="mem-card">
+        <div class="fid">MEM&#8209;002</div>
+        <h3>The Ossuary</h3>
+        <ul>
+          <li>Three winters beneath Marien's Kirche.</li>
+        </ul>
+        <span class="badge active">ACTIVE</span>
+      </div>
+      <div class="mem-card">
+        <div class="fid">MEM&#8209;003</div>
+        <h3>Cabal Initiation</h3>
+        <ul>
+          <li>They called it a rite. I called it drowning.</li>
+        </ul>
+        <span class="badge active">ACTIVE</span>
+      </div>
+      <div class="mem-card">
+        <div class="fid">MEM&#8209;004</div>
+        <h3>A Debt of Blood</h3>
+        <ul>
+          <li>Reiner forgave the theft. I have not.</li>
+        </ul>
+        <span class="badge active">ACTIVE</span>
+      </div>
+      <div class="mem-card">
+        <div class="fid">MEM&#8209;005</div>
+        <h3>The Long Sleep</h3>
+        <ul>
+          <li>A century, held like one breath.</li>
+        </ul>
+        <span class="badge active">ACTIVE</span>
+      </div>
+    </div>
+
+    <div class="field-label">Filed Associations</div>
+    <div class="filing-row">
+      <div class="file-tab"><span class="code">SKL&#8209;01</span>Bloodthirsty</div>
+      <div class="file-tab struck"><span class="code">SKL&#8209;02</span>Belly on the Ground</div>
+      <div class="file-tab"><span class="code">SKL&#8209;03</span>Grave&#8209;Tongue</div>
+      <div class="file-tab"><span class="code">RES&#8209;01</span>The Ossuary</div>
+      <div class="file-tab"><span class="code">RES&#8209;02</span>Servitor of Lineage</div>
+      <div class="file-tab mark"><span class="code">MRK&#8209;01</span>Eyes Like Coins</div>
+    </div>
+
+    <div class="evidence-bag">
+      <p><strong>The Iron Box</strong> &mdash; one memory removed from active file, retained under seal.</p>
+      <span class="seal-text">Sealed &mdash; no further entries</span>
+    </div>
+
+    <div class="gauge-row">
+      <span>Memory Capacity</span>
+      <span class="ticks">
+        <span class="tick filled"></span><span class="tick filled"></span><span class="tick filled"></span><span class="tick filled"></span><span class="tick filled"></span>
+      </span>
+      <span>5 / 5</span>
+    </div>
+  </div>
+</div>

@@ -29,6 +29,26 @@ materials:
   handwritten verbs appear ("write here · copy into the diary · lose it").
   The inkpot and quill are decorative props.
 
+## Second iteration
+
+**`desk2.html`** revises The Desk toward physical believability:
+
+- The notebook is five double-page **spreads** (Memories, People, Skills,
+  Resources, Marks). Index tabs sit in fixed slots down the fore-edge and
+  physically migrate: a section behind the open page shows its tab on the
+  left edge, sections ahead on the right; navigation is a direction-aware
+  page turn.
+- The **diary is a closed book lying on the desk** (was: a hanging
+  bookmark); clicking it swaps books, and the notebook lies closed in its
+  place while the diary is open.
+- Wood is scaled to table-sized planks; dice cast a static contact shadow
+  (only the die tumbles on a roll) and rest at slight angles; the crumpled
+  wads share one contact shadow and stack as a heap; the drawn inkpot prop
+  was removed (see asset notes).
+- Mobile: a sliver of the facing page shows left of the stitching, and the
+  tabs become compact fixed-slot tabs on the page's right edge (passed
+  sections dim and press in).
+
 ## Earlier explorations (superseded)
 
 - `ledger.html` — parchment commonplace book with rubricated marginalia.
@@ -45,3 +65,15 @@ materials:
   in a verified-CC0 texture before production use.
 - The handwriting face is Caveat (SIL Open Font License), subsetted to
   latin and embedded as a data URI.
+- `desk2.html` (realism pass): the decorative inkpot+quill `.prop` SVG was
+  removed rather than replaced with a photo. The plan was to source a
+  PD/CC0 inkwell image from Wikimedia Commons (`commons.wikimedia.org`
+  search API + `Special:FilePath`/`imageinfo thumburl`), but every image
+  host tried (commons.wikimedia.org, upload.wikimedia.org, en.wikipedia.org,
+  openclipart.org, pixabay.com, publicdomainvectors.org, archive.org,
+  freesvg.org, svgrepo.com, pexels.com, unsplash.com) returned a 403
+  "policy denial" from the sandbox's egress proxy — general internet access
+  is not permitted in that environment, only an allowlisted set of hosts
+  (npm, PyPI, GitHub, anthropic.com, etc.). No image could be fetched, so
+  per the task's own fallback the prop was deleted outright: an absent prop
+  beats a fake-looking drawn one. Revisit if run somewhere with open egress.

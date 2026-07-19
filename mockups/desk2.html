@@ -261,6 +261,9 @@
     width: min(100%, 72rem);
     display: grid;
     justify-items: center;
+    /* reserves room below the page for the notebook's current-section
+       ribbon, which hangs well past the page's bottom edge */
+    padding-bottom: 4.4rem;
   }
 
   .book { position: relative; }
@@ -562,54 +565,100 @@
   .verb.quiet { color: var(--pen-faint); font-weight: 500; }
   .verb:hover { text-decoration: underline wavy 1px; text-underline-offset: 4px; }
 
-  /* ---------- index tabs on the book edge ---------- */
+  /* ---------- ribbon bookmarks: anchored at the spine, hanging down,
+     exiting at the bottom edge of whichever page-stack they're sandwiched
+     in. Ribbons before the open section tuck under the left page, ribbons
+     after it tuck under the right page, and the open section's own ribbon
+     hangs full-length at the gutter. ---------- */
 
-  .tab-deck {
+  .ribbon-deck {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    z-index: 4;
+    z-index: 6;
   }
 
-  .tab {
+  /* the wrap carries the position (it's what moves between passed/current/
+     upcoming); the .rbn button inside it carries the clipped ribbon shape.
+     the tag is a sibling of .rbn, not a child of it — clip-path clips its
+     whole subtree, so a label nested inside the clipped button would be
+     cut away along with it. */
+  .rbn-wrap {
     position: absolute;
+    top: 100%;
+  }
+
+  .rbn {
+    position: relative;
+    display: block;
     appearance: none;
+    border: 0;
+    padding: 0;
     cursor: pointer;
-    writing-mode: vertical-rl;
     pointer-events: auto;
-    border: 1px solid rgba(60, 40, 20, 0.4);
-    background: var(--tab-c, #888);
-    color: #f7edd6;
+    width: 1.05rem;
+    height: 1rem;
+    background: linear-gradient(180deg, var(--rc1), var(--rc2) 55%, var(--rc3));
+    clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
+    box-shadow: 0 4px 7px -3px rgba(10, 5, 0, 0.5);
+    opacity: 0.72;
+    transition: transform 140ms ease, opacity 140ms ease, height 140ms ease;
+  }
+
+  .rbn-tag {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%) rotate(-3deg);
+    margin-top: 0.2rem;
+    font-family: var(--hand);
     font-size: 0.62rem;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    padding: 0.8rem 0.42rem 0.8rem 0.5rem;
-    transition: transform 140ms ease, opacity 140ms ease;
+    line-height: 1;
+    color: var(--pen-faint);
+    white-space: nowrap;
+    background: rgba(246, 236, 210, 0.82);
+    padding: 0.03rem 0.22rem;
+    border-radius: 2px;
+    pointer-events: none;
   }
 
-  .tab.side-right, .tab.active {
-    right: -1.95rem;
-    left: auto;
-    border-left: none;
-    border-radius: 0 0.55rem 0.55rem 0;
-    opacity: 0.75;
-    transform: translateX(-0.3rem);
-    box-shadow: 3px 2px 6px -2px rgba(20, 10, 0, 0.5);
+  .rbn:hover { opacity: 0.95; transform: translateY(1px); }
+
+  .rbn-wrap.rbn-current { left: 50%; transform: translateX(-50%); z-index: 2; }
+
+  .rbn-wrap.rbn-current .rbn {
+    width: 1.35rem;
+    height: 3.4rem;
+    opacity: 1;
   }
 
-  .tab.side-left {
-    left: -1.95rem;
-    right: auto;
-    border-right: none;
-    border-radius: 0.55rem 0 0 0.55rem;
-    opacity: 0.55;
-    transform: translateX(0.3rem);
-    box-shadow: -3px 2px 6px -2px rgba(20, 10, 0, 0.5);
+  .rbn-wrap.rbn-current .rbn:hover { transform: translateY(2px); }
+
+  .rbn-wrap.rbn-current .rbn-tag {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--pen);
+    background: rgba(246, 236, 210, 0.92);
+    padding: 0.05rem 0.32rem;
   }
 
-  .tab.side-right:not(.active):hover { opacity: 0.95; transform: translateX(-0.12rem); }
-  .tab.side-left:hover { opacity: 0.8; transform: translateX(0.12rem); }
-  .tab.active { opacity: 1; transform: translateX(-1px); }
+  .rbn-wrap.rbn-passed { left: calc(50% - 1rem - var(--dist, 1) * 1.05rem); }
+  .rbn-wrap.rbn-upcoming { left: calc(50% + 1rem + (var(--dist, 1) - 1) * 1.05rem); }
+
+  /* tucked ribbons sit shoulder to shoulder, but their tags need more room
+     than that to stay legible — stagger alternate tags a row lower (the
+     wraps' DOM order is fixed by section, so nth-of-type gives a stable
+     zig-zag regardless of which sections are currently tucked) */
+  .ribbon-deck .rbn-wrap:nth-of-type(even).rbn-passed .rbn-tag,
+  .ribbon-deck .rbn-wrap:nth-of-type(even).rbn-upcoming .rbn-tag {
+    margin-top: 1.35rem;
+  }
+
+  .rbn-memories { --rc1: #a06d76; --rc2: #7d4a52; --rc3: #5e343b; }
+  .rbn-people   { --rc1: #ab7f56; --rc2: #8a5a3a; --rc3: #6b4128; }
+  .rbn-skills   { --rc1: #c79a4a; --rc2: #a3792f; --rc3: #7d5a1f; }
+  .rbn-resources{ --rc1: #82a17c; --rc2: #5f7a5a; --rc3: #445c41; }
+  .rbn-marks    { --rc1: #9077a8; --rc2: #6d5580; --rc3: #4f3d5e; }
 
   .roster { display: grid; gap: 0.1rem; }
 
@@ -809,10 +858,6 @@
 
     .fresh-slip { margin-left: 0.4rem; }
 
-    /* leave room on the fore-edge for the stacked tabs so they don't push
-       the page past the viewport and force horizontal scroll */
-    .book-zone { padding-right: 2rem; }
-
     /* let slips/entries shrink to the (narrower) mobile page instead of
        blowing out their grid track to fit an unbroken line of text */
     .slip, .entry { min-width: 0; }
@@ -841,31 +886,51 @@
     .page.left .slip { margin-right: 0.15rem; }
     i.pc { width: 0.7rem; height: 0.7rem; }
 
-    .tab {
-      writing-mode: vertical-rl;
-      font-size: 0.56rem;
-      padding: 0.6rem 0.3rem;
+    /* mobile: only one page-stack is visible, and its spine/gutter sits at
+       the left edge (where the stitched seam-sliver peeks through). Passed
+       ribbons tuck along that seam in a vertical stack; the current and
+       upcoming ribbons lay along the page's bottom edge instead, ordered
+       out from the gutter side. */
+
+    .rbn-tag { font-size: 0.56rem; }
+    .rbn-wrap.rbn-current .rbn-tag { font-size: 0.78rem; }
+
+    .rbn-wrap.rbn-current {
+      left: 0.5rem;
+      right: auto;
+      transform: none;
     }
 
-    .tab.side-right, .tab.side-left, .tab.active {
-      left: auto;
-      right: -1.6rem;
-      border-left: none;
-      border-right: 1px solid rgba(60, 40, 20, 0.4);
-      border-radius: 0 0.5rem 0.5rem 0;
-      box-shadow: 3px 2px 6px -2px rgba(20, 10, 0, 0.5);
+    .rbn-wrap.rbn-current .rbn {
+      width: 1.2rem;
+      height: 2.6rem;
     }
 
-    .tab.side-right { opacity: 0.75; transform: translateX(-0.3rem); }
-    .tab.side-right:hover { opacity: 0.9; transform: translateX(-0.4rem); }
+    .rbn-wrap.rbn-current .rbn:hover { transform: translateY(2px); }
 
-    .tab.side-left {
-      opacity: 0.4;
-      filter: brightness(0.7);
-      transform: translateX(0.35rem);
+    .rbn-wrap.rbn-upcoming {
+      left: calc(0.5rem + 1.2rem + 0.35rem + (var(--dist, 1) - 1) * 0.95rem);
     }
 
-    .tab.active { opacity: 1; transform: translateX(-1.05rem); }
+    .rbn-wrap.rbn-passed {
+      top: auto;
+      left: -0.05rem;
+      bottom: calc(0.7rem + (var(--dist, 1) - 1) * 1.15rem);
+    }
+
+    .rbn-wrap.rbn-passed .rbn {
+      width: 0.8rem;
+      height: 0.68rem;
+      opacity: 0.85;
+    }
+
+    .rbn-wrap.rbn-passed .rbn-tag {
+      top: auto;
+      bottom: 100%;
+      margin-top: 0;
+      margin-bottom: 0.1rem;
+      font-size: 0.5rem;
+    }
 
     .closed-book-spot {
       position: static;
@@ -956,12 +1021,12 @@
 
     <!-- notebook -->
     <div class="book" id="book-notebook">
-      <nav class="tab-deck" aria-label="Sections">
-        <button class="tab" data-tab="memories" data-i="0" style="--tab-c: #7d4a52; top: 1.3rem">Memories</button>
-        <button class="tab" data-tab="people" data-i="1" style="--tab-c: #8a5a3a; top: 7.1rem">People</button>
-        <button class="tab" data-tab="skills" data-i="2" style="--tab-c: #a3792f; top: 12.9rem">Skills</button>
-        <button class="tab" data-tab="resources" data-i="3" style="--tab-c: #5f7a5a; top: 18.7rem">Resources</button>
-        <button class="tab" data-tab="marks" data-i="4" style="--tab-c: #6d5580; top: 24.5rem">Marks</button>
+      <nav class="ribbon-deck" aria-label="Sections">
+        <span class="rbn-wrap"><button class="rbn rbn-memories" data-i="0" aria-label="Ribbon: jump to Memories"></button><span class="rbn-tag hand">Memories</span></span>
+        <span class="rbn-wrap"><button class="rbn rbn-people" data-i="1" aria-label="Ribbon: jump to People"></button><span class="rbn-tag hand">People</span></span>
+        <span class="rbn-wrap"><button class="rbn rbn-skills" data-i="2" aria-label="Ribbon: jump to Skills"></button><span class="rbn-tag hand">Skills</span></span>
+        <span class="rbn-wrap"><button class="rbn rbn-resources" data-i="3" aria-label="Ribbon: jump to Resources"></button><span class="rbn-tag hand">Resources</span></span>
+        <span class="rbn-wrap"><button class="rbn rbn-marks" data-i="4" aria-label="Ribbon: jump to Marks"></button><span class="rbn-tag hand">Marks</span></span>
       </nav>
 
       <div class="spread paged" data-section="memories">
@@ -1268,20 +1333,30 @@
   document.querySelectorAll("[data-open-diary]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); showBook(dy); }));
   document.querySelectorAll("[data-open-notebook]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); showBook(nb); }));
 
-  // notebook: five section-spreads, and index tabs that migrate between the
-  // left/right fore-edge as the current spread moves past them
+  // notebook: five section-spreads, and ribbon bookmarks anchored at the
+  // spine that regroup (passed / current / upcoming) as the current spread
+  // moves past them
   const sections = ["memories", "people", "skills", "resources", "marks"];
   const spreads = sections.map((s) => nb.querySelector(`.spread[data-section="${s}"]`));
-  const tabs = Array.from(nb.querySelectorAll(".tab"));
+  const ribbons = Array.from(nb.querySelectorAll(".rbn"));
   let curSec = 0;
   let curSide = "left";
 
-  const updateTabs = () => {
-    tabs.forEach((tab) => {
-      const i = Number(tab.dataset.i);
-      tab.classList.remove("side-left", "side-right", "active");
-      if (i === curSec) tab.classList.add("active");
-      else tab.classList.add(i < curSec ? "side-left" : "side-right");
+  const updateRibbons = () => {
+    ribbons.forEach((rbn) => {
+      const i = Number(rbn.dataset.i);
+      const wrap = rbn.parentElement;
+      wrap.classList.remove("rbn-passed", "rbn-current", "rbn-upcoming");
+      if (i === curSec) {
+        wrap.classList.add("rbn-current");
+        wrap.style.removeProperty("--dist");
+      } else if (i < curSec) {
+        wrap.classList.add("rbn-passed");
+        wrap.style.setProperty("--dist", curSec - i);
+      } else {
+        wrap.classList.add("rbn-upcoming");
+        wrap.style.setProperty("--dist", i - curSec);
+      }
     });
   };
 
@@ -1306,17 +1381,17 @@
     }
     curSide = side;
     showSide(spreads[curSec], curSide);
-    updateTabs();
+    updateRibbons();
   };
 
-  tabs.forEach((tab) => {
-    tab.addEventListener("click", (e) => {
+  ribbons.forEach((rbn) => {
+    rbn.addEventListener("click", (e) => {
       e.stopPropagation();
-      openSection(Number(tab.dataset.i), "left");
+      openSection(Number(rbn.dataset.i), "left");
     });
   });
 
-  updateTabs();
+  updateRibbons();
   showSide(spreads[curSec], curSide);
 
   // dice
@@ -1378,4 +1453,5 @@
       spread.querySelector(`[data-mpage="${btn.dataset.mturn}"]`).classList.add("current");
     });
   });
+
 </script>

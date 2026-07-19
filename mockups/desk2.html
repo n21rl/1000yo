@@ -48,6 +48,7 @@
       var(--wood-2);
     background-size: auto, auto, 220vw auto, auto;
     min-height: 100%;
+    overflow-x: hidden;
   }
 
   body {
@@ -264,7 +265,7 @@
     justify-items: center;
     /* reserves room below the page for the notebook's current-section
        ribbon, which hangs well past the page's bottom edge */
-    padding-bottom: 4.4rem;
+    padding-bottom: 7.2rem;
   }
 
   .book { position: relative; }
@@ -639,11 +640,16 @@
   .verb.quiet { color: var(--pen-faint); font-weight: 500; }
   .verb:hover { text-decoration: underline wavy 1px; text-underline-offset: 4px; }
 
-  /* ---------- ribbon bookmarks: anchored at the spine, hanging down,
-     exiting at the bottom edge of whichever page-stack they're sandwiched
-     in. Ribbons before the open section tuck under the left page, ribbons
-     after it tuck under the right page, and the open section's own ribbon
-     hangs full-length at the gutter. ---------- */
+  /* ---------- ribbon bookmarks: long fabric strips pinned at the spine.
+     The open section's ribbon is anchored at the TOP of the spine and lies
+     down the gutter for the whole page height, its tail hanging out past
+     the bottom edge lower than any other ribbon. Ribbons before the open
+     section dangle below the book, emerging from under the left page;
+     ribbons after it dangle from under the right page — both in section
+     order, each with its own irregular length and a slight twist, like
+     real cloth bookmarks rather than uniform UI chips. The section name is
+     embroidered vertically down the ribbon itself (writing-mode:
+     vertical-rl) — there is no separate label tag. ---------- */
 
   .ribbon-deck {
     position: absolute;
@@ -652,80 +658,97 @@
     z-index: 6;
   }
 
-  /* the wrap carries the position (it's what moves between passed/current/
-     upcoming); the .rbn button inside it carries the clipped ribbon shape.
-     the tag is a sibling of .rbn, not a child of it — clip-path clips its
-     whole subtree, so a label nested inside the clipped button would be
-     cut away along with it. */
+  /* the wrap carries position (passed / current / upcoming) plus each
+     section's fixed width/twist/tail-length, set once per ribbon by DOM
+     order (nth-child) so the same physical ribbon looks the same whether
+     it's currently dangling passed or upcoming. */
   .rbn-wrap {
     position: absolute;
     top: 100%;
   }
 
+  .rbn-wrap:nth-child(1) { --rbn-w: 1.15rem; --rbn-rot: -2deg;   --rbn-tail: 5rem; }
+  .rbn-wrap:nth-child(2) { --rbn-w: 1.2rem;  --rbn-rot: 3deg;    --rbn-tail: 3.6rem; }
+  .rbn-wrap:nth-child(3) { --rbn-w: 1.3rem;  --rbn-rot: -3deg;   --rbn-tail: 4.3rem; }
+  .rbn-wrap:nth-child(4) { --rbn-w: 1.25rem; --rbn-rot: 2deg;    --rbn-tail: 5.8rem; }
+  .rbn-wrap:nth-child(5) { --rbn-w: 1.15rem; --rbn-rot: -1.5deg; --rbn-tail: 3.4rem; }
+
   .rbn {
     position: relative;
-    display: block;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
     appearance: none;
     border: 0;
-    padding: 0;
+    padding: 0.3rem 0 1rem;
     cursor: pointer;
     pointer-events: auto;
-    width: 1.05rem;
-    height: 1rem;
+    width: var(--rbn-w, 1.2rem);
     background: linear-gradient(180deg, var(--rc1), var(--rc2) 55%, var(--rc3));
-    clip-path: polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%);
-    box-shadow: 0 4px 7px -3px rgba(10, 5, 0, 0.5);
-    opacity: 0.72;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 0.85rem), 50% 100%, 0 calc(100% - 0.85rem));
+    box-shadow: 0 4px 8px -3px rgba(10, 5, 0, 0.5);
+    opacity: 0.92;
     transition: transform 140ms ease, opacity 140ms ease, height 140ms ease;
   }
 
-  .rbn-tag {
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%) rotate(-3deg);
-    margin-top: 0.2rem;
+  .rbn-label {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
     font-family: var(--hand);
-    font-size: 0.62rem;
-    line-height: 1;
-    color: var(--pen-faint);
-    white-space: nowrap;
-    background: rgba(246, 236, 210, 0.82);
-    padding: 0.03rem 0.22rem;
-    border-radius: 2px;
+    font-size: 0.78rem;
+    letter-spacing: 0.02em;
+    color: rgba(255, 250, 235, 0.85);
+    text-shadow: 0 1px 2px rgba(10, 5, 0, 0.4);
     pointer-events: none;
+    white-space: nowrap;
   }
 
-  .rbn:hover { opacity: 0.95; transform: translateY(1px); }
+  .rbn:hover { opacity: 1; transform: translateY(1px); }
 
-  .rbn-wrap.rbn-current { left: 50%; transform: translateX(-50%); z-index: 2; }
+  /* current: anchored at the top of the spine, lying the full page height
+     down the gutter, tail hanging out lower than every other ribbon */
+  .rbn-wrap.rbn-current { top: 0; left: 50%; transform: translateX(-50%); z-index: 2; }
 
   .rbn-wrap.rbn-current .rbn {
-    width: 1.35rem;
-    height: 3.4rem;
+    width: 1.4rem;
+    height: calc(var(--page-h) + 6.5rem);
     opacity: 1;
+    transform: none;
   }
 
   .rbn-wrap.rbn-current .rbn:hover { transform: translateY(2px); }
 
-  .rbn-wrap.rbn-current .rbn-tag {
-    font-size: 0.92rem;
+  .rbn-wrap.rbn-current .rbn-label {
+    font-size: 1.05rem;
     font-weight: 600;
-    color: var(--pen);
-    background: rgba(246, 236, 210, 0.92);
-    padding: 0.05rem 0.32rem;
   }
 
-  .rbn-wrap.rbn-passed { left: calc(50% - 1rem - var(--dist, 1) * 1.05rem); }
-  .rbn-wrap.rbn-upcoming { left: calc(50% + 1rem + (var(--dist, 1) - 1) * 1.05rem); }
+  /* passed: dangling below the book, emerging from under the left page,
+     in section order */
+  .rbn-wrap.rbn-passed { top: 100%; }
+  .rbn-wrap:nth-child(1).rbn-passed { left: 10%; }
+  .rbn-wrap:nth-child(2).rbn-passed { left: 20%; }
+  .rbn-wrap:nth-child(3).rbn-passed { left: 30%; }
+  .rbn-wrap:nth-child(4).rbn-passed { left: 40%; }
 
-  /* tucked ribbons sit shoulder to shoulder, but their tags need more room
-     than that to stay legible — stagger alternate tags a row lower (the
-     wraps' DOM order is fixed by section, so nth-of-type gives a stable
-     zig-zag regardless of which sections are currently tucked) */
-  .ribbon-deck .rbn-wrap:nth-of-type(even).rbn-passed .rbn-tag,
-  .ribbon-deck .rbn-wrap:nth-of-type(even).rbn-upcoming .rbn-tag {
-    margin-top: 1.35rem;
+  /* upcoming: dangling below the book, emerging from under the right page,
+     in section order (kept clear of the closed-book prop pinned at the
+     bottom-right corner) */
+  .rbn-wrap.rbn-upcoming { top: 100%; }
+  .rbn-wrap:nth-child(2).rbn-upcoming { left: 55%; }
+  .rbn-wrap:nth-child(3).rbn-upcoming { left: 65%; }
+  .rbn-wrap:nth-child(4).rbn-upcoming { left: 75%; }
+  .rbn-wrap:nth-child(5).rbn-upcoming { left: 85%; }
+
+  .rbn-wrap.rbn-passed .rbn,
+  .rbn-wrap.rbn-upcoming .rbn {
+    height: var(--rbn-tail, 4rem);
+    transform: rotate(var(--rbn-rot, 0deg));
+  }
+
+  .rbn-wrap.rbn-passed .rbn-label,
+  .rbn-wrap.rbn-upcoming .rbn-label {
+    font-size: 0.66rem;
   }
 
   .rbn-memories { --rc1: #a06d76; --rc2: #7d4a52; --rc3: #5e343b; }
@@ -914,7 +937,13 @@
   .m-only { display: none; }
 
   @media (max-width: 880px) {
-    :root { --page-w: 100%; --page-h: min(78vh, 41rem); }
+    /* page-w is expressed in viewport units, not a percentage: the whole
+       book-stage → book → spread → page chain is width:auto (shrink-to-fit)
+       on mobile, so a percentage width here would resolve against
+       content — meaning it would go a different pixel width per section
+       depending on how wide that section's own text happens to be. Fixed
+       viewport math keeps every section (and the diary) pixel-identical. */
+    :root { --page-w: calc(100vw - 1.85rem); --page-h: min(78vh, 41rem); }
 
     body { padding: 0.9rem 0.7rem 2.6rem; gap: 1.2rem; }
 
@@ -945,10 +974,33 @@
     .page.left::after, .page.right::before {
       left: 0; right: auto;
       width: 1.3rem;
-      background:
-        var(--stitch) repeat-y,
-        linear-gradient(to right, rgba(40, 25, 8, 0.34), transparent 65%),
-        linear-gradient(to right, #d6c093 0 0.6rem, transparent 0.6rem 100%);
+      background: linear-gradient(to right, rgba(40, 25, 8, 0.32), transparent 65%);
+    }
+
+    /* the book sits flush against the left viewport edge: a sliver of the
+       facing page's paper (cut off by the frame, no rounded corner) and
+       the stitched seam bleed off-screen, then the visible page begins.
+       Only the book bleeds — the parchment/prompt above keep body's
+       padding. */
+    .book-zone {
+      justify-self: start;
+      margin-left: -0.7rem;
+      width: calc(100% + 0.7rem);
+      display: flex;
+      align-items: flex-start;
+      padding-bottom: 1.2rem;
+    }
+
+    .book-zone::before {
+      content: "";
+      flex: 0 0 1.15rem;
+      align-self: flex-start;
+      height: var(--page-h);
+      background-image: var(--stitch), linear-gradient(to right, #dcc79a 0 0.8rem, #cbb488 0.8rem 0.95rem, transparent 0.95rem);
+      background-repeat: repeat-y, no-repeat;
+      background-position: 0.85rem 0, 0 0;
+      background-size: 10px auto, auto auto;
+      box-shadow: inset -2px 0 5px rgba(20, 10, 2, 0.3);
     }
 
     .spread.paged [data-mpage] { display: none; }
@@ -961,56 +1013,77 @@
     i.pc { width: 0.7rem; height: 0.7rem; }
 
     /* mobile: only one page-stack is visible, and its spine/gutter sits at
-       the left edge (where the stitched seam-sliver peeks through). Passed
-       ribbons tuck along that seam in a vertical stack; the current and
-       upcoming ribbons lay along the page's bottom edge instead, ordered
-       out from the gutter side. */
-
-    .rbn-tag { font-size: 0.56rem; }
-    .rbn-wrap.rbn-current .rbn-tag { font-size: 0.78rem; }
+       the left edge. The current section's ribbon runs down that left seam
+       over the page, its tail dangling below the page's bottom edge lower
+       than any other. Passed ribbons emanate fanned-out from the
+       bottom-left corner, where the stitching meets the page bottom;
+       upcoming ribbons hang below the page's bottom edge in order,
+       spaced out across the page. */
 
     .rbn-wrap.rbn-current {
-      left: 0.5rem;
-      right: auto;
+      top: 0;
+      left: 0;
       transform: none;
     }
 
     .rbn-wrap.rbn-current .rbn {
-      width: 1.2rem;
-      height: 2.6rem;
+      width: 1.05rem;
+      height: calc(var(--page-h) + 5rem);
     }
 
     .rbn-wrap.rbn-current .rbn:hover { transform: translateY(2px); }
 
-    .rbn-wrap.rbn-upcoming {
-      left: calc(0.5rem + 1.2rem + 0.35rem + (var(--dist, 1) - 1) * 0.95rem);
+    .rbn-wrap.rbn-current .rbn-label { font-size: 0.85rem; }
+
+    /* passed: fanned out from the bottom-left corner of the spine, just
+       clear of the current ribbon's own column so they read as a
+       separate bundle instead of hiding behind it */
+    .rbn-wrap.rbn-passed { top: 100%; left: 1.1rem; }
+    .rbn-wrap:nth-child(1).rbn-passed { left: 1.5rem; }
+    .rbn-wrap:nth-child(2).rbn-passed { left: 1.1rem; }
+    .rbn-wrap:nth-child(3).rbn-passed { left: 1.35rem; }
+    .rbn-wrap:nth-child(4).rbn-passed { left: 0.9rem; }
+
+    .rbn-wrap.rbn-passed .rbn { transform-origin: top left; }
+    .rbn-wrap:nth-child(1).rbn-passed .rbn { transform: rotate(-14deg); }
+    .rbn-wrap:nth-child(2).rbn-passed .rbn { transform: rotate(-4deg); }
+    .rbn-wrap:nth-child(3).rbn-passed .rbn { transform: rotate(7deg); }
+    .rbn-wrap:nth-child(4).rbn-passed .rbn { transform: rotate(16deg); }
+
+    /* upcoming: spaced out below the page's bottom edge, in order */
+    .rbn-wrap.rbn-upcoming { top: 100%; }
+    .rbn-wrap:nth-child(2).rbn-upcoming { left: 10%; }
+    .rbn-wrap:nth-child(3).rbn-upcoming { left: 28%; }
+    .rbn-wrap:nth-child(4).rbn-upcoming { left: 46%; }
+    .rbn-wrap:nth-child(5).rbn-upcoming { left: 64%; }
+
+    .rbn-wrap.rbn-passed .rbn,
+    .rbn-wrap.rbn-upcoming .rbn {
+      height: calc(var(--rbn-tail, 4rem) * 0.6);
+      width: calc(var(--rbn-w, 1.2rem) * 0.9);
     }
 
-    .rbn-wrap.rbn-passed {
-      top: auto;
-      left: -0.05rem;
-      bottom: calc(0.7rem + (var(--dist, 1) - 1) * 1.15rem);
+    .rbn-wrap.rbn-passed .rbn-label,
+    .rbn-wrap.rbn-upcoming .rbn-label {
+      font-size: 0.6rem;
     }
 
-    .rbn-wrap.rbn-passed .rbn {
-      width: 0.8rem;
-      height: 0.68rem;
-      opacity: 0.85;
-    }
+    /* a section gets a second (right) page on mobile only if it actually
+       has content there — pages whose right side is filler-only are
+       marked data-page2="hint" and collapse to a single page: no fold, no
+       page 2, no "1" either, since there's nothing to page through */
+    .page.right[data-page2="hint"] { display: none !important; }
 
-    .rbn-wrap.rbn-passed .rbn-tag {
-      top: auto;
-      bottom: 100%;
-      margin-top: 0;
-      margin-bottom: 0.1rem;
-      font-size: 0.5rem;
+    .spread:has(.page.right[data-page2="hint"]) .page.left .page-corner,
+    .spread:has(.page.right[data-page2="hint"]) .page.left .page-num {
+      display: none;
     }
 
     .closed-book-spot {
       position: static;
       display: flex;
       justify-content: center;
-      margin-top: 0.6rem;
+      margin-top: 5.6rem;
     }
 
     .diary .page { padding-left: 2.9rem; }
@@ -1096,11 +1169,11 @@
     <!-- notebook -->
     <div class="book" id="book-notebook">
       <nav class="ribbon-deck" aria-label="Sections">
-        <span class="rbn-wrap"><button class="rbn rbn-memories" data-i="0" aria-label="Ribbon: jump to Memories"></button><span class="rbn-tag hand">Memories</span></span>
-        <span class="rbn-wrap"><button class="rbn rbn-people" data-i="1" aria-label="Ribbon: jump to People"></button><span class="rbn-tag hand">People</span></span>
-        <span class="rbn-wrap"><button class="rbn rbn-skills" data-i="2" aria-label="Ribbon: jump to Skills"></button><span class="rbn-tag hand">Skills</span></span>
-        <span class="rbn-wrap"><button class="rbn rbn-resources" data-i="3" aria-label="Ribbon: jump to Resources"></button><span class="rbn-tag hand">Resources</span></span>
-        <span class="rbn-wrap"><button class="rbn rbn-marks" data-i="4" aria-label="Ribbon: jump to Marks"></button><span class="rbn-tag hand">Marks</span></span>
+        <span class="rbn-wrap"><button class="rbn rbn-memories" data-i="0" aria-label="Ribbon: jump to Memories"><span class="rbn-label hand">Memories</span></button></span>
+        <span class="rbn-wrap"><button class="rbn rbn-people" data-i="1" aria-label="Ribbon: jump to People"><span class="rbn-label hand">People</span></button></span>
+        <span class="rbn-wrap"><button class="rbn rbn-skills" data-i="2" aria-label="Ribbon: jump to Skills"><span class="rbn-label hand">Skills</span></button></span>
+        <span class="rbn-wrap"><button class="rbn rbn-resources" data-i="3" aria-label="Ribbon: jump to Resources"><span class="rbn-label hand">Resources</span></button></span>
+        <span class="rbn-wrap"><button class="rbn rbn-marks" data-i="4" aria-label="Ribbon: jump to Marks"><span class="rbn-label hand">Marks</span></button></span>
       </nav>
 
       <div class="spread paged" data-section="memories">
@@ -1234,7 +1307,7 @@
           <div class="page-num m-only">1</div>
         </section>
 
-        <section class="page right" data-mpage="2">
+        <section class="page right" data-mpage="2" data-page2="hint">
           <p class="hand blank-note">the rest of the page waits&hellip;</p>
 
           <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
@@ -1273,7 +1346,7 @@
           <div class="page-num m-only">1</div>
         </section>
 
-        <section class="page right" data-mpage="2">
+        <section class="page right" data-mpage="2" data-page2="hint">
           <p class="hand blank-note">the rest of the page waits&hellip;</p>
 
           <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
@@ -1304,7 +1377,7 @@
           <div class="page-num m-only">1</div>
         </section>
 
-        <section class="page right" data-mpage="2">
+        <section class="page right" data-mpage="2" data-page2="hint">
           <p class="hand blank-note">the rest of the page waits&hellip;</p>
 
           <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
@@ -1330,7 +1403,7 @@
           <div class="page-num m-only">1</div>
         </section>
 
-        <section class="page right" data-mpage="2">
+        <section class="page right" data-mpage="2" data-page2="hint">
           <p class="hand blank-note">the rest of the page waits&hellip;</p>
 
           <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
@@ -1354,7 +1427,7 @@
           </div>
         </section>
 
-        <section class="page right" data-mpage="2">
+        <section class="page right" data-mpage="2" data-page2="hint">
           <div class="page-head"><span class="print-label">&nbsp;</span></div>
           <p class="hand" style="font-size:1.12rem; font-style: italic; color: #5a6b80; line-height: 1.8rem;">three pages remain.</p>
           <button class="page-corner m-only" data-mturn="1" aria-label="Turn back"></button>
@@ -1533,14 +1606,32 @@
 
   // select-to-reveal
   const selectables = document.querySelectorAll(".slip:not(.smoothed), .entry");
-  const clearSel = () => document.querySelectorAll(".selected").forEach((s) => s.classList.remove("selected"));
+
+  // a lifted .slip goes position:fixed and leaves the flow, which used to
+  // let the remaining slips reflow up and shift the book's height. Drop an
+  // invisible same-size placeholder in its mounted spot for as long as it's
+  // lifted, so the layout never jumps.
+  const clearSel = () => {
+    document.querySelectorAll(".selected").forEach((s) => s.classList.remove("selected"));
+    document.querySelectorAll(".slip-placeholder").forEach((p) => p.remove());
+  };
   selectables.forEach((el) => {
     el.addEventListener("click", (e) => {
       if (e.target.closest(".verb")) return;
       e.stopPropagation();
       const was = el.classList.contains("selected");
       clearSel();
-      if (!was) el.classList.add("selected");
+      if (!was) {
+        if (el.classList.contains("slip")) {
+          const r = el.getBoundingClientRect();
+          const cs = getComputedStyle(el);
+          const ph = document.createElement("div");
+          ph.className = "slip-placeholder";
+          ph.style.cssText = `width:${r.width}px; height:${r.height}px; margin:${cs.marginTop} ${cs.marginRight} ${cs.marginBottom} ${cs.marginLeft}; visibility:hidden;`;
+          el.parentNode.insertBefore(ph, el);
+        }
+        el.classList.add("selected");
+      }
     });
   });
   document.body.addEventListener("click", clearSel);

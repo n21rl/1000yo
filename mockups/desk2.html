@@ -243,10 +243,27 @@
     to { transform: none; opacity: 1; }
   }
 
+  .book-stage { position: relative; }
+
   .spread {
     display: grid;
     grid-template-columns: var(--page-w) var(--page-w);
     position: relative;
+  }
+
+  .spread[hidden] { display: none; }
+
+  .spread.turn-fwd { animation: turn-fwd 420ms ease both; transform-origin: 50% 50%; }
+  .spread.turn-back { animation: turn-back 420ms ease both; transform-origin: 50% 50%; }
+
+  @keyframes turn-fwd {
+    from { transform: perspective(1800px) rotateY(-16deg); opacity: 0.25; }
+    to { transform: none; opacity: 1; }
+  }
+
+  @keyframes turn-back {
+    from { transform: perspective(1800px) rotateY(16deg); opacity: 0.25; }
+    to { transform: none; opacity: 1; }
   }
 
   .page {
@@ -296,30 +313,87 @@
     margin-bottom: 0.5rem;
   }
 
-  /* hanging bookmark to swap books */
-  .book-swap {
+  /* closed book prop: click it to swap books */
+  .closed-book-spot {
     position: absolute;
-    right: 2.6rem;
-    bottom: -1.75rem;
-    appearance: none;
-    border: 0;
-    cursor: pointer;
-    font-family: var(--hand);
-    font-size: 1.05rem;
-    font-weight: 600;
-    color: #f2ddc4;
-    background: linear-gradient(90deg, #6d1e29, var(--ribbon) 55%, #5d1822);
-    padding: 0.45rem 0.8rem 0.55rem;
-    clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 84%, 0 100%);
-    box-shadow: 0 6px 9px -4px rgba(10, 5, 0, 0.6);
-    z-index: 3;
+    right: -0.5rem;
+    bottom: -1.6rem;
+    z-index: 5;
   }
 
-  .book-swap:hover { transform: translateY(2px); }
+  .closed-book {
+    appearance: none;
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+    display: block;
+    position: relative;
+    width: 5.6rem;
+    height: 7.6rem;
+    border-radius: 0.2rem 0.4rem 0.4rem 0.2rem;
+    transform: rotate(7deg);
+    box-shadow: 0 12px 18px -9px rgba(5, 2, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.4);
+    transition: transform 150ms ease;
+  }
 
-  .book-swap.papered {
-    background: linear-gradient(90deg, #cbb586, var(--paper) 55%, #cbb586);
+  .closed-book[hidden] { display: none; }
+  .closed-book:hover { transform: rotate(7deg) translateY(-2px); }
+
+  .cb-diary { background: linear-gradient(155deg, #4a2a19, #241209 65%, #170b05); border: 1px solid #1c0f07; }
+
+  .cb-diary::before {
+    content: "";
+    position: absolute;
+    inset: 0.3rem;
+    border: 1px solid rgba(207, 168, 92, 0.5);
+    border-radius: 0.12rem;
+    pointer-events: none;
+  }
+
+  .cb-strap {
+    position: absolute;
+    left: 0; right: 0;
+    top: 44%;
+    height: 0.5rem;
+    background: linear-gradient(180deg, #5c3320, #2c1710);
+    box-shadow: 0 0 0 1px #1c0f07;
+  }
+
+  .cb-strap::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 0.65rem; height: 0.65rem;
+    background: #cfa85c;
+    border: 1px solid #7a5c26;
+    transform: translate(-50%, -50%) rotate(45deg);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+
+  .cb-diary .cb-label {
+    position: absolute;
+    left: 0.3rem; right: 0.3rem; top: 0.9rem;
+    text-align: center;
+    font-size: 0.95rem;
+    line-height: 1.1;
+    color: #cfa85c;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
+    transform: rotate(-1.5deg);
+  }
+
+  .cb-notebook {
+    background: var(--grain), linear-gradient(160deg, #c2a476, #a9895a 60%, #937249);
+    border: 1px solid #6d5230;
+  }
+
+  .cb-notebook .cb-label {
+    position: absolute;
+    left: 0.3rem; right: 0.3rem; top: 2.6rem;
+    text-align: center;
+    font-size: 1rem;
+    line-height: 1.1;
     color: var(--pen);
+    transform: rotate(-1deg);
   }
 
   /* ---------- memory slips ---------- */
@@ -454,43 +528,54 @@
   .verb.quiet { color: var(--pen-faint); font-weight: 500; }
   .verb:hover { text-decoration: underline wavy 1px; text-underline-offset: 4px; }
 
-  /* ---------- right page: tabs ---------- */
+  /* ---------- index tabs on the book edge ---------- */
 
-  .page-wrap { position: relative; }
-
-  .tab-rail {
+  .tab-deck {
     position: absolute;
-    top: 1.5rem;
-    right: -1.95rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+    inset: 0;
+    pointer-events: none;
     z-index: 4;
   }
 
   .tab {
+    position: absolute;
     appearance: none;
     cursor: pointer;
     writing-mode: vertical-rl;
+    pointer-events: auto;
     border: 1px solid rgba(60, 40, 20, 0.4);
-    border-left: none;
-    border-radius: 0 0.55rem 0.55rem 0;
     background: var(--tab-c, #888);
     color: #f7edd6;
     font-size: 0.62rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
     padding: 0.8rem 0.42rem 0.8rem 0.5rem;
+    transition: transform 140ms ease, opacity 140ms ease;
+  }
+
+  .tab.side-right, .tab.active {
+    right: -1.95rem;
+    left: auto;
+    border-left: none;
+    border-radius: 0 0.55rem 0.55rem 0;
     opacity: 0.75;
     transform: translateX(-0.3rem);
-    transition: transform 140ms ease, opacity 140ms ease;
     box-shadow: 3px 2px 6px -2px rgba(20, 10, 0, 0.5);
   }
 
-  .tab:hover { opacity: 0.95; transform: translateX(-0.12rem); }
-  .tab.active { opacity: 1; transform: translateX(-1px); }
+  .tab.side-left {
+    left: -1.95rem;
+    right: auto;
+    border-right: none;
+    border-radius: 0.55rem 0 0 0.55rem;
+    opacity: 0.55;
+    transform: translateX(0.3rem);
+    box-shadow: -3px 2px 6px -2px rgba(20, 10, 0, 0.5);
+  }
 
-  .panel[hidden] { display: none; }
+  .tab.side-right:not(.active):hover { opacity: 0.95; transform: translateX(-0.12rem); }
+  .tab.side-left:hover { opacity: 0.8; transform: translateX(0.12rem); }
+  .tab.active { opacity: 1; transform: translateX(-1px); }
 
   .roster { display: grid; gap: 0.1rem; }
 
@@ -537,6 +622,15 @@
   }
 
   .add-line:hover { text-decoration: underline wavy 1px; text-underline-offset: 4px; }
+
+  .blank-note {
+    margin: 3.6rem 0.4rem 0;
+    font-size: 1.1rem;
+    font-style: italic;
+    color: var(--pen-faint);
+    opacity: 0.75;
+    text-align: center;
+  }
 
   .page-corner {
     position: absolute;
@@ -657,6 +751,14 @@
 
     .fresh-slip { margin-left: 0.4rem; }
 
+    /* leave room on the fore-edge for the stacked tabs so they don't push
+       the page past the viewport and force horizontal scroll */
+    .book-zone { padding-right: 2rem; }
+
+    /* let slips/entries shrink to the (narrower) mobile page instead of
+       blowing out their grid track to fit an unbroken line of text */
+    .slip, .entry { min-width: 0; }
+
     .spread { grid-template-columns: 1fr; }
 
     .seam { display: none; }
@@ -665,10 +767,11 @@
 
     .page.left::after, .page.right::before {
       left: 0; right: auto;
-      width: 1rem;
+      width: 1.3rem;
       background:
         var(--stitch) repeat-y,
-        linear-gradient(to right, rgba(40, 25, 8, 0.30), transparent);
+        linear-gradient(to right, rgba(40, 25, 8, 0.34), transparent 65%),
+        linear-gradient(to right, #d6c093 0 0.6rem, transparent 0.6rem 100%);
     }
 
     .spread.paged [data-mpage] { display: none; }
@@ -679,25 +782,38 @@
     .slip { margin: 0 0.15rem; }
     i.pc { width: 0.7rem; height: 0.7rem; }
 
-    .tab-rail { position: static; flex-direction: row; padding: 0 0 0 0.9rem; margin-bottom: -1px; }
-
     .tab {
-      writing-mode: horizontal-tb;
-      flex: 1 1 auto;
-      min-width: 0;
-      text-align: center;
-      border: 1px solid rgba(60, 40, 20, 0.4);
-      border-bottom: none;
-      border-radius: 0.55rem 0.55rem 0 0;
-      padding: 0.42rem 0.3rem;
-      transform: translateY(0.25rem);
-      white-space: nowrap;
+      writing-mode: vertical-rl;
+      font-size: 0.56rem;
+      padding: 0.6rem 0.3rem;
     }
 
-    .tab:hover { transform: translateY(0.12rem); }
-    .tab.active { transform: translateY(1px); }
+    .tab.side-right, .tab.side-left, .tab.active {
+      left: auto;
+      right: -1.6rem;
+      border-left: none;
+      border-right: 1px solid rgba(60, 40, 20, 0.4);
+      border-radius: 0 0.5rem 0.5rem 0;
+      box-shadow: 3px 2px 6px -2px rgba(20, 10, 0, 0.5);
+    }
 
-    .book-swap { right: 1.4rem; bottom: -1.6rem; }
+    .tab.side-right { opacity: 0.75; transform: translateX(-0.3rem); }
+    .tab.side-right:hover { opacity: 0.9; transform: translateX(-0.4rem); }
+
+    .tab.side-left {
+      opacity: 0.4;
+      filter: brightness(0.7);
+      transform: translateX(0.35rem);
+    }
+
+    .tab.active { opacity: 1; transform: translateX(-1.05rem); }
+
+    .closed-book-spot {
+      position: static;
+      display: flex;
+      justify-content: center;
+      margin-top: 0.6rem;
+    }
 
     .diary .page { padding-left: 2.9rem; }
   }
@@ -794,212 +910,279 @@
 
 <!-- the books -->
 <div class="book-zone">
+  <div class="book-stage">
 
-  <!-- notebook -->
-  <div class="book" id="book-notebook">
-    <div class="spread paged">
-      <div class="seam" aria-hidden="true"></div>
+    <!-- notebook -->
+    <div class="book" id="book-notebook">
+      <nav class="tab-deck" aria-label="Sections">
+        <button class="tab" data-tab="memories" data-i="0" style="--tab-c: #7d4a52; top: 1.3rem">Memories</button>
+        <button class="tab" data-tab="people" data-i="1" style="--tab-c: #8a5a3a; top: 7.1rem">People</button>
+        <button class="tab" data-tab="skills" data-i="2" style="--tab-c: #a3792f; top: 12.9rem">Skills</button>
+        <button class="tab" data-tab="resources" data-i="3" style="--tab-c: #5f7a5a; top: 18.7rem">Resources</button>
+        <button class="tab" data-tab="marks" data-i="4" style="--tab-c: #6d5580; top: 24.5rem">Marks</button>
+      </nav>
 
-      <section class="page left current" data-mpage="1">
-        <div class="page-head">
-          <span class="print-label">Memories</span>
-          <span class="print-label" style="color: var(--pen-faint)">IV of V held</span>
-        </div>
+      <div class="spread paged" data-section="memories">
+        <div class="seam" aria-hidden="true"></div>
 
-        <div class="slips">
-          <div class="slip" tabindex="0">
-            <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
-            <div class="stitle">The Turning</div>
-            <ul>
-              <li>I woke beneath the church floor, hands still folded.</li>
-              <li>The priest who dug me free did not survive the dawn.</li>
-              <li class="blank">a line remains&hellip;</li>
-            </ul>
-            <div class="verbs">
-              <button class="verb">write here</button>
-              <button class="verb">copy into the diary</button>
-              <button class="verb quiet">rewrite</button>
-              <button class="verb quiet">lose it</button>
+        <section class="page left current" data-mpage="1">
+          <div class="page-head">
+            <span class="print-label">Memories</span>
+            <span class="print-label" style="color: var(--pen-faint)">IV of V held</span>
+          </div>
+
+          <div class="slips">
+            <div class="slip" tabindex="0">
+              <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
+              <div class="stitle">The Turning</div>
+              <ul>
+                <li>I woke beneath the church floor, hands still folded.</li>
+                <li>The priest who dug me free did not survive the dawn.</li>
+                <li class="blank">a line remains&hellip;</li>
+              </ul>
+              <div class="verbs">
+                <button class="verb">write here</button>
+                <button class="verb">copy into the diary</button>
+                <button class="verb quiet">rewrite</button>
+                <button class="verb quiet">lose it</button>
+              </div>
+            </div>
+
+            <div class="slip" tabindex="0">
+              <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
+              <div class="stitle">The Ossuary</div>
+              <ul>
+                <li>Three winters beneath Marien's Kirche, feeding on what the plague had left.</li>
+                <li class="blank">a line remains&hellip;</li>
+                <li class="blank">&nbsp;</li>
+              </ul>
+              <div class="verbs">
+                <button class="verb">write here</button>
+                <button class="verb">copy into the diary</button>
+                <button class="verb quiet">rewrite</button>
+                <button class="verb quiet">lose it</button>
+              </div>
+            </div>
+
+            <div class="slip" tabindex="0">
+              <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
+              <div class="stitle">The Cabal's Initiation</div>
+              <ul>
+                <li>They called it a rite. I called it drowning, and drowning again.</li>
+                <li>The water remembers me now.</li>
+                <li>What rose from the font wore my face better than I do.</li>
+              </ul>
+              <div class="verbs">
+                <span class="hand" style="font-size:1.02rem; color: var(--pen-faint); font-style: italic;">full &mdash; no line remains</span>
+                <button class="verb">copy into the diary</button>
+                <button class="verb quiet">lose it</button>
+              </div>
             </div>
           </div>
 
-          <div class="slip" tabindex="0">
-            <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
-            <div class="stitle">The Ossuary</div>
-            <ul>
-              <li>Three winters beneath Marien's Kirche, feeding on what the plague had left.</li>
-              <li class="blank">a line remains&hellip;</li>
-              <li class="blank">&nbsp;</li>
-            </ul>
-            <div class="verbs">
-              <button class="verb">write here</button>
-              <button class="verb">copy into the diary</button>
-              <button class="verb quiet">rewrite</button>
-              <button class="verb quiet">lose it</button>
+          <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
+          <div class="page-num m-only">1</div>
+        </section>
+
+        <section class="page right" data-mpage="2">
+          <div class="page-head"><span class="print-label" style="color: var(--pen-faint)">continued</span></div>
+
+          <div class="slips">
+            <div class="slip" tabindex="0">
+              <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
+              <div class="stitle">The Long Sleep</div>
+              <ul>
+                <li>A century passed as a single held breath.</li>
+                <li class="blank">a line remains&hellip;</li>
+                <li class="blank">&nbsp;</li>
+              </ul>
+              <div class="verbs">
+                <button class="verb">write here</button>
+                <button class="verb">copy into the diary</button>
+                <button class="verb quiet">rewrite</button>
+                <button class="verb quiet">lose it</button>
+              </div>
+            </div>
+
+            <div class="empty-slot">
+              <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
+              <div class="hint">an empty mount &mdash; its memory lies crumpled on the desk</div>
             </div>
           </div>
 
-          <div class="slip" tabindex="0">
-            <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
-            <div class="stitle">The Cabal's Initiation</div>
-            <ul>
-              <li>They called it a rite. I called it drowning, and drowning again.</li>
-              <li>The water remembers me now.</li>
-              <li>What rose from the font wore my face better than I do.</li>
-            </ul>
-            <div class="verbs">
-              <span class="hand" style="font-size:1.02rem; color: var(--pen-faint); font-style: italic;">full &mdash; no line remains</span>
-              <button class="verb">copy into the diary</button>
-              <button class="verb quiet">lose it</button>
+          <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
+          <div class="page-num m-only">2</div>
+        </section>
+      </div>
+
+      <div class="spread paged" data-section="people" hidden>
+        <div class="seam" aria-hidden="true"></div>
+
+        <section class="page left" data-mpage="1">
+          <div class="page-head"><span class="print-label">People</span></div>
+          <div class="roster">
+            <div class="entry" tabindex="0">
+              <div class="eline"><span class="ename">Reiner Voss</span><span class="emeta">mortal</span></div>
+              <div class="enote">Grave-digger's son. He knows what sleeps under the kirche, and digs anyway.</div>
+              <div class="verbs"><button class="verb">check</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
+            </div>
+            <div class="entry gone" tabindex="0">
+              <div class="eline"><span class="ename">Father Anselm</span><span class="emeta">mortal &middot; dead</span></div>
+              <div class="enote">He dug me free. He should have prayed faster.</div>
+              <div class="verbs"><button class="verb">write him back</button></div>
+            </div>
+            <div class="entry" tabindex="0">
+              <div class="eline"><span class="ename">The Cabal</span><span class="emeta">immortal &middot; enemy</span></div>
+              <div class="enote">They wear my initiation like a debt I owe. Patient as rot.</div>
+              <div class="verbs"><button class="verb">check</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
             </div>
           </div>
+          <button class="add-line">+ someone new</button>
 
-          
+          <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
+          <div class="page-num m-only">1</div>
+        </section>
 
-          <div class="slip" tabindex="0">
-            <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
-            <div class="stitle">The Long Sleep</div>
-            <ul>
-              <li>A century passed as a single held breath.</li>
-              <li class="blank">a line remains&hellip;</li>
-              <li class="blank">&nbsp;</li>
-            </ul>
-            <div class="verbs">
-              <button class="verb">write here</button>
-              <button class="verb">copy into the diary</button>
-              <button class="verb quiet">rewrite</button>
-              <button class="verb quiet">lose it</button>
+        <section class="page right" data-mpage="2">
+          <p class="hand blank-note">the rest of the page waits&hellip;</p>
+
+          <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
+          <div class="page-num m-only">2</div>
+        </section>
+      </div>
+
+      <div class="spread paged" data-section="skills" hidden>
+        <div class="seam" aria-hidden="true"></div>
+
+        <section class="page left" data-mpage="1">
+          <div class="page-head"><span class="print-label">Skills</span></div>
+          <div class="roster">
+            <div class="entry" tabindex="0">
+              <div class="eline">
+                <span class="tickbox"><svg viewBox="0 0 24 24" fill="none" stroke="#4a3826" stroke-width="2.4" stroke-linecap="round"><path d="M5 13 C8 15, 9 18, 10.5 17.5 C13 11, 17 6, 21 4"/></svg></span>
+                <span class="ename">Bloodthirsty</span><span class="emeta">checked &middot; prompt 7</span>
+              </div>
+              <div class="verbs"><button class="verb">uncheck</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
+            </div>
+            <div class="entry gone" tabindex="0">
+              <div class="eline">
+                <span class="tickbox"><svg viewBox="0 0 24 24" fill="none" stroke="#4a3826" stroke-width="2.4" stroke-linecap="round"><path d="M5 13 C8 15, 9 18, 10.5 17.5 C13 11, 17 6, 21 4"/></svg></span>
+                <span class="ename">Belly on the Ground</span><span class="emeta">spent</span>
+              </div>
+              <div class="verbs"><button class="verb">write it back</button></div>
+            </div>
+            <div class="entry" tabindex="0">
+              <div class="eline"><span class="tickbox"></span><span class="ename">Grave&#8209;Tongue</span></div>
+              <div class="verbs"><button class="verb">check</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
             </div>
           </div>
+          <button class="add-line">+ a new skill</button>
 
-          <div class="empty-slot">
-            <i class="pc tl"></i><i class="pc tr"></i><i class="pc bl"></i><i class="pc br"></i>
-            <div class="hint">an empty mount &mdash; its memory lies crumpled on the desk</div>
-          </div>
-        </div>
+          <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
+          <div class="page-num m-only">1</div>
+        </section>
 
-        <button class="page-corner m-only" data-mturn="2" aria-label="Turn the page"></button>
-        <div class="page-num m-only">1</div>
-      </section>
+        <section class="page right" data-mpage="2">
+          <p class="hand blank-note">the rest of the page waits&hellip;</p>
 
-      <div class="page-wrap" data-mpage="2">
-        <nav class="tab-rail" aria-label="Sections">
-          <button class="tab active" data-tab="people" style="--tab-c: #8a5a3a">People</button>
-          <button class="tab" data-tab="skills" style="--tab-c: #a3792f">Skills</button>
-          <button class="tab" data-tab="resources" style="--tab-c: #5f7a5a">Resources</button>
-          <button class="tab" data-tab="marks" style="--tab-c: #6d5580">Marks</button>
-        </nav>
+          <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
+          <div class="page-num m-only">2</div>
+        </section>
+      </div>
 
-        <section class="page right">
-          <div class="panel" id="panel-people">
-            <div class="page-head"><span class="print-label">People</span></div>
-            <div class="roster">
-              <div class="entry" tabindex="0">
-                <div class="eline"><span class="ename">Reiner Voss</span><span class="emeta">mortal</span></div>
-                <div class="enote">Grave-digger's son. He knows what sleeps under the kirche, and digs anyway.</div>
-                <div class="verbs"><button class="verb">check</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
-              </div>
-              <div class="entry gone" tabindex="0">
-                <div class="eline"><span class="ename">Father Anselm</span><span class="emeta">mortal &middot; dead</span></div>
-                <div class="enote">He dug me free. He should have prayed faster.</div>
-                <div class="verbs"><button class="verb">write him back</button></div>
-              </div>
-              <div class="entry" tabindex="0">
-                <div class="eline"><span class="ename">The Cabal</span><span class="emeta">immortal &middot; enemy</span></div>
-                <div class="enote">They wear my initiation like a debt I owe. Patient as rot.</div>
-                <div class="verbs"><button class="verb">check</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
-              </div>
+      <div class="spread paged" data-section="resources" hidden>
+        <div class="seam" aria-hidden="true"></div>
+
+        <section class="page left" data-mpage="1">
+          <div class="page-head"><span class="print-label">Resources</span></div>
+          <div class="roster">
+            <div class="entry" tabindex="0">
+              <div class="eline"><span class="tickbox"></span><span class="ename">The Ossuary</span><span class="emeta">stationary</span></div>
+              <div class="enote">Shelter beneath the kirche. Lost if she must flee.</div>
+              <div class="verbs"><button class="verb">check</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
             </div>
-            <button class="add-line">+ someone new</button>
-          </div>
-
-          <div class="panel" id="panel-skills" hidden>
-            <div class="page-head"><span class="print-label">Skills</span></div>
-            <div class="roster">
-              <div class="entry" tabindex="0">
-                <div class="eline">
-                  <span class="tickbox"><svg viewBox="0 0 24 24" fill="none" stroke="#4a3826" stroke-width="2.4" stroke-linecap="round"><path d="M5 13 C8 15, 9 18, 10.5 17.5 C13 11, 17 6, 21 4"/></svg></span>
-                  <span class="ename">Bloodthirsty</span><span class="emeta">checked &middot; prompt 7</span>
-                </div>
-                <div class="verbs"><button class="verb">uncheck</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
-              </div>
-              <div class="entry gone" tabindex="0">
-                <div class="eline">
-                  <span class="tickbox"><svg viewBox="0 0 24 24" fill="none" stroke="#4a3826" stroke-width="2.4" stroke-linecap="round"><path d="M5 13 C8 15, 9 18, 10.5 17.5 C13 11, 17 6, 21 4"/></svg></span>
-                  <span class="ename">Belly on the Ground</span><span class="emeta">spent</span>
-                </div>
-                <div class="verbs"><button class="verb">write it back</button></div>
-              </div>
-              <div class="entry" tabindex="0">
-                <div class="eline"><span class="tickbox"></span><span class="ename">Grave&#8209;Tongue</span></div>
-                <div class="verbs"><button class="verb">check</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
-              </div>
+            <div class="entry" tabindex="0">
+              <div class="eline"><span class="tickbox"></span><span class="ename">The Iron Box</span><span class="emeta">her diary &middot; I of IV</span></div>
+              <div class="enote">A black book under lock. What is written there is written forever.</div>
+              <div class="verbs"><button class="verb" data-open-diary>open the diary</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
             </div>
-            <button class="add-line">+ a new skill</button>
           </div>
+          <button class="add-line">+ a new resource</button>
 
-          <div class="panel" id="panel-resources" hidden>
-            <div class="page-head"><span class="print-label">Resources</span></div>
-            <div class="roster">
-              <div class="entry" tabindex="0">
-                <div class="eline"><span class="tickbox"></span><span class="ename">The Ossuary</span><span class="emeta">stationary</span></div>
-                <div class="enote">Shelter beneath the kirche. Lost if she must flee.</div>
-                <div class="verbs"><button class="verb">check</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
-              </div>
-              <div class="entry" tabindex="0">
-                <div class="eline"><span class="tickbox"></span><span class="ename">The Iron Box</span><span class="emeta">her diary &middot; I of IV</span></div>
-                <div class="enote">A black book under lock. What is written there is written forever.</div>
-                <div class="verbs"><button class="verb" data-open-diary>open the diary</button><button class="verb quiet">rewrite</button><button class="verb quiet">strike out</button></div>
-              </div>
+          <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
+          <div class="page-num m-only">1</div>
+        </section>
+
+        <section class="page right" data-mpage="2">
+          <p class="hand blank-note">the rest of the page waits&hellip;</p>
+
+          <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
+          <div class="page-num m-only">2</div>
+        </section>
+      </div>
+
+      <div class="spread paged" data-section="marks" hidden>
+        <div class="seam" aria-hidden="true"></div>
+
+        <section class="page left" data-mpage="1">
+          <div class="page-head"><span class="print-label">Marks</span></div>
+          <div class="roster">
+            <div class="entry" tabindex="0">
+              <div class="eline"><span class="ename">Eyes Like Coins</span></div>
+              <div class="enote">Flat gold in candlelight. Dogs will not look at me; children will not stop.</div>
+              <div class="verbs"><button class="verb quiet">rewrite</button><button class="verb quiet">remove</button></div>
             </div>
-            <button class="add-line">+ a new resource</button>
           </div>
+          <button class="add-line">+ a new mark</button>
 
-          <div class="panel" id="panel-marks" hidden>
-            <div class="page-head"><span class="print-label">Marks</span></div>
-            <div class="roster">
-              <div class="entry" tabindex="0">
-                <div class="eline"><span class="ename">Eyes Like Coins</span></div>
-                <div class="enote">Flat gold in candlelight. Dogs will not look at me; children will not stop.</div>
-                <div class="verbs"><button class="verb quiet">rewrite</button><button class="verb quiet">remove</button></div>
-              </div>
-            </div>
-            <button class="add-line">+ a new mark</button>
+          <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
+          <div class="page-num m-only">1</div>
+        </section>
+
+        <section class="page right" data-mpage="2">
+          <p class="hand blank-note">the rest of the page waits&hellip;</p>
+
+          <button class="page-corner m-only" data-mnext aria-label="Turn the page"></button>
+          <div class="page-num m-only">2</div>
+        </section>
+      </div>
+    </div>
+
+    <!-- diary: a different book -->
+    <div class="book diary" id="book-diary" hidden>
+      <div class="spread paged">
+        <div class="seam" aria-hidden="true"></div>
+
+        <section class="page left current" data-mpage="1">
+          <div class="ribbon" aria-hidden="true"></div>
+          <div class="page-head"><span class="print-label">The Iron Box &middot; written forever &middot; I of IV</span></div>
+          <div class="diary-entry">
+            <div class="dtitle">The Turning</div>
+            <p>I woke beneath the church floor, hands still folded as they had buried me. The priest who dug me free did not survive the dawn. I copy this here before it can leave me, as so much else has left me.</p>
+            <p class="dnote">entered folio VI &mdash; this page can hold no more experiences</p>
           </div>
+        </section>
 
+        <section class="page right" data-mpage="2">
+          <div class="page-head"><span class="print-label">&nbsp;</span></div>
+          <p class="hand" style="font-size:1.12rem; font-style: italic; color: #5a6b80; line-height: 1.8rem;">three pages remain.</p>
           <button class="page-corner m-only" data-mturn="1" aria-label="Turn back"></button>
           <div class="page-num m-only">2</div>
         </section>
       </div>
     </div>
 
-    <button class="book-swap" data-open-diary>the diary</button>
-  </div>
-
-  <!-- diary: a different book -->
-  <div class="book diary" id="book-diary" hidden>
-    <div class="spread paged">
-      <div class="seam" aria-hidden="true"></div>
-
-      <section class="page left current" data-mpage="1">
-        <div class="ribbon" aria-hidden="true"></div>
-        <div class="page-head"><span class="print-label">The Iron Box &middot; written forever &middot; I of IV</span></div>
-        <div class="diary-entry">
-          <div class="dtitle">The Turning</div>
-          <p>I woke beneath the church floor, hands still folded as they had buried me. The priest who dug me free did not survive the dawn. I copy this here before it can leave me, as so much else has left me.</p>
-          <p class="dnote">entered folio VI &mdash; this page can hold no more experiences</p>
-        </div>
-      </section>
-
-      <section class="page right" data-mpage="2">
-        <div class="page-head"><span class="print-label">&nbsp;</span></div>
-        <p class="hand" style="font-size:1.12rem; font-style: italic; color: #5a6b80; line-height: 1.8rem;">three pages remain.</p>
-        <button class="page-corner m-only" data-mturn="1" aria-label="Turn back"></button>
-        <div class="page-num m-only">2</div>
-      </section>
+    <!-- closed book prop: tap to swap books -->
+    <div class="closed-book-spot">
+      <button class="closed-book cb-diary" id="cb-diary" data-open-diary aria-label="Open the diary, the Iron Box">
+        <span class="cb-strap" aria-hidden="true"></span>
+        <span class="cb-label hand" aria-hidden="true">the Iron Box</span>
+      </button>
+      <button class="closed-book cb-notebook" id="cb-notebook" data-open-notebook aria-label="Open her notebook" hidden>
+        <span class="cb-label hand" aria-hidden="true">her notebook</span>
+      </button>
     </div>
 
-    <button class="book-swap papered" data-open-notebook>the notebook</button>
   </div>
 </div>
 
@@ -1027,28 +1210,72 @@
 </section>
 
 <script>
-  // book swapping
+  // book swapping: the closed-book prop on the desk shows whichever book is NOT open
   const nb = document.getElementById("book-notebook");
   const dy = document.getElementById("book-diary");
+  const cbDiary = document.getElementById("cb-diary");
+  const cbNotebook = document.getElementById("cb-notebook");
   const showBook = (book) => {
     nb.hidden = book !== nb;
     dy.hidden = book !== dy;
+    cbDiary.hidden = book === dy;
+    cbNotebook.hidden = book === nb;
     book.classList.remove("turn-in");
     requestAnimationFrame(() => book.classList.add("turn-in"));
   };
   document.querySelectorAll("[data-open-diary]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); showBook(dy); }));
   document.querySelectorAll("[data-open-notebook]").forEach((b) => b.addEventListener("click", (e) => { e.stopPropagation(); showBook(nb); }));
 
-  // tabs
-  const tabs = document.querySelectorAll(".tab");
+  // notebook: five section-spreads, and index tabs that migrate between the
+  // left/right fore-edge as the current spread moves past them
+  const sections = ["memories", "people", "skills", "resources", "marks"];
+  const spreads = sections.map((s) => nb.querySelector(`.spread[data-section="${s}"]`));
+  const tabs = Array.from(nb.querySelectorAll(".tab"));
+  let curSec = 0;
+  let curSide = "left";
+
+  const updateTabs = () => {
+    tabs.forEach((tab) => {
+      const i = Number(tab.dataset.i);
+      tab.classList.remove("side-left", "side-right", "active");
+      if (i === curSec) tab.classList.add("active");
+      else tab.classList.add(i < curSec ? "side-left" : "side-right");
+    });
+  };
+
+  const showSide = (spread, side) => {
+    spread.querySelectorAll("[data-mpage]").forEach((p) => p.classList.remove("current"));
+    const target = spread.querySelector(`[data-mpage="${side === "left" ? 1 : 2}"]`);
+    if (target) target.classList.add("current");
+  };
+
+  // open a section's spread with a direction-aware page-turn (CSS suppresses
+  // the animation entirely under prefers-reduced-motion)
+  const openSection = (idx, side) => {
+    if (idx !== curSec) {
+      const direction = idx > curSec ? "fwd" : "back";
+      spreads[curSec].hidden = true;
+      const next = spreads[idx];
+      next.hidden = false;
+      next.classList.remove("turn-fwd", "turn-back");
+      void next.offsetWidth;
+      next.classList.add(direction === "back" ? "turn-back" : "turn-fwd");
+      curSec = idx;
+    }
+    curSide = side;
+    showSide(spreads[curSec], curSide);
+    updateTabs();
+  };
+
   tabs.forEach((tab) => {
     tab.addEventListener("click", (e) => {
       e.stopPropagation();
-      tabs.forEach((t) => t.classList.remove("active"));
-      tab.classList.add("active");
-      document.querySelectorAll(".panel").forEach((p) => { p.hidden = p.id !== `panel-${tab.dataset.tab}`; });
+      openSection(Number(tab.dataset.i), "left");
     });
   });
+
+  updateTabs();
+  showSide(spreads[curSec], curSide);
 
   // dice
   const words = ["nought","one","two","three","four","five","six","seven","eight","nine","ten"];
@@ -1090,8 +1317,18 @@
   wad.addEventListener("click", (e) => { e.stopPropagation(); wad.hidden = true; smoothed.hidden = false; });
   document.getElementById("recrumple").addEventListener("click", (e) => { e.stopPropagation(); smoothed.hidden = true; wad.hidden = false; });
 
-  // mobile page turn
-  document.querySelectorAll("[data-mturn]").forEach((btn) => {
+  // mobile: the notebook's page-corner always turns onward — left page to
+  // right page, then on to the next section's left page, wrapping at Marks
+  nb.querySelectorAll("[data-mnext]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (curSide === "left") openSection(curSec, "right");
+      else openSection((curSec + 1) % sections.length, "left");
+    });
+  });
+
+  // mobile: the diary has no sections, just its own two pages
+  dy.querySelectorAll("[data-mturn]").forEach((btn) => {
     btn.addEventListener("click", (e) => {
       e.stopPropagation();
       const spread = btn.closest(".spread");

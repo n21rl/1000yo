@@ -396,8 +396,8 @@
      top, and .book-stage's top reliably matches the page's own top. */
   .closed-book-spot {
     position: absolute;
-    right: -0.6rem;
-    top: calc(var(--page-h) - 4.3rem);
+    right: 3.5rem;
+    top: -3rem;
   }
 
   .closed-book {
@@ -407,11 +407,11 @@
     cursor: pointer;
     display: block;
     position: relative;
-    width: 4.1rem;
-    height: 5.6rem;
-    border-radius: 0.15rem 0.3rem 0.3rem 0.15rem;
-    transform: rotate(6deg);
-    box-shadow: 0 10px 16px -9px rgba(5, 2, 0, 0.7), 0 2px 4px rgba(0, 0, 0, 0.4);
+    width: 5.4rem;
+    height: 7.4rem;
+    border-radius: 0.3rem 0.3rem 0.15rem 0.15rem;
+    transform: rotate(-4deg);
+    box-shadow: 0 12px 20px -9px rgba(5, 2, 0, 0.75), 0 2px 4px rgba(0, 0, 0, 0.4);
     transition: transform 150ms ease;
   }
 
@@ -425,7 +425,7 @@
   }
 
   .closed-book[hidden] { display: none; }
-  .closed-book:hover { transform: rotate(6deg) translateY(-2px); }
+  .closed-book:hover { transform: rotate(-4deg) translateY(-3px); }
 
   .cb-diary { background: linear-gradient(155deg, #4a2a19, #241209 65%, #170b05); border: 1px solid #1c0f07; }
 
@@ -476,7 +476,7 @@
 
   .cb-notebook .cb-label {
     position: absolute;
-    left: 0.25rem; right: 0.25rem; top: 1.85rem;
+    left: 0.25rem; right: 0.25rem; top: 0.6rem;
     text-align: center;
     font-size: 0.76rem;
     line-height: 1.1;
@@ -551,6 +551,11 @@
     z-index: 40;
   }
 
+  /* while a memory is lifted for reading, drop the whole ribbon deck behind
+     the dimming backdrop so no ribbon can paint over the focused note,
+     regardless of any stacking context the page-turn animation may pin */
+  body:has(.slip.selected) .ribbon-deck { z-index: 0; }
+
   body:has(.slip.selected) .slip-backdrop {
     background: rgba(12, 7, 2, 0.55);
     pointer-events: auto;
@@ -565,13 +570,13 @@
      the whole width of the note, smoothly feathered top and bottom. */
   .crease {
     position: absolute;
-    left: 0;
-    right: 0;
-    height: 12px;
-    margin-top: -6px;
+    left: 0.2rem;
+    right: 0.2rem;
+    height: 3px;
+    margin-top: -1.5px;
     pointer-events: none;
-    background: rgba(28, 18, 8, 0.24);
-    filter: blur(4px);
+    background: linear-gradient(to bottom, rgba(255,250,235,0.35), rgba(28,18,8,0.32) 60%);
+    filter: blur(0.7px);
   }
 
   .slip:not(.selected) .crease { display: none; }
@@ -582,14 +587,14 @@
      area, standing in for the fold beneath without drawing the fold itself. */
   .fold-edge {
     position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0.5rem;
-    height: 0.8rem;
+    left: 0.2rem;
+    right: 0.2rem;
+    bottom: 0.32rem;
+    height: 0.34rem;
     pointer-events: none;
     z-index: 2;
-    background: linear-gradient(to bottom, rgba(20, 12, 4, 0) 0%, rgba(20, 12, 4, 0.42) 100%);
-    filter: blur(1.5px);
+    background: linear-gradient(to bottom, rgba(20, 12, 4, 0) 0%, rgba(20, 12, 4, 0.3) 72%, rgba(20, 12, 4, 0.5) 100%);
+    filter: blur(0.8px);
   }
 
   .slip.selected .fold-edge { display: none; }
@@ -798,7 +803,7 @@
 
   .rbn-wrap.rbn-current .rbn {
     width: 1.35rem;
-    height: calc(var(--page-h) + 6.7rem);
+    height: calc(var(--page-h) + 4.6rem);
     opacity: 1;
     transform: none;
   }
@@ -823,19 +828,19 @@
      than a plain even fan would put it, so the current ribbon always has
      clear air on both sides regardless of which section is open. */
   .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); z-index: 0; clip-path: inset(0.9rem 0 0 0); }
-  .rbn-wrap:nth-child(1).rbn-passed { left: 2%; }
-  .rbn-wrap:nth-child(2).rbn-passed { left: 14%; }
-  .rbn-wrap:nth-child(3).rbn-passed { left: 26%; }
-  .rbn-wrap:nth-child(4).rbn-passed { left: 38%; }
+  .rbn-wrap:nth-child(1).rbn-passed { left: 1%; }
+  .rbn-wrap:nth-child(2).rbn-passed { left: 15%; }
+  .rbn-wrap:nth-child(3).rbn-passed { left: 29%; }
+  .rbn-wrap:nth-child(4).rbn-passed { left: 43%; }
 
   /* upcoming: dangling below the book, emerging from under the right page,
      in section order (kept clear of the closed-book prop pinned at the
      bottom-right corner); same under-page clip as passed, above */
   .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); z-index: 0; clip-path: inset(0.9rem 0 0 0); }
-  .rbn-wrap:nth-child(2).rbn-upcoming { left: 62%; }
-  .rbn-wrap:nth-child(3).rbn-upcoming { left: 72%; }
+  .rbn-wrap:nth-child(2).rbn-upcoming { left: 56%; }
+  .rbn-wrap:nth-child(3).rbn-upcoming { left: 69%; }
   .rbn-wrap:nth-child(4).rbn-upcoming { left: 82%; }
-  .rbn-wrap:nth-child(5).rbn-upcoming { left: 92%; }
+  .rbn-wrap:nth-child(5).rbn-upcoming { left: 94%; }
 
   .rbn-wrap.rbn-passed .rbn,
   .rbn-wrap.rbn-upcoming .rbn {
@@ -1145,7 +1150,7 @@
 
     .rbn-wrap.rbn-current .rbn {
       width: 1.25rem;
-      height: calc(var(--page-h) + 5.2rem);
+      height: calc(var(--page-h) + 3.4rem);
     }
 
     .rbn-wrap.rbn-current .rbn:hover { transform: translateY(2px); }
@@ -1160,31 +1165,27 @@
        unrotated desktop ribbon hiding under the page above it, but here
        the ribbon itself rotates around its own top-left corner, so the
        same fixed inset can instead slice across the rotated label. */
-    .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); z-index: 0; clip-path: none; }
-    .rbn-wrap:nth-child(1).rbn-passed { left: -1.3rem; }
-    .rbn-wrap:nth-child(2).rbn-passed { left: -2.5rem; }
-    .rbn-wrap:nth-child(3).rbn-passed { left: -3.7rem; }
-    .rbn-wrap:nth-child(4).rbn-passed { left: -4.9rem; }
-
-    /* rotation is reversed from the original assignment: with a top-left
-       pivot, a clockwise (positive) rotation swings the labeled end LEFT
-       (away from the gutter) and a counter-clockwise (negative) one
-       swings it RIGHT (toward center) — so the ribbon nearest the gutter
-       (nth1) needs a clockwise swing to clear the current ribbon's tail,
-       and the ribbon nearest the true viewport edge (nth4) needs a
-       counter-clockwise swing to stay on-screen. */
-    .rbn-wrap.rbn-passed .rbn { transform-origin: top left; }
-    .rbn-wrap:nth-child(1).rbn-passed .rbn { transform: rotate(16deg); }
-    .rbn-wrap:nth-child(2).rbn-passed .rbn { transform: rotate(7deg); }
-    .rbn-wrap:nth-child(3).rbn-passed .rbn { transform: rotate(-4deg); }
-    .rbn-wrap:nth-child(4).rbn-passed .rbn { transform: rotate(-14deg); }
-
-    /* upcoming: spaced out below the page's bottom edge, in order */
-    .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); z-index: 0; }
-    .rbn-wrap:nth-child(2).rbn-upcoming { left: 6%; }
-    .rbn-wrap:nth-child(3).rbn-upcoming { left: 28%; }
-    .rbn-wrap:nth-child(4).rbn-upcoming { left: 50%; }
-    .rbn-wrap:nth-child(5).rbn-upcoming { left: 72%; }
+    /* mobile can't do desktop's two-sided split (only one page edge is on
+       screen — the spine is the left viewport edge). So every non-current
+       ribbon hangs below the page in a FIXED horizontal slot keyed to its
+       section index, and only the current section's ribbon lifts up to run
+       down the spine (leaving its own slot empty). Because sections are in
+       order, passed ribbons naturally settle into the left slots and
+       upcoming into the right ones, evenly spaced with room to breathe —
+       no crammed fan, nothing off-screen. Passed and upcoming therefore
+       share the same per-section slots. */
+    .rbn-wrap.rbn-passed,
+    .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); z-index: 0; clip-path: inset(0.9rem 0 0 0); }
+    .rbn-wrap:nth-child(1).rbn-passed,
+    .rbn-wrap:nth-child(1).rbn-upcoming { left: 8%; }
+    .rbn-wrap:nth-child(2).rbn-passed,
+    .rbn-wrap:nth-child(2).rbn-upcoming { left: 29%; }
+    .rbn-wrap:nth-child(3).rbn-passed,
+    .rbn-wrap:nth-child(3).rbn-upcoming { left: 50%; }
+    .rbn-wrap:nth-child(4).rbn-passed,
+    .rbn-wrap:nth-child(4).rbn-upcoming { left: 71%; }
+    .rbn-wrap:nth-child(5).rbn-passed,
+    .rbn-wrap:nth-child(5).rbn-upcoming { left: 89%; }
 
     .rbn-wrap.rbn-passed .rbn {
       height: calc(var(--rbn-tail, 4rem) * 0.62);
@@ -1217,10 +1218,10 @@
 
     /* stays tucked under the page's lower-right corner on mobile too, just
        sized down a touch further for the narrower page */
-    .closed-book-spot { right: -0.5rem; top: calc(var(--page-h) - 3.7rem); }
-    .closed-book { width: 3.5rem; height: 4.8rem; }
+    .closed-book-spot { right: 0.6rem; top: -2.5rem; }
+    .closed-book { width: 4.3rem; height: 5.9rem; }
     .cb-diary .cb-label { font-size: 0.66rem; top: 0.5rem; }
-    .cb-notebook .cb-label { font-size: 0.68rem; top: 1.55rem; }
+    .cb-notebook .cb-label { font-size: 0.68rem; top: 0.5rem; }
 
     .diary .page { padding-left: 2.9rem; }
   }

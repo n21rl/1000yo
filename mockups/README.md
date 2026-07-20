@@ -43,16 +43,27 @@ materials:
 - Memory slips sit in **fixed-size photo-corner mounts**: overflowing text
   folds under a visible crease; clicking lifts the slip to center, fully
   unfolded (crease marks remain), for reading and editing.
-- The **diary is a closed book lying on the desk** (was: a hanging
-  bookmark); clicking it swaps books, and the notebook lies closed in its
-  place while the diary is open.
-- Wood is scaled to table-sized planks; dice cast a static contact shadow
+- The **diary is a smaller closed book half-tucked under the open
+  notebook's lower-right corner** (was: lying beside it in full view) — only
+  a corner peeks out, enough to read a hint of the cover and tap it;
+  clicking swaps books, and the notebook peeks from the same spot while the
+  diary is open.
+- The **dice sit tossed on the prompt parchment itself** (was: a separate
+  desk-props column), overlapping its right portion with their contact
+  shadows falling on the paper; rolling still tumbles the dice, but the
+  rolled faces are now the only feedback (the "seven less three…" roll-note
+  line was removed — a 3D dice library will replace these later).
+- Wood is a single continuous slab (procedurally generated, see asset
+  notes) rather than table-sized planks; dice cast a static contact shadow
   (only the die tumbles on a roll) and rest at slight angles; the crumpled
-  wads share one contact shadow and stack as a heap; the drawn inkpot prop
+  wads share one contact shadow, tuned to actually touch the sprites' real
+  (alpha-measured) bottom edge, and stack as a heap; the drawn inkpot prop
   was removed (see asset notes).
-- Mobile: a sliver of the facing page shows left of the stitching, and the
-  tabs become compact fixed-slot tabs on the page's right edge (passed
-  sections dim and press in).
+- Mobile: the book sits flush against the left viewport edge — a strip of
+  the facing page (cut off by the screen) shows left of the stitching, the
+  current ribbon runs down the gutter, passed ribbons hang from the strip's
+  bottom, and sections whose right page is filler-only render as a single
+  page.
 
 ## Earlier explorations (superseded)
 
@@ -64,10 +75,16 @@ materials:
 
 - `gen_assets.py` regenerates the procedural textures embedded in `desk.html`
   (paper grain, crumpled wads via Voronoi facet shading, crease overlays) and
-  the tinted wood. It expects `assets/hardwood.jpg` next to it; the mockup's
-  wood photo comes from the three.js repository
+  the tinted wood. It expects `assets/hardwood.jpg` next to it; that wood
+  photo comes from the three.js repository
   (`examples/textures/hardwood2_diffuse.jpg`) — confirm its license or swap
   in a verified-CC0 texture before production use.
+- `desk2.html`'s wood is a **generated** texture instead (numpy + PIL:
+  anisotropic horizontal grain via a domain-warped sine field, low-frequency
+  luminance blotches, one faint knot, JPEG q55, ~18KB) — it replaces an
+  earlier three.js-sourced photo and sidesteps that photo's license caveat
+  entirely. Regenerate with the noise script kept alongside this file if the
+  palette (`--wood-2` etc.) ever changes.
 - The handwriting face is Caveat (SIL Open Font License), subsetted to
   latin and embedded as a data URI.
 - `desk2.html` (realism pass): the decorative inkpot+quill `.prop` SVG was

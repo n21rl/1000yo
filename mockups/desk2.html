@@ -592,15 +592,18 @@
      once the slip is lifted and fully unfolded, standing in for the memory
      of each former fold: one soft, blurry, low-opacity dark band across
      the whole width of the note, smoothly feathered top and bottom. */
+  /* expanded: the crease from a former fold — a thin line spanning the full
+     width of the sheet at each old fold boundary. */
   .crease {
     position: absolute;
     left: 0;
     right: 0;
-    height: 2px;
-    margin-top: -1px;
+    height: 5px;
+    margin-top: -2.5px;
     pointer-events: none;
-    background: linear-gradient(to bottom, rgba(255,250,235,0.4), rgba(28,18,8,0.38) 60%);
-    filter: blur(0.5px);
+    background: linear-gradient(to bottom, rgba(255,250,235,0.5) 0%, rgba(28,18,8,0.2) 45%, rgba(28,18,8,0.4) 100%);
+    box-shadow: 0 1px 2px -1px rgba(20,12,4,0.3);
+    filter: blur(0.4px);
   }
 
   .slip:not(.selected) .crease { display: none; }
@@ -615,14 +618,13 @@
      regardless of the text's own margins. */
   .fold-edge {
     position: absolute;
-    left: 0;
-    right: 0;
+    left: 0.7rem;
+    right: 0.7rem;
     bottom: 0;
-    height: 3px;
+    height: 5px;
     pointer-events: none;
     z-index: 2;
-    background: linear-gradient(to bottom, rgba(255,250,235,0.32), rgba(20, 12, 4, 0.46) 85%);
-    box-shadow: 0 2px 3px -1px rgba(20, 12, 4, 0.4);
+    background: linear-gradient(to bottom, rgba(255,250,235,0.3), rgba(20, 12, 4, 0.5) 90%);
     filter: blur(0.4px);
   }
 
@@ -856,23 +858,27 @@
      gutter) is pushed a bit further from the 50% current-ribbon anchor
      than a plain even fan would put it, so the current ribbon always has
      clear air on both sides regardless of which section is open. */
-  .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); z-index: 0; clip-path: inset(0.9rem 0 0 0); }
-  .rbn-wrap:nth-child(1).rbn-passed { left: 1%; }
-  .rbn-wrap:nth-child(2).rbn-passed { left: 15%; }
-  .rbn-wrap:nth-child(3).rbn-passed { left: 29%; }
-  .rbn-wrap:nth-child(4).rbn-passed { left: 43%; }
+  /* non-current ribbons gather in a tight overlapping STACK right at the
+     gutter — passed just left of the current ribbon, upcoming just right —
+     each offset ~1.2rem and layered (nearest the gutter on top), their
+     tails staggered lengths (--rbn-tail) so every label reads at its own
+     depth. Same width as the current ribbon; the current one stands apart
+     by running the full page height and dangling lowest. */
+  .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); clip-path: inset(0.9rem 0 0 0); }
+  .rbn-wrap:nth-child(1).rbn-passed { left: calc(50% - 1.7rem);  z-index: 5; }
+  .rbn-wrap:nth-child(2).rbn-passed { left: calc(50% - 2.9rem);  z-index: 4; }
+  .rbn-wrap:nth-child(3).rbn-passed { left: calc(50% - 4.1rem);  z-index: 3; }
+  .rbn-wrap:nth-child(4).rbn-passed { left: calc(50% - 5.3rem);  z-index: 2; }
 
-  /* upcoming: dangling below the book, emerging from under the right page,
-     in section order (kept clear of the closed-book prop pinned at the
-     bottom-right corner); same under-page clip as passed, above */
-  .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); z-index: 0; clip-path: inset(0.9rem 0 0 0); }
-  .rbn-wrap:nth-child(2).rbn-upcoming { left: 56%; }
-  .rbn-wrap:nth-child(3).rbn-upcoming { left: 69%; }
-  .rbn-wrap:nth-child(4).rbn-upcoming { left: 82%; }
-  .rbn-wrap:nth-child(5).rbn-upcoming { left: 94%; }
+  .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); clip-path: inset(0.9rem 0 0 0); }
+  .rbn-wrap:nth-child(2).rbn-upcoming { left: calc(50% + 1.7rem); z-index: 5; }
+  .rbn-wrap:nth-child(3).rbn-upcoming { left: calc(50% + 2.9rem); z-index: 4; }
+  .rbn-wrap:nth-child(4).rbn-upcoming { left: calc(50% + 4.1rem); z-index: 3; }
+  .rbn-wrap:nth-child(5).rbn-upcoming { left: calc(50% + 5.3rem); z-index: 2; }
 
   .rbn-wrap.rbn-passed .rbn,
   .rbn-wrap.rbn-upcoming .rbn {
+    width: 1.35rem;
     height: var(--rbn-tail, 4rem);
     min-height: 3.6rem;
     padding: 0.2rem 0 0.85rem;
@@ -1082,7 +1088,7 @@
        content — meaning it would go a different pixel width per section
        depending on how wide that section's own text happens to be. Fixed
        viewport math keeps every section (and the diary) pixel-identical. */
-    :root { --page-w: calc(100vw - 8.5rem); --page-h: min(78vh, 41rem); }
+    :root { --page-w: calc(100vw - 5.9rem); --page-h: min(78vh, 41rem); }
 
     /* the wood slab photo (5th background layer) is sized by vw so it
        scales with viewport width; at a narrow viewport, 220vw's height
@@ -1139,12 +1145,12 @@
 
     .book-zone::before {
       content: "";
-      flex: 0 0 8rem;
+      flex: 0 0 5.4rem;
       align-self: flex-start;
       height: var(--page-h);
-      background-image: var(--stitch), linear-gradient(to right, #dcc79a 0 6.4rem, #cbb488 6.4rem 7.65rem, #a4895a 7.65rem 8rem);
+      background-image: var(--stitch), linear-gradient(to right, #dcc79a 0 4rem, #cbb488 4rem 5.05rem, #a4895a 5.05rem 5.4rem);
       background-repeat: repeat-y, no-repeat;
-      background-position: 7.7rem 0, 0 0;
+      background-position: 5.1rem 0, 0 0;
       background-size: 10px auto, auto auto;
       box-shadow: inset -2px 0 5px rgba(20, 10, 2, 0.3);
       position: relative;
@@ -1208,32 +1214,29 @@
        place for a bookmark of a page you've already turned past. They can
        bunch a little like real cloth ribbons, but their tails are staggered
        lengths (--rbn-tail) so each label reads at a different depth. */
-    .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); z-index: 0; clip-path: inset(0.9rem 0 0 0); }
-    .rbn-wrap:nth-child(1).rbn-passed { left: -0.7rem; }
-    .rbn-wrap:nth-child(2).rbn-passed { left: -2.7rem; }
-    .rbn-wrap:nth-child(3).rbn-passed { left: -4.7rem; }
-    .rbn-wrap:nth-child(4).rbn-passed { left: -6.7rem; }
+    /* same tight overlapping stack as desktop: passed bunch just left of the
+       spine (into the strip), upcoming just right (onto the page), layered
+       nearest-gutter-on-top with staggered tail lengths. */
+    .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); clip-path: inset(0.9rem 0 0 0); }
+    .rbn-wrap:nth-child(1).rbn-passed { left: -1.4rem; z-index: 5; }
+    .rbn-wrap:nth-child(2).rbn-passed { left: -2.5rem; z-index: 4; }
+    .rbn-wrap:nth-child(3).rbn-passed { left: -3.6rem; z-index: 3; }
+    .rbn-wrap:nth-child(4).rbn-passed { left: -4.7rem; z-index: 2; }
 
-    /* upcoming sections hang below the current page (ahead of the spine),
-       in fixed slots across its width */
-    .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); z-index: 0; clip-path: inset(0.9rem 0 0 0); }
-    .rbn-wrap:nth-child(2).rbn-upcoming { left: 10%; }
-    .rbn-wrap:nth-child(3).rbn-upcoming { left: 33%; }
-    .rbn-wrap:nth-child(4).rbn-upcoming { left: 56%; }
-    .rbn-wrap:nth-child(5).rbn-upcoming { left: 79%; }
+    .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); clip-path: inset(0.9rem 0 0 0); }
+    .rbn-wrap:nth-child(2).rbn-upcoming { left: 1.6rem; z-index: 5; }
+    .rbn-wrap:nth-child(3).rbn-upcoming { left: 2.7rem; z-index: 4; }
+    .rbn-wrap:nth-child(4).rbn-upcoming { left: 3.8rem; z-index: 3; }
+    .rbn-wrap:nth-child(5).rbn-upcoming { left: 4.9rem; z-index: 2; }
 
-    .rbn-wrap.rbn-passed .rbn {
-      height: calc(var(--rbn-tail, 4rem) * 0.62);
-      width: calc(var(--rbn-w, 1.2rem) * 0.85);
+    .rbn-wrap.rbn-passed .rbn,
+    .rbn-wrap.rbn-upcoming .rbn {
+      height: calc(var(--rbn-tail, 4rem) * 0.66);
+      width: 1.25rem;
     }
 
     .rbn-wrap.rbn-passed .rbn-label {
       font-size: 0.68rem;
-    }
-
-    .rbn-wrap.rbn-upcoming .rbn {
-      height: calc(var(--rbn-tail, 4rem) * 0.62);
-      width: calc(var(--rbn-w, 1.2rem) * 0.9);
     }
 
     .rbn-wrap.rbn-upcoming .rbn-label {

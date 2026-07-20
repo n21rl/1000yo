@@ -277,8 +277,9 @@
     display: grid;
     justify-items: center;
     /* reserves room below the page for the notebook's current-section
-       ribbon, which hangs well past the page's bottom edge */
-    padding-bottom: 7.2rem;
+       ribbon and the longest hanging (passed/upcoming) tail, both of which
+       hang well past the page's bottom edge */
+    padding-bottom: 8rem;
   }
 
   .book { position: relative; }
@@ -327,6 +328,12 @@
 
   .page.left  { border-radius: 0.55rem 0 0 0.55rem; }
   .page.right { border-radius: 0 0.55rem 0.55rem 0; }
+
+  /* the current-section ribbon hugs the right side of the stitched seam,
+     lying across the right page's inner (gutter-side) margin — give that
+     margin extra padding so body text clears the ribbon instead of running
+     under it */
+  #book-notebook .page.right { padding-left: 2.2rem; }
 
   .page.left::after, .page.right::before {
     content: "";
@@ -719,12 +726,16 @@
     top: 100%;
   }
 
-  .rbn-wrap:nth-child(1) { --rbn-w: 1.15rem; --rbn-rot: -2deg;   --rbn-tail: 5rem; }
-  .rbn-wrap:nth-child(2) { --rbn-w: 1.2rem;  --rbn-rot: 3deg;    --rbn-tail: 3.6rem; }
-  .rbn-wrap:nth-child(3) { --rbn-w: 1.3rem;  --rbn-rot: -3deg;   --rbn-tail: 4.3rem; }
-  .rbn-wrap:nth-child(4) { --rbn-w: 1.25rem; --rbn-rot: 2deg;    --rbn-tail: 5.8rem; }
-  .rbn-wrap:nth-child(5) { --rbn-w: 1.15rem; --rbn-rot: -1.5deg; --rbn-tail: 3.4rem; }
+  .rbn-wrap:nth-child(1) { --rbn-w: 1.15rem; --rbn-rot: -2deg;   --rbn-tail: 6.2rem; }
+  .rbn-wrap:nth-child(2) { --rbn-w: 1.2rem;  --rbn-rot: 3deg;    --rbn-tail: 5rem; }
+  .rbn-wrap:nth-child(3) { --rbn-w: 1.3rem;  --rbn-rot: -3deg;   --rbn-tail: 7rem; }
+  .rbn-wrap:nth-child(4) { --rbn-w: 1.25rem; --rbn-rot: 2deg;    --rbn-tail: 8rem; }
+  .rbn-wrap:nth-child(5) { --rbn-w: 1.15rem; --rbn-rot: -1.5deg; --rbn-tail: 4.6rem; }
 
+  /* the fabric + notch clip-path live on ::before, not on .rbn itself, so
+     .rbn's own hit-testing box stays a plain unclipped rectangle — the
+     clip-path shape would otherwise clip pointer events too, defeating the
+     enlarged ::after hit area below */
   .rbn {
     position: relative;
     display: flex;
@@ -736,14 +747,33 @@
     cursor: pointer;
     pointer-events: auto;
     width: var(--rbn-w, 1.2rem);
-    background: linear-gradient(180deg, var(--rc1), var(--rc2) 55%, var(--rc3));
-    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 0.85rem), 50% 100%, 0 calc(100% - 0.85rem));
-    box-shadow: 0 4px 8px -3px rgba(10, 5, 0, 0.5);
+    background: none;
     opacity: 0.92;
     transition: transform 140ms ease, opacity 140ms ease, height 140ms ease;
   }
 
+  .rbn::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, var(--rc1), var(--rc2) 55%, var(--rc3));
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 0.85rem), 50% 100%, 0 calc(100% - 0.85rem));
+    box-shadow: 0 4px 8px -3px rgba(10, 5, 0, 0.5);
+    pointer-events: none;
+  }
+
+  /* invisible enlarged touch/click target: expands past the visible ribbon
+     on every side without changing its painted shape */
+  .rbn::after {
+    content: "";
+    position: absolute;
+    inset: -6px -8px;
+    pointer-events: auto;
+  }
+
   .rbn-label {
+    position: relative;
+    z-index: 1;
     writing-mode: vertical-rl;
     text-orientation: mixed;
     font-family: var(--hand);
@@ -757,13 +787,16 @@
 
   .rbn:hover { opacity: 1; transform: translateY(1px); }
 
-  /* current: anchored at the top of the spine, lying the full page height
-     down the gutter, tail hanging out lower than every other ribbon */
-  .rbn-wrap.rbn-current { top: 0; left: calc(50% - 7px); transform: translateX(-100%); z-index: 2; }
+  /* current: anchored at the top of the spine (a couple px into the page's
+     top-edge shading so it reads as wrapping over the spine head, not
+     starting mid-air), lying the full page height down the gutter, tail
+     hanging out lower than every other ribbon. Hugs the RIGHT side of the
+     stitched seam, over the current page's inner edge. */
+  .rbn-wrap.rbn-current { top: -0.2rem; left: calc(50% + 6px); transform: none; z-index: 2; }
 
   .rbn-wrap.rbn-current .rbn {
     width: 1.35rem;
-    height: calc(var(--page-h) + 6.5rem);
+    height: calc(var(--page-h) + 6.7rem);
     opacity: 1;
     transform: none;
   }
@@ -775,26 +808,34 @@
     font-weight: 600;
   }
 
-  /* passed: dangling below the book, emerging from under the left page,
-     in section order */
-  .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); z-index: 0; }
-  .rbn-wrap:nth-child(1).rbn-passed { left: 10%; }
-  .rbn-wrap:nth-child(2).rbn-passed { left: 20%; }
-  .rbn-wrap:nth-child(3).rbn-passed { left: 30%; }
-  .rbn-wrap:nth-child(4).rbn-passed { left: 40%; }
+  /* passed: dangling below the book, emerging from under the left page, in
+     section order. The wrap (not the .rbn button) is clipped 0.9rem down
+     from its own top — exactly the span that overlaps the page above — so
+     the fabric is genuinely erased there and the page's own paint (already
+     laid down first, lower in the stacking order) is what shows, rather
+     than the ribbon painting over it. This is a clip, not a z-index bet, so
+     it holds regardless of which stacking context .ribbon-deck ends up in
+     (including mid page-turn-animation, which pins its own contexts). */
+  .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); z-index: 0; clip-path: inset(0.9rem 0 0 0); }
+  .rbn-wrap:nth-child(1).rbn-passed { left: 4%; }
+  .rbn-wrap:nth-child(2).rbn-passed { left: 18%; }
+  .rbn-wrap:nth-child(3).rbn-passed { left: 32%; }
+  .rbn-wrap:nth-child(4).rbn-passed { left: 46%; }
 
   /* upcoming: dangling below the book, emerging from under the right page,
      in section order (kept clear of the closed-book prop pinned at the
-     bottom-right corner) */
-  .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); z-index: 0; }
-  .rbn-wrap:nth-child(2).rbn-upcoming { left: 55%; }
-  .rbn-wrap:nth-child(3).rbn-upcoming { left: 65%; }
-  .rbn-wrap:nth-child(4).rbn-upcoming { left: 75%; }
-  .rbn-wrap:nth-child(5).rbn-upcoming { left: 85%; }
+     bottom-right corner); same under-page clip as passed, above */
+  .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); z-index: 0; clip-path: inset(0.9rem 0 0 0); }
+  .rbn-wrap:nth-child(2).rbn-upcoming { left: 56%; }
+  .rbn-wrap:nth-child(3).rbn-upcoming { left: 68%; }
+  .rbn-wrap:nth-child(4).rbn-upcoming { left: 78%; }
+  .rbn-wrap:nth-child(5).rbn-upcoming { left: 88%; }
 
   .rbn-wrap.rbn-passed .rbn,
   .rbn-wrap.rbn-upcoming .rbn {
     height: var(--rbn-tail, 4rem);
+    min-height: 3.6rem;
+    padding: 0.2rem 0 0.85rem;
     transform: rotate(var(--rbn-rot, 0deg));
   }
 
@@ -1023,6 +1064,11 @@
 
     .page.left, .page.right { border-radius: 0 0.55rem 0.55rem 0; }
 
+    /* the current-section ribbon hugs the right side of the stitch line
+       here too, lying across the page's own inner (left) margin — give it
+       room to clear the ribbon rather than running text under it */
+    #book-notebook .page.left, #book-notebook .page.right { padding-left: 1.85rem; }
+
     .page.left::after, .page.right::before {
       left: 0; right: auto;
       width: 1.3rem;
@@ -1048,7 +1094,7 @@
       flex: 0 0 5rem;
       align-self: flex-start;
       height: var(--page-h);
-      background-image: var(--stitch), linear-gradient(to right, #dcc79a 0 4.65rem, #cbb488 4.65rem 4.8rem, transparent 4.8rem);
+      background-image: var(--stitch), linear-gradient(to right, #dcc79a 0 3.6rem, #cbb488 3.6rem 4.65rem, #a4895a 4.65rem 5rem);
       background-repeat: repeat-y, no-repeat;
       background-position: 4.7rem 0, 0 0;
       background-size: 10px auto, auto auto;
@@ -1069,23 +1115,23 @@
     /* mobile: only one page-stack is visible, and its spine/gutter sits at
        the left edge, now widened into a visible facing-page strip (see
        .book-zone::before). The current section's ribbon runs down that
-       gutter hugging the LEFT side of the stitch line (never over it),
-       its tail dangling below the page's bottom edge lower than any
-       other. Passed ribbons hang from the bottom of that same strip,
-       fanned out but kept entirely left of the stitch; upcoming ribbons
-       hang below the page's bottom edge in order, spaced out across the
-       page. */
+       gutter hugging the RIGHT side of the stitch line, over the current
+       page's inner edge, its tail dangling below the page's bottom edge
+       lower than any other. Passed ribbons hang from the bottom of that
+       same strip, fanned out but kept entirely left of the stitch; upcoming
+       ribbons hang below the page's bottom edge in order, spaced out
+       across the page. */
 
     .rbn-wrap.rbn-current {
-      top: 0;
-      left: -1.6rem;
+      top: -0.2rem;
+      left: 0;
       transform: none;
       z-index: 2;
     }
 
     .rbn-wrap.rbn-current .rbn {
       width: 1.25rem;
-      height: calc(var(--page-h) + 5rem);
+      height: calc(var(--page-h) + 5.2rem);
     }
 
     .rbn-wrap.rbn-current .rbn:hover { transform: translateY(2px); }
@@ -1096,10 +1142,10 @@
        staggered side by side with minimal overlap, entirely left of the
        stitch line (never crossing onto the current page) */
     .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); z-index: 0; }
-    .rbn-wrap:nth-child(1).rbn-passed { left: -3.0rem; }
-    .rbn-wrap:nth-child(2).rbn-passed { left: -3.8rem; }
-    .rbn-wrap:nth-child(3).rbn-passed { left: -4.6rem; }
-    .rbn-wrap:nth-child(4).rbn-passed { left: -5.35rem; }
+    .rbn-wrap:nth-child(1).rbn-passed { left: -2.6rem; }
+    .rbn-wrap:nth-child(2).rbn-passed { left: -3.7rem; }
+    .rbn-wrap:nth-child(3).rbn-passed { left: -4.8rem; }
+    .rbn-wrap:nth-child(4).rbn-passed { left: -5.9rem; }
 
     .rbn-wrap.rbn-passed .rbn { transform-origin: top left; }
     .rbn-wrap:nth-child(1).rbn-passed .rbn { transform: rotate(-14deg); }
@@ -1109,10 +1155,10 @@
 
     /* upcoming: spaced out below the page's bottom edge, in order */
     .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); z-index: 0; }
-    .rbn-wrap:nth-child(2).rbn-upcoming { left: 10%; }
+    .rbn-wrap:nth-child(2).rbn-upcoming { left: 6%; }
     .rbn-wrap:nth-child(3).rbn-upcoming { left: 28%; }
-    .rbn-wrap:nth-child(4).rbn-upcoming { left: 46%; }
-    .rbn-wrap:nth-child(5).rbn-upcoming { left: 64%; }
+    .rbn-wrap:nth-child(4).rbn-upcoming { left: 50%; }
+    .rbn-wrap:nth-child(5).rbn-upcoming { left: 72%; }
 
     .rbn-wrap.rbn-passed .rbn {
       height: calc(var(--rbn-tail, 4rem) * 0.62);

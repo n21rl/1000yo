@@ -121,14 +121,17 @@
 
   /* ---------- the table top: prompt, dice, props ---------- */
 
-  .desk-top {
-    width: min(100%, 72rem);
-    display: grid;
-    justify-items: start;
-  }
+  /* ---------- the prompt ----------
+     DESKTOP: a loose parchment sheet at the top of the desk, dice tossed on
+     it, always visible (the original placement). MOBILE ONLY: the sheet is
+     instead filed in the gutter — a tab pokes out of the spine (.prompt-tab),
+     and pulling it reveals this same card centred and oriented the right way.
+     The tab and backdrop are desktop-hidden; the card is a static top sheet
+     on desktop and a fixed pull-overlay on mobile. */
 
-  .parchment {
+  .prompt-card {
     position: relative;
+    justify-self: start;
     max-width: 42rem;
     background:
       var(--grain),
@@ -139,12 +142,28 @@
     clip-path: polygon(0.6% 1.8%, 12% 0.4%, 30% 1.4%, 52% 0.2%, 74% 1.6%, 92% 0.6%, 99.4% 2.4%, 99% 22%, 99.8% 45%, 99% 71%, 99.6% 92%, 98.6% 99%, 80% 98.4%, 57% 99.6%, 33% 98.6%, 12% 99.4%, 0.8% 98.2%, 1.2% 76%, 0.2% 52%, 1% 27%);
   }
 
-  .parchment .prompt-text {
+  .prompt-card .prompt-text {
     font-family: var(--hand);
     font-size: 1.55rem;
     font-weight: 500;
     line-height: 1.42;
     margin: 0.5rem 8.5rem 0 0; /* keep the writing clear of the tossed dice */
+  }
+
+  /* desktop: the gutter tab and dim backdrop don't exist */
+  .prompt-tab, .prompt-backdrop { display: none; }
+
+  .prompt-tab .pt-label {
+    font-family: var(--print);
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--rubric);
+  }
+
+  @keyframes prompt-pull {
+    from { transform: translate(-50%, -50%) rotate(-86deg) scale(0.55); opacity: 0; }
+    to   { transform: translate(-50%, -50%) rotate(0deg) scale(1); opacity: 1; }
   }
 
   .fresh-slip {
@@ -276,6 +295,9 @@
     width: min(100%, 72rem);
     display: grid;
     justify-items: center;
+    /* a little desk above the book for the diary peeking from beneath its
+       top edge (mobile widens this for the gutter prompt tab too) */
+    margin-top: 1.4rem;
     /* reserves room below the page for the notebook's current-section
        ribbon and the longest hanging (passed/upcoming) tail, both of which
        hang well past the page's bottom edge */
@@ -858,23 +880,20 @@
      gutter) is pushed a bit further from the 50% current-ribbon anchor
      than a plain even fan would put it, so the current ribbon always has
      clear air on both sides regardless of which section is open. */
-  /* non-current ribbons gather in a tight overlapping STACK right at the
-     gutter — passed just left of the current ribbon, upcoming just right —
-     each offset ~1.2rem and layered (nearest the gutter on top), their
-     tails staggered lengths (--rbn-tail) so every label reads at its own
-     depth. Same width as the current ribbon; the current one stands apart
-     by running the full page height and dangling lowest. */
+  /* DESKTOP: there's room, so spread the ribbons out — passed evenly across
+     the left page's bottom edge, upcoming across the right's. (Only the
+     cramped mobile strip stacks them; see the media query.) */
   .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); clip-path: inset(0.9rem 0 0 0); }
-  .rbn-wrap:nth-child(1).rbn-passed { left: calc(50% - 1.7rem);  z-index: 5; }
-  .rbn-wrap:nth-child(2).rbn-passed { left: calc(50% - 2.9rem);  z-index: 4; }
-  .rbn-wrap:nth-child(3).rbn-passed { left: calc(50% - 4.1rem);  z-index: 3; }
-  .rbn-wrap:nth-child(4).rbn-passed { left: calc(50% - 5.3rem);  z-index: 2; }
+  .rbn-wrap:nth-child(1).rbn-passed { left: 4%; }
+  .rbn-wrap:nth-child(2).rbn-passed { left: 18%; }
+  .rbn-wrap:nth-child(3).rbn-passed { left: 32%; }
+  .rbn-wrap:nth-child(4).rbn-passed { left: 46%; }
 
   .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); clip-path: inset(0.9rem 0 0 0); }
-  .rbn-wrap:nth-child(2).rbn-upcoming { left: calc(50% + 1.7rem); z-index: 5; }
-  .rbn-wrap:nth-child(3).rbn-upcoming { left: calc(50% + 2.9rem); z-index: 4; }
-  .rbn-wrap:nth-child(4).rbn-upcoming { left: calc(50% + 4.1rem); z-index: 3; }
-  .rbn-wrap:nth-child(5).rbn-upcoming { left: calc(50% + 5.3rem); z-index: 2; }
+  .rbn-wrap:nth-child(2).rbn-upcoming { left: 54%; }
+  .rbn-wrap:nth-child(3).rbn-upcoming { left: 68%; }
+  .rbn-wrap:nth-child(4).rbn-upcoming { left: 82%; }
+  .rbn-wrap:nth-child(5).rbn-upcoming { left: 96%; }
 
   .rbn-wrap.rbn-passed .rbn,
   .rbn-wrap.rbn-upcoming .rbn {
@@ -895,6 +914,25 @@
   .rbn-skills   { --rc1: #c79a4a; --rc2: #a3792f; --rc3: #7d5a1f; }
   .rbn-resources{ --rc1: #82a17c; --rc2: #5f7a5a; --rc3: #445c41; }
   .rbn-marks    { --rc1: #9077a8; --rc2: #6d5580; --rc3: #4f3d5e; }
+
+  /* a small section icon below the name on EVERY ribbon (desktop + mobile) —
+     a distinct CSS-drawn shape per section so a stacked ribbon is still
+     identifiable from just the sliver of tail that pokes out. Drawn, not a
+     glyph, so it never depends on the handwriting font's character set. */
+  .rbn-label::after {
+    content: "";
+    display: inline-block;
+    width: 0.5rem;
+    height: 0.5rem;
+    margin-top: 0.32rem;
+    background: currentColor;
+    opacity: 0.9;
+  }
+  .rbn-memories  .rbn-label::after { border-radius: 50%; }                              /* moon-round: memories */
+  .rbn-people    .rbn-label::after { clip-path: polygon(50% 0, 100% 100%, 0 100%); }    /* triangle: people */
+  .rbn-skills    .rbn-label::after { border-radius: 1px; }                              /* square: skills */
+  .rbn-resources .rbn-label::after { clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%); } /* diamond: resources */
+  .rbn-marks     .rbn-label::after { clip-path: polygon(0 0, 100% 0, 50% 100%); }       /* inverted triangle: marks */
 
   .roster { display: grid; gap: 0.1rem; }
 
@@ -1101,10 +1139,67 @@
 
     body { padding: 0.9rem 0.7rem 2.6rem; gap: 1.2rem; }
 
-    .parchment { max-width: none; width: 100%; }
+    /* room above the book for the gutter prompt tab and the peeking diary */
+    .book-zone { margin-top: 3rem; }
+
+    /* MOBILE: the prompt is filed in the gutter. A tab pokes up from the
+       spine (at the book-stage's left edge, just past the facing-page
+       strip); pulling it reveals the sheet centred and upright. */
+    .prompt-tab {
+      display: flex;
+      position: absolute;
+      top: -1.6rem;
+      left: 0;
+      transform: translateX(-50%) rotate(-1.5deg);
+      width: 3.6rem;
+      height: 2.6rem;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 0.25rem;
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      z-index: 8;
+      background:
+        var(--grain),
+        linear-gradient(180deg, var(--paper-hi), var(--parchment) 75%, #d8c398);
+      border-radius: 0.25rem 0.25rem 0 0;
+      box-shadow: 0 5px 9px -4px rgba(10, 5, 0, 0.6), inset 0 -0.7rem 0.6rem -0.6rem rgba(90, 60, 25, 0.4);
+    }
+
+    .prompt-tab:hover { top: -1.9rem; }
+
+    .prompt-card {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      justify-self: auto;
+      max-width: none;
+      width: min(30rem, 92vw);
+      z-index: 41;
+      display: none;
+      padding: 1.4rem 1.5rem 1.5rem;
+    }
+
+    .prompt-card.pulled {
+      display: block;
+      animation: prompt-pull 300ms cubic-bezier(0.2, 0.8, 0.3, 1) both;
+    }
+
+    .prompt-card .prompt-text { margin-right: 0; padding-bottom: 4rem; }
+
+    .prompt-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(10, 6, 2, 0.56);
+    }
+
+    .prompt-backdrop.pulled { display: block; }
 
     .dice-tray { right: 0.9rem; bottom: 0.7rem; gap: 0.6rem; }
-    .parchment .prompt-text { margin-right: 0; padding-bottom: 4.4rem; }
 
     .fresh-slip { margin-left: 0.4rem; }
 
@@ -1209,36 +1304,34 @@
        upcoming into the right ones, evenly spaced with room to breathe —
        no crammed fan, nothing off-screen. Passed and upcoming therefore
        share the same per-section slots. */
-    /* passed sections hang LEFT of the gutter, from the bottom of the
-       widened facing-page strip (the spine side) — that's the realistic
-       place for a bookmark of a page you've already turned past. They can
-       bunch a little like real cloth ribbons, but their tails are staggered
-       lengths (--rbn-tail) so each label reads at a different depth. */
-    /* same tight overlapping stack as desktop: passed bunch just left of the
-       spine (into the strip), upcoming just right (onto the page), layered
-       nearest-gutter-on-top with staggered tail lengths. */
+    /* PASSED sections live in the cramped facing-page strip left of the
+       spine — the one place there isn't room to spread — so they STACK on
+       top of each other: same spot, tiny 0.4rem offsets for depth, layered
+       nearest-front, tails cascading a monotonic length so each section's
+       name + icon peeks out below the one in front. */
     .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); clip-path: inset(0.9rem 0 0 0); }
-    .rbn-wrap:nth-child(1).rbn-passed { left: -1.4rem; z-index: 5; }
-    .rbn-wrap:nth-child(2).rbn-passed { left: -2.5rem; z-index: 4; }
-    .rbn-wrap:nth-child(3).rbn-passed { left: -3.6rem; z-index: 3; }
-    .rbn-wrap:nth-child(4).rbn-passed { left: -4.7rem; z-index: 2; }
+    .rbn-wrap:nth-child(1).rbn-passed { left: -2rem;    z-index: 5; height: 3rem; }
+    .rbn-wrap:nth-child(2).rbn-passed { left: -2.4rem;  z-index: 4; height: 4.4rem; }
+    .rbn-wrap:nth-child(3).rbn-passed { left: -2.8rem;  z-index: 3; height: 5.8rem; }
+    .rbn-wrap:nth-child(4).rbn-passed { left: -3.2rem;  z-index: 2; height: 7.2rem; }
 
+    /* UPCOMING hang below the page where there IS room, so spread them out */
     .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); clip-path: inset(0.9rem 0 0 0); }
-    .rbn-wrap:nth-child(2).rbn-upcoming { left: 1.6rem; z-index: 5; }
-    .rbn-wrap:nth-child(3).rbn-upcoming { left: 2.7rem; z-index: 4; }
-    .rbn-wrap:nth-child(4).rbn-upcoming { left: 3.8rem; z-index: 3; }
-    .rbn-wrap:nth-child(5).rbn-upcoming { left: 4.9rem; z-index: 2; }
+    .rbn-wrap:nth-child(2).rbn-upcoming { left: 12%; }
+    .rbn-wrap:nth-child(3).rbn-upcoming { left: 34%; }
+    .rbn-wrap:nth-child(4).rbn-upcoming { left: 56%; }
+    .rbn-wrap:nth-child(5).rbn-upcoming { left: 78%; }
 
-    .rbn-wrap.rbn-passed .rbn,
+    /* passed ribbons take their stacked height from the .rbn-wrap above */
+    .rbn-wrap.rbn-passed { --stack: 1; }
+    .rbn-wrap.rbn-passed .rbn { width: 1.25rem; height: 100%; }
+
     .rbn-wrap.rbn-upcoming .rbn {
       height: calc(var(--rbn-tail, 4rem) * 0.66);
       width: 1.25rem;
     }
 
-    .rbn-wrap.rbn-passed .rbn-label {
-      font-size: 0.68rem;
-    }
-
+    .rbn-wrap.rbn-passed .rbn-label,
     .rbn-wrap.rbn-upcoming .rbn-label {
       font-size: 0.68rem;
     }
@@ -1281,8 +1374,10 @@
 </header>
 
 <!-- the table top -->
-<section class="desk-top">
-  <div class="parchment">
+<!-- the prompt now lives tucked in the book's gutter (see .prompt-tab in
+     the book-stage). Pulling it reveals this card, oriented the right way,
+     with the dice tossed on it. -->
+<div class="prompt-card" id="prompt-card">
     <span class="print-label">Prompt 7 &middot; first visit</span>
     <p class="prompt-text">In your blood-hunger, you destroy someone close to you. Kill a mortal Character. Create a mortal if none are available. Take the skill Bloodthirsty.</p>
 
@@ -1334,12 +1429,19 @@
          source could be verified in this environment (Wikimedia Commons and
          other image hosts were blocked by network policy), and an absent
          prop beats a fake-looking drawn one. See mockups/README.md. -->
-  </div>
-</section>
+</div>
+<div class="prompt-backdrop" id="prompt-backdrop" aria-hidden="true"></div>
 
 <!-- the books -->
 <div class="book-zone">
   <div class="book-stage">
+
+    <!-- the prompt sheet, tucked into the gutter and rotated so its edge
+         pokes up from the spine. Pull it to read (see #prompt-card). -->
+    <button class="prompt-tab" id="prompt-tab" aria-label="Pull out the prompt">
+      <span class="pt-label">Prompt&nbsp;7</span>
+    </button>
+
 
     <!-- closed book prop: tap to swap books. Placed before the .book
          elements below (both z-index:auto) so plain DOM order, not
@@ -1743,6 +1845,23 @@
   };
   document.getElementById("die10").addEventListener("click", doRoll);
   document.getElementById("die6").addEventListener("click", doRoll);
+
+  // pull the prompt out of the gutter to read it (and roll the dice on it)
+  const promptTab = document.getElementById("prompt-tab");
+  const promptCard = document.getElementById("prompt-card");
+  const promptBackdrop = document.getElementById("prompt-backdrop");
+  const openPrompt = () => {
+    promptBackdrop.classList.add("pulled");
+    promptCard.classList.remove("pulled");
+    void promptCard.offsetWidth;
+    promptCard.classList.add("pulled");
+  };
+  const closePrompt = () => { promptCard.classList.remove("pulled"); promptBackdrop.classList.remove("pulled"); };
+  promptTab.addEventListener("click", (e) => { e.stopPropagation(); openPrompt(); });
+  promptBackdrop.addEventListener("click", (e) => { e.stopPropagation(); closePrompt(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closePrompt(); });
+  // clicks inside the card (dice, text) shouldn't close it
+  promptCard.addEventListener("click", (e) => e.stopPropagation());
 
   // fold the Memory slips: mounted, each slip shows exactly one --mount-h's
   // worth of content; anything past that is conceptually pleated behind it.

@@ -396,8 +396,8 @@
      top, and .book-stage's top reliably matches the page's own top. */
   .closed-book-spot {
     position: absolute;
-    right: 3.5rem;
-    top: -3rem;
+    right: 2.5rem;
+    top: -4.6rem;
   }
 
   .closed-book {
@@ -407,11 +407,11 @@
     cursor: pointer;
     display: block;
     position: relative;
-    width: 5.4rem;
-    height: 7.4rem;
-    border-radius: 0.3rem 0.3rem 0.15rem 0.15rem;
-    transform: rotate(-4deg);
-    box-shadow: 0 12px 20px -9px rgba(5, 2, 0, 0.75), 0 2px 4px rgba(0, 0, 0, 0.4);
+    width: 13.5rem;
+    height: calc(var(--page-h) * 0.62);
+    border-radius: 0.35rem 0.35rem 0.15rem 0.15rem;
+    transform: rotate(-2.5deg);
+    box-shadow: 0 14px 24px -10px rgba(5, 2, 0, 0.78), 0 2px 4px rgba(0, 0, 0, 0.4);
     transition: transform 150ms ease;
   }
 
@@ -425,7 +425,7 @@
   }
 
   .closed-book[hidden] { display: none; }
-  .closed-book:hover { transform: rotate(-4deg) translateY(-3px); }
+  .closed-book:hover { transform: rotate(-2.5deg) translateY(-3px); }
 
   .cb-diary { background: linear-gradient(155deg, #4a2a19, #241209 65%, #170b05); border: 1px solid #1c0f07; }
 
@@ -460,13 +460,14 @@
 
   .cb-diary .cb-label {
     position: absolute;
-    left: 0.25rem; right: 0.25rem; top: 0.6rem;
+    left: 0.5rem; right: 0.5rem; top: 1rem;
     text-align: center;
-    font-size: 0.72rem;
+    font-size: 1.4rem;
     line-height: 1.1;
     color: #cfa85c;
     text-shadow: 0 1px 1px rgba(0, 0, 0, 0.6);
-    transform: rotate(-1.5deg);
+    transform: rotate(-1deg);
+    letter-spacing: 0.02em;
   }
 
   .cb-notebook {
@@ -476,9 +477,9 @@
 
   .cb-notebook .cb-label {
     position: absolute;
-    left: 0.25rem; right: 0.25rem; top: 0.6rem;
+    left: 0.5rem; right: 0.5rem; top: 1rem;
     text-align: center;
-    font-size: 0.76rem;
+    font-size: 1.3rem;
     line-height: 1.1;
     color: var(--pen);
     transform: rotate(-1deg);
@@ -556,6 +557,29 @@
      regardless of any stacking context the page-turn animation may pin */
   body:has(.slip.selected) .ribbon-deck { z-index: 0; }
 
+  /* a lifted memory is position:fixed to escape to the viewport centre. If
+     the page-turn animation has left (or is mid-) a transform on .spread,
+     that transform would become the slip's containing block — trapping it
+     inside .page's overflow:hidden (clipped) and below the backdrop
+     (dimmed). Neutralising the transform on the open spread while a slip is
+     lifted keeps the note fixed to the viewport: full width, above the dim. */
+  /* A fixed-positioned lifted slip escapes to the viewport centre ONLY if no
+     ancestor establishes a containing block for it. The page-turn keyframes
+     (turn-fwd/turn-back) leave their .spread a filling animation target on
+     `transform` — and an animation target counts as a containing block even
+     when its current transform resolves to none — which would trap the slip
+     inside .page's overflow (clipped) and below the backdrop (dimmed). While
+     a slip is lifted, strip every containing-block source, animation
+     included, from the whole book subtree. */
+  body:has(.slip.selected) :is(.book-zone, .book-stage, .book, .spread, .page, .slips) {
+    transform: none !important;
+    filter: none !important;
+    perspective: none !important;
+    will-change: auto !important;
+    contain: none !important;
+    animation: none !important;
+  }
+
   body:has(.slip.selected) .slip-backdrop {
     background: rgba(12, 7, 2, 0.55);
     pointer-events: auto;
@@ -570,13 +594,13 @@
      the whole width of the note, smoothly feathered top and bottom. */
   .crease {
     position: absolute;
-    left: 0.2rem;
-    right: 0.2rem;
-    height: 3px;
-    margin-top: -1.5px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    margin-top: -1px;
     pointer-events: none;
-    background: linear-gradient(to bottom, rgba(255,250,235,0.35), rgba(28,18,8,0.32) 60%);
-    filter: blur(0.7px);
+    background: linear-gradient(to bottom, rgba(255,250,235,0.4), rgba(28,18,8,0.38) 60%);
+    filter: blur(0.5px);
   }
 
   .slip:not(.selected) .crease { display: none; }
@@ -585,16 +609,21 @@
      hidden content (JS adds it), sitting at the mount's clip line — just a
      soft, blurry darkening fading in over the last ~0.8rem of the visible
      area, standing in for the fold beneath without drawing the fold itself. */
+  /* the crease where the paper folds under: a thin line running the full
+     width, edge to edge, right at the slip's bottom — the fold IS the
+     bottom edge of the visible sheet, so it spans the whole paper
+     regardless of the text's own margins. */
   .fold-edge {
     position: absolute;
-    left: 0.2rem;
-    right: 0.2rem;
-    bottom: 0.32rem;
-    height: 0.34rem;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
     pointer-events: none;
     z-index: 2;
-    background: linear-gradient(to bottom, rgba(20, 12, 4, 0) 0%, rgba(20, 12, 4, 0.3) 72%, rgba(20, 12, 4, 0.5) 100%);
-    filter: blur(0.8px);
+    background: linear-gradient(to bottom, rgba(255,250,235,0.32), rgba(20, 12, 4, 0.46) 85%);
+    box-shadow: 0 2px 3px -1px rgba(20, 12, 4, 0.4);
+    filter: blur(0.4px);
   }
 
   .slip.selected .fold-edge { display: none; }
@@ -803,7 +832,7 @@
 
   .rbn-wrap.rbn-current .rbn {
     width: 1.35rem;
-    height: calc(var(--page-h) + 4.6rem);
+    height: calc(var(--page-h) + 7rem);
     opacity: 1;
     transform: none;
   }
@@ -1053,7 +1082,7 @@
        content — meaning it would go a different pixel width per section
        depending on how wide that section's own text happens to be. Fixed
        viewport math keeps every section (and the diary) pixel-identical. */
-    :root { --page-w: calc(100vw - 5.7rem); --page-h: min(78vh, 41rem); }
+    :root { --page-w: calc(100vw - 8.5rem); --page-h: min(78vh, 41rem); }
 
     /* the wood slab photo (5th background layer) is sized by vw so it
        scales with viewport width; at a narrow viewport, 220vw's height
@@ -1110,12 +1139,12 @@
 
     .book-zone::before {
       content: "";
-      flex: 0 0 5rem;
+      flex: 0 0 8rem;
       align-self: flex-start;
       height: var(--page-h);
-      background-image: var(--stitch), linear-gradient(to right, #dcc79a 0 3.6rem, #cbb488 3.6rem 4.65rem, #a4895a 4.65rem 5rem);
+      background-image: var(--stitch), linear-gradient(to right, #dcc79a 0 6.4rem, #cbb488 6.4rem 7.65rem, #a4895a 7.65rem 8rem);
       background-repeat: repeat-y, no-repeat;
-      background-position: 4.7rem 0, 0 0;
+      background-position: 7.7rem 0, 0 0;
       background-size: 10px auto, auto auto;
       box-shadow: inset -2px 0 5px rgba(20, 10, 2, 0.3);
       position: relative;
@@ -1150,7 +1179,7 @@
 
     .rbn-wrap.rbn-current .rbn {
       width: 1.25rem;
-      height: calc(var(--page-h) + 3.4rem);
+      height: calc(var(--page-h) + 5.4rem);
     }
 
     .rbn-wrap.rbn-current .rbn:hover { transform: translateY(2px); }
@@ -1174,18 +1203,24 @@
        upcoming into the right ones, evenly spaced with room to breathe —
        no crammed fan, nothing off-screen. Passed and upcoming therefore
        share the same per-section slots. */
-    .rbn-wrap.rbn-passed,
+    /* passed sections hang LEFT of the gutter, from the bottom of the
+       widened facing-page strip (the spine side) — that's the realistic
+       place for a bookmark of a page you've already turned past. They can
+       bunch a little like real cloth ribbons, but their tails are staggered
+       lengths (--rbn-tail) so each label reads at a different depth. */
+    .rbn-wrap.rbn-passed { top: calc(100% - 0.9rem); z-index: 0; clip-path: inset(0.9rem 0 0 0); }
+    .rbn-wrap:nth-child(1).rbn-passed { left: -0.7rem; }
+    .rbn-wrap:nth-child(2).rbn-passed { left: -2.7rem; }
+    .rbn-wrap:nth-child(3).rbn-passed { left: -4.7rem; }
+    .rbn-wrap:nth-child(4).rbn-passed { left: -6.7rem; }
+
+    /* upcoming sections hang below the current page (ahead of the spine),
+       in fixed slots across its width */
     .rbn-wrap.rbn-upcoming { top: calc(100% - 0.9rem); z-index: 0; clip-path: inset(0.9rem 0 0 0); }
-    .rbn-wrap:nth-child(1).rbn-passed,
-    .rbn-wrap:nth-child(1).rbn-upcoming { left: 8%; }
-    .rbn-wrap:nth-child(2).rbn-passed,
-    .rbn-wrap:nth-child(2).rbn-upcoming { left: 29%; }
-    .rbn-wrap:nth-child(3).rbn-passed,
-    .rbn-wrap:nth-child(3).rbn-upcoming { left: 50%; }
-    .rbn-wrap:nth-child(4).rbn-passed,
-    .rbn-wrap:nth-child(4).rbn-upcoming { left: 71%; }
-    .rbn-wrap:nth-child(5).rbn-passed,
-    .rbn-wrap:nth-child(5).rbn-upcoming { left: 89%; }
+    .rbn-wrap:nth-child(2).rbn-upcoming { left: 10%; }
+    .rbn-wrap:nth-child(3).rbn-upcoming { left: 33%; }
+    .rbn-wrap:nth-child(4).rbn-upcoming { left: 56%; }
+    .rbn-wrap:nth-child(5).rbn-upcoming { left: 79%; }
 
     .rbn-wrap.rbn-passed .rbn {
       height: calc(var(--rbn-tail, 4rem) * 0.62);
@@ -1218,10 +1253,14 @@
 
     /* stays tucked under the page's lower-right corner on mobile too, just
        sized down a touch further for the narrower page */
-    .closed-book-spot { right: 0.6rem; top: -2.5rem; }
-    .closed-book { width: 4.3rem; height: 5.9rem; }
-    .cb-diary .cb-label { font-size: 0.66rem; top: 0.5rem; }
-    .cb-notebook .cb-label { font-size: 0.68rem; top: 0.5rem; }
+    /* keep the crumpled pile clear of the current ribbon, which on mobile
+       dangles from the left-edge spine */
+    .desk-floor { justify-content: flex-end; padding-right: 2rem; }
+
+    .closed-book-spot { right: 0.5rem; top: -3.4rem; }
+    .closed-book { width: 10rem; height: calc(var(--page-h) * 0.6); }
+    .cb-diary .cb-label { font-size: 1.15rem; top: 0.8rem; }
+    .cb-notebook .cb-label { font-size: 1.05rem; top: 0.8rem; }
 
     .diary .page { padding-left: 2.9rem; }
   }
@@ -1303,12 +1342,12 @@
          elements below (both z-index:auto) so plain DOM order, not
          z-index, tucks it under the open book's pages. -->
     <div class="closed-book-spot">
-      <button class="closed-book cb-diary" id="cb-diary" data-open-diary aria-label="Open the diary, the Iron Box">
+      <button class="closed-book cb-diary" id="cb-diary" data-open-diary aria-label="Open the diary">
         <span class="cb-strap" aria-hidden="true"></span>
-        <span class="cb-label hand" aria-hidden="true">the Iron Box</span>
+        <span class="cb-label hand" aria-hidden="true">Diary</span>
       </button>
       <button class="closed-book cb-notebook" id="cb-notebook" data-open-notebook aria-label="Open her notebook" hidden>
-        <span class="cb-label hand" aria-hidden="true">her notebook</span>
+        <span class="cb-label hand" aria-hidden="true">Notebook</span>
       </button>
     </div>
 

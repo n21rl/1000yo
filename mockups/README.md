@@ -34,10 +34,15 @@ materials:
 **`desk2.html`** revises The Desk toward physical believability:
 
 - The notebook is five double-page **spreads** (Memories, People, Skills,
-  Resources, Marks). Index tabs sit in fixed slots down the fore-edge and
-  physically migrate: a section behind the open page shows its tab on the
-  left edge, sections ahead on the right; navigation is a direction-aware
-  page turn.
+  Resources, Marks) navigated by **ribbon bookmarks**: fabric strips with
+  the section name written on the tail. The open section's ribbon runs from
+  the top of the spine down the gutter and dangles lowest; passed sections
+  hang below the left page (mobile: from the bottom of the visible
+  facing-page strip), upcoming below the right. Navigation is a
+  direction-aware page turn.
+- Memory slips sit in **fixed-size photo-corner mounts**: overflowing text
+  folds under a visible crease; clicking lifts the slip to center, fully
+  unfolded (crease marks remain), for reading and editing.
 - The **diary is a closed book lying on the desk** (was: a hanging
   bookmark); clicking it swaps books, and the notebook lies closed in its
   place while the diary is open.

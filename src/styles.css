@@ -1576,3 +1576,86 @@ select { font-family: var(--print); font-size: 1rem; background-color: rgba(255,
 .form-actions-equal { justify-content: space-between; }
 .modal-checkbox-row { display: flex; align-items: center; gap: 0.5rem; text-transform: none; letter-spacing: 0; font-family: var(--print); font-size: 0.9rem; color: var(--pen); }
 .modal-checkbox-row input { width: auto; }
+
+/* =====================================================================
+   Prompt above the book (peek + pull on all breakpoints)
+   The prompt is no longer a desktop top sheet or a mobile gutter file: it
+   peeks from above the book's top-left edge (mirroring the diary tucked at
+   top-right) and pulls up into focus over a dimmed desk when tapped.
+   ===================================================================== */
+
+.prompt-card {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  justify-self: auto;
+  max-width: none;
+  width: min(32rem, 92vw);
+  z-index: 61;
+  display: none;
+  padding: 1.4rem 1.6rem 1.5rem;
+}
+.prompt-card.pulled { display: block; animation: prompt-pull 300ms cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.prompt-card .prompt-text { margin-right: 0; padding-bottom: 4.2rem; }
+
+.prompt-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(10, 6, 2, 0.56);
+}
+.prompt-backdrop.pulled { display: block; }
+
+/* the peeking prompt sheet, tucked above the book's top edge (DOM order puts
+   it before .book so the page tucks its lower edge under, like the diary) */
+.prompt-tab {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  position: absolute;
+  left: 2.5rem;
+  top: -4.4rem;
+  width: 15rem;
+  height: 5.6rem;
+  padding: 0.5rem 0.95rem 0.6rem;
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  overflow: hidden;
+  background:
+    var(--grain),
+    linear-gradient(160deg, var(--paper-hi), var(--parchment) 70%, #ddc99e);
+  border-radius: 0.3rem 0.3rem 0 0;
+  box-shadow: 0 -6px 14px -8px rgba(10, 5, 0, 0.5);
+  transform: rotate(-0.6deg);
+  transition: transform 150ms ease;
+}
+.prompt-tab:hover { transform: rotate(-0.6deg) translateY(-3px); }
+.prompt-tab .pt-label {
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+  font-size: 0.6rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--rubric);
+  max-height: none;
+}
+.prompt-tab .pt-text {
+  writing-mode: horizontal-tb;
+  font-family: var(--hand);
+  font-size: 1.06rem;
+  line-height: 1.32;
+  color: var(--pen);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: none;
+}
+
+/* headroom above the book for both peeks (prompt at left, diary at right) */
+.book-zone { margin-top: 4.8rem; }
+@media (max-width: 880px) { .book-zone { margin-top: 4.6rem; } }

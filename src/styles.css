@@ -1727,6 +1727,8 @@ select { font-family: var(--print); font-size: 1rem; background-color: rgba(255,
   #book-notebook .spread .seam { display: block; }
   #book-notebook .spread.view-right { transform: translateX(calc(2 * var(--sliver) - var(--bookw))); }
   #book-notebook .page-corner, #book-notebook .page-num { display: none; }
+  #book-notebook .page.left  { border-radius: 0.55rem 0 0 0.55rem; }
+  #book-notebook .page.right { border-radius: 0 0.55rem 0.55rem 0; }
 
   /* the diary stays a single mobile page */
   #book-diary .spread { grid-template-columns: 1fr; }
@@ -1755,8 +1757,8 @@ select { font-family: var(--print); font-size: 1rem; background-color: rgba(255,
     z-index: 2;
     transition: left 420ms cubic-bezier(0.3, 0.8, 0.3, 1);
   }
-  #book-notebook[data-side="left"] .rbn-wrap.rbn-current { left: calc(var(--bookw) - var(--sliver)); }
-  #book-notebook[data-side="right"] .rbn-wrap.rbn-current { left: var(--sliver); }
+  #book-notebook[data-side="left"] .rbn-wrap.rbn-current { left: calc(var(--bookw) - var(--sliver) + 0.45rem); }
+  #book-notebook[data-side="right"] .rbn-wrap.rbn-current { left: calc(var(--sliver) + 0.45rem); }
   #book-notebook .rbn-wrap.rbn-current .rbn { width: 1.25rem; height: calc(var(--page-h) + 3.6rem); }
   #book-notebook .rbn-wrap.rbn-current .rbn-label { font-size: 0.78rem; }
 

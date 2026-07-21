@@ -84,6 +84,7 @@ const openSection = (idx, side) => {
       next.classList.remove("turn-fwd", "turn-back");
       void next.offsetWidth;
       next.classList.add(backward ? "turn-back" : "turn-fwd");
+      window.setTimeout(() => next.classList.remove("turn-fwd", "turn-back"), 460);
     }
     curSec = idx;
   }

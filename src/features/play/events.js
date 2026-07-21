@@ -21,15 +21,36 @@ export const bindPlayEvents = ({
   getPendingDiaryMemoryId,
   updatePlayExperienceActionState,
 }) => {
-  elements.promptButton.addEventListener("click", () => {
+  // The rolled faces are the only feedback — no result text (per DESIGN §8);
+  // the faces settle after the tumble, then the prompt advances by d10 - d6.
+  const showRoll = (d10, d6) => {
+    document.querySelectorAll(".die").forEach((die) => {
+      die.classList.remove("rolling");
+      void die.offsetWidth;
+      die.classList.add("rolling");
+    });
+    const faceTen = document.getElementById("d10v");
+    const faceSix = document.getElementById("d6v");
+    if (faceTen) faceTen.textContent = String(d10);
+    if (faceSix) faceSix.textContent = String(d6);
+  };
+
+  const performRoll = () => {
     if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
-    const delta = rollDie(10) - rollDie(6);
-    const target = promptState.currentPrompt + delta;
-    advanceToNextPromptEntry(promptState, target);
+    const d10 = rollDie(10);
+    const d6 = rollDie(6);
+    showRoll(d10, d6);
+    advanceToNextPromptEntry(promptState, promptState.currentPrompt + (d10 - d6));
     collapseSettledRecords();
     persistCurrentCharacter();
     render();
-  });
+  };
+
+  elements.promptButton.addEventListener("click", performRoll);
+  const dieTen = document.getElementById("die10");
+  const dieSix = document.getElementById("die6");
+  if (dieTen) dieTen.addEventListener("click", performRoll);
+  if (dieSix) dieSix.addEventListener("click", performRoll);
 
   elements.addMemoryButton.addEventListener("click", (event) => {
     event.stopPropagation();

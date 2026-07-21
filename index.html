@@ -230,6 +230,10 @@
                 <span class="rbn-wrap"><button class="rbn rbn-marks" type="button" data-i="4" aria-label="Ribbon: jump to Marks"><span class="rbn-label hand">Marks</span><svg class="rbn-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3c1.5 2.5 4.5 4.4 4.5 8.1A4.5 4.5 0 1 1 7.5 11c0-1.8.8-3.2 2.3-4.8.2 1.5 1 2.4 2.2 3.1C13 7.8 13 5.7 12 3z"/></svg></button></span>
               </nav>
 
+              <!-- mobile: tap the peeking page-edge sliver to slide the spread -->
+              <button class="slide-edge to-left" type="button" data-slide="left" aria-label="Slide to the previous page"></button>
+              <button class="slide-edge to-right" type="button" data-slide="right" aria-label="Slide to the next page"></button>
+
               <!-- Memories -->
               <div class="spread paged" data-section="memories">
                 <div class="seam" aria-hidden="true"></div>
@@ -238,6 +242,7 @@
                     <span class="print-label">Memories</span>
                     <span class="print-label" id="memory-slots-meta" style="color: var(--pen-faint)">0/0</span>
                   </div>
+                  <p class="memory-blurb">Each memory holds up to three experiences. Fill a slip, then copy it into the diary to keep it forever &mdash; or lose it, and it crumples onto the desk below.</p>
                   <ul id="play-memory-list" class="slips"></ul>
                   <div class="press-row" style="justify-content: flex-start; gap: 1.2rem; margin-top: 0.6rem">
                     <button type="button" id="add-memory-button" class="add-line">+ a new memory</button>

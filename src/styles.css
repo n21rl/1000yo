@@ -1659,3 +1659,125 @@ select { font-family: var(--print); font-size: 1rem; background-color: rgba(255,
 /* headroom above the book for both peeks (prompt at left, diary at right) */
 .book-zone { margin-top: 4.8rem; }
 @media (max-width: 880px) { .book-zone { margin-top: 4.6rem; } }
+
+
+/* =====================================================================
+   Memory slips: the photo-corner frame is the marker — no list bullet.
+   ===================================================================== */
+.slips { list-style: none; margin: 0; padding: 0; }
+.slips > li { list-style: none; }
+
+/* Memories: 2 slips sit at the bottom of the left page under an explanatory
+   blurb; the remaining 3 continue on the right page. */
+.spread[data-section="memories"] .page.left { display: flex; flex-direction: column; }
+.memory-blurb {
+  font-family: var(--hand);
+  font-size: 1.12rem;
+  line-height: 1.5;
+  color: var(--pen-faint);
+  margin: 0.4rem 0.4rem 0;
+  font-style: italic;
+}
+.spread[data-section="memories"] #play-memory-list { margin-top: auto; }
+.spread[data-section="memories"] .page.left .press-row { margin-top: 0.7rem; }
+
+/* =====================================================================
+   Mobile: sliding two-page spread with the current ribbon on the gutter
+   Each notebook section is the full two-page leaf laid side by side, wider
+   than the on-screen book window, translated so one page is fully in view
+   and the other peeks as a tappable sliver at the opposite edge (mirrored).
+   The stitched gutter sits between the pages and MOVES with the slide; the
+   current-section ribbon is threaded at that gutter and slides with it,
+   always hanging just to the gutter's right. Overflow runs off-screen and is
+   clipped by html { overflow-x: hidden } so the ribbons below are never cut.
+   ===================================================================== */
+@media (max-width: 880px) {
+  :root {
+    --sliver: 2.4rem;
+    --bookw: min(100vw - 1.4rem, 30rem);
+    --mpagew: calc(var(--bookw) - var(--sliver));
+  }
+
+  body { overflow-x: hidden; }
+
+  /* drop the old gutter-strip model: the book no longer bleeds off the left
+     edge, and the facing-page strip (which held the filed prompt) is gone. */
+  .book-zone {
+    justify-self: center;
+    margin-left: 0;
+    width: 100%;
+    display: grid;
+    justify-items: center;
+    padding-bottom: 3.2rem;
+  }
+  .book-zone::before { content: none !important; display: none !important; }
+
+  #book-notebook, #book-diary { width: var(--bookw); position: relative; }
+
+  /* every notebook section is a sliding two-page spread */
+  #book-notebook .spread {
+    grid-template-columns: var(--mpagew) var(--mpagew);
+    width: calc(2 * var(--mpagew));
+    transform: translateX(0);
+    transition: transform 420ms cubic-bezier(0.3, 0.8, 0.3, 1);
+  }
+  #book-notebook .spread .page { width: var(--mpagew); }
+  #book-notebook .spread.paged [data-mpage] { display: block !important; }
+  #book-notebook .spread .page.right[data-page2="hint"] { display: block !important; }
+  #book-notebook .spread .seam { display: block; }
+  #book-notebook .spread.view-right { transform: translateX(calc(2 * var(--sliver) - var(--bookw))); }
+  #book-notebook .page-corner, #book-notebook .page-num { display: none; }
+
+  /* the diary stays a single mobile page */
+  #book-diary .spread { grid-template-columns: 1fr; }
+  #book-diary .page { width: 100%; }
+
+  /* tappable sliver zones: exactly one shows, over the peeking page edge */
+  .slide-edge {
+    display: none;
+    position: absolute;
+    top: 0;
+    width: var(--sliver);
+    height: var(--page-h);
+    z-index: 4;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  #book-notebook[data-side="left"] .slide-edge.to-right { display: block; right: 0; }
+  #book-notebook[data-side="right"] .slide-edge.to-left { display: block; left: 0; }
+
+  /* the current ribbon is threaded at the gutter and slides with it */
+  #book-notebook .rbn-wrap.rbn-current {
+    top: -0.2rem;
+    transform: none;
+    z-index: 2;
+    transition: left 420ms cubic-bezier(0.3, 0.8, 0.3, 1);
+  }
+  #book-notebook[data-side="left"] .rbn-wrap.rbn-current { left: calc(var(--bookw) - var(--sliver)); }
+  #book-notebook[data-side="right"] .rbn-wrap.rbn-current { left: var(--sliver); }
+  #book-notebook .rbn-wrap.rbn-current .rbn { width: 1.25rem; height: calc(var(--page-h) + 3.6rem); }
+  #book-notebook .rbn-wrap.rbn-current .rbn-label { font-size: 0.78rem; }
+
+  /* passed & upcoming ribbons fan out below the book */
+  #book-notebook .rbn-wrap.rbn-passed,
+  #book-notebook .rbn-wrap.rbn-upcoming {
+    top: calc(100% - 0.9rem);
+    clip-path: inset(0.9rem 0 0 0);
+    height: auto;
+    z-index: auto;
+  }
+  #book-notebook .rbn-wrap:nth-child(1).rbn-passed { left: 6%; }
+  #book-notebook .rbn-wrap:nth-child(2).rbn-passed { left: 20%; }
+  #book-notebook .rbn-wrap:nth-child(3).rbn-passed { left: 34%; }
+  #book-notebook .rbn-wrap:nth-child(4).rbn-passed { left: 48%; }
+  #book-notebook .rbn-wrap:nth-child(2).rbn-upcoming { left: 54%; }
+  #book-notebook .rbn-wrap:nth-child(3).rbn-upcoming { left: 68%; }
+  #book-notebook .rbn-wrap:nth-child(4).rbn-upcoming { left: 82%; }
+  #book-notebook .rbn-wrap:nth-child(5).rbn-upcoming { left: 96%; }
+  #book-notebook .rbn-wrap.rbn-passed .rbn,
+  #book-notebook .rbn-wrap.rbn-upcoming .rbn { width: 1.25rem; height: var(--rbn-tail, 4rem); }
+  #book-notebook .rbn-wrap.rbn-passed .rbn-label,
+  #book-notebook .rbn-wrap.rbn-upcoming .rbn-label { font-size: 0.68rem; }
+}

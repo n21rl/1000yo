@@ -59,6 +59,15 @@ const showSide = (spread, side) => {
   spread.querySelectorAll("[data-mpage]").forEach((page) => page.classList.remove("current"));
   const target = spread.querySelector(`[data-mpage="${side === "left" ? 1 : 2}"]`);
   if (target) target.classList.add("current");
+  // Mobile sliding spread: translate to show one page fully, the other as a
+  // tappable sliver (CSS drives the actual translate inside the media query).
+  spread.classList.toggle("view-right", side === "right");
+  spread.classList.toggle("view-left", side !== "right");
+  const nb = notebook();
+  if (nb) {
+    nb.dataset.side = side;
+    nb.dataset.section = spread.dataset.section || "";
+  }
 };
 
 // open a section's spread with a direction-aware page-turn animation
@@ -153,6 +162,14 @@ export const initDeskInteractions = () => {
     if (!rbn) return;
     event.stopPropagation();
     openSection(Number(rbn.dataset.i), "left");
+  });
+
+  // mobile: tap a peeking page-edge sliver to slide the spread to that page
+  document.addEventListener("click", (event) => {
+    const edge = event.target.closest(".slide-edge");
+    if (!edge) return;
+    event.stopPropagation();
+    openSection(curSec, edge.dataset.slide === "right" ? "right" : "left");
   });
 
   // pull the gutter prompt up into focus (mobile), dim behind it

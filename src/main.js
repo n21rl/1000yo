@@ -715,20 +715,19 @@ const renderPlayMemoryList = () => {
   const activeMemories = nonDiary.filter(({ memory }) => !memory.lost);
   const lostMemories = nonDiary.filter(({ memory }) => memory.lost);
 
-  if (!activeMemories.length) {
-    elements.playMemoryList.append(createEmptyRecord("No memories held — the mounts are bare."));
-  } else {
-    activeMemories.forEach(({ memory, index }) => {
-      elements.playMemoryList.append(buildMemorySlip({ memory, memoryIndex: index }));
-    });
-  }
-
-  // The facing (right) page shows the remaining empty photo-corner mounts —
-  // remaining capacity is spatial, never a counter.
-  const emptyMounts = Math.max(0, character.memorySlots - activeMemories.length);
-  const mountsHost = mountsPage || elements.playMemoryList;
-  for (let index = 0; index < emptyMounts; index += 1) {
-    mountsHost.append(buildEmptyMount());
+  // Each memory slot is either a held slip or an empty photo-corner mount
+  // (remaining capacity is spatial, never a counter). The leaf splits the
+  // slots across the two pages: 2 sit at the bottom of the left page (under
+  // the explanatory blurb), the rest continue on the right page.
+  const LEFT_PAGE_SLOTS = 2;
+  const slotCount = Math.max(character.memorySlots, activeMemories.length);
+  const rightHost = mountsPage || elements.playMemoryList;
+  for (let slot = 0; slot < slotCount; slot += 1) {
+    const held = activeMemories[slot];
+    const element = held
+      ? buildMemorySlip({ memory: held.memory, memoryIndex: held.index })
+      : buildEmptyMount();
+    (slot < LEFT_PAGE_SLOTS ? elements.playMemoryList : rightHost).append(element);
   }
 
   // Lost memories become crumpled wads on the desk floor.

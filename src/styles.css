@@ -925,11 +925,20 @@
      local_fire_department. Inline SVG so currentColor tints them to the
      label's own colour. */
   .rbn-ico {
+    position: relative;
+    z-index: 1;
+    display: flex;
     width: 1.02rem;
     height: 1.02rem;
     margin-top: 0.32rem;
     color: rgba(255, 250, 235, 0.96);
     flex: 0 0 auto;
+  }
+
+  .rbn-ico svg,
+  .rbn-ico .material-icon {
+    width: 1.05rem;
+    height: 1.05rem;
   }
 
   .roster { display: grid; gap: 0.1rem; }
@@ -1762,24 +1771,28 @@ select { font-family: var(--print); font-size: 1rem; background-color: rgba(255,
   #book-notebook .rbn-wrap.rbn-current .rbn { width: 1.25rem; height: calc(var(--page-h) + 3.6rem); }
   #book-notebook .rbn-wrap.rbn-current .rbn-label { font-size: 0.78rem; }
 
-  /* passed & upcoming ribbons fan out below the book */
+  /* passed & upcoming ribbons hang below the book; their side (spread vs
+     stacked) is driven by data-side + --dist so they follow the slide */
+  #book-notebook .rbn-wrap { transition: left 420ms cubic-bezier(0.3, 0.8, 0.3, 1); }
   #book-notebook .rbn-wrap.rbn-passed,
   #book-notebook .rbn-wrap.rbn-upcoming {
     top: calc(100% - 0.9rem);
     clip-path: inset(0.9rem 0 0 0);
     height: auto;
-    z-index: auto;
   }
-  #book-notebook .rbn-wrap:nth-child(1).rbn-passed { left: 6%; }
-  #book-notebook .rbn-wrap:nth-child(2).rbn-passed { left: 20%; }
-  #book-notebook .rbn-wrap:nth-child(3).rbn-passed { left: 34%; }
-  #book-notebook .rbn-wrap:nth-child(4).rbn-passed { left: 48%; }
-  #book-notebook .rbn-wrap:nth-child(2).rbn-upcoming { left: 54%; }
-  #book-notebook .rbn-wrap:nth-child(3).rbn-upcoming { left: 68%; }
-  #book-notebook .rbn-wrap:nth-child(4).rbn-upcoming { left: 82%; }
-  #book-notebook .rbn-wrap:nth-child(5).rbn-upcoming { left: 96%; }
-  #book-notebook .rbn-wrap.rbn-passed .rbn,
-  #book-notebook .rbn-wrap.rbn-upcoming .rbn { width: 1.25rem; height: var(--rbn-tail, 4rem); }
+
+  /* SPREAD (the fully-visible page's side): fan out from the gutter, one step per --dist */
+  #book-notebook[data-side="left"]  .rbn-wrap.rbn-passed   { left: calc(var(--bookw) - var(--sliver) - 0.8rem - var(--dist) * 3.4rem); }
+  #book-notebook[data-side="right"] .rbn-wrap.rbn-upcoming { left: calc(var(--sliver) + 0.8rem + var(--dist) * 3.4rem); }
+  #book-notebook[data-side="left"]  .rbn-wrap.rbn-passed .rbn,
+  #book-notebook[data-side="right"] .rbn-wrap.rbn-upcoming .rbn { width: 1.25rem; height: 4.2rem; }
+
+  /* STACK (the sliver side): cluster at the sliver, cascading tail lengths so each tip+icon peeks */
+  #book-notebook[data-side="left"]  .rbn-wrap.rbn-upcoming { left: calc(var(--bookw) - var(--sliver) + 0.3rem + var(--dist) * 0.28rem); z-index: calc(9 - var(--dist)); }
+  #book-notebook[data-side="right"] .rbn-wrap.rbn-passed   { left: calc(var(--sliver) - 1.4rem - var(--dist) * 0.28rem); z-index: calc(9 - var(--dist)); }
+  #book-notebook[data-side="left"]  .rbn-wrap.rbn-upcoming .rbn,
+  #book-notebook[data-side="right"] .rbn-wrap.rbn-passed .rbn { width: 1.25rem; height: calc(2.4rem + var(--dist) * 1.35rem); }
+
   #book-notebook .rbn-wrap.rbn-passed .rbn-label,
   #book-notebook .rbn-wrap.rbn-upcoming .rbn-label { font-size: 0.68rem; }
 }

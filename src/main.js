@@ -10,7 +10,6 @@ import {
   upsertVampireRecord,
 } from "./vampire-storage.js";
 import { getElements } from "./ui/elements.js";
-import { showBook, initDeskInteractions, measureFolds } from "./features/play/desk.js";
 import { createMaterialIcon, hydrateStaticIcons } from "./ui/icons.js";
 import {
   bindCardToggleEvents,
@@ -56,7 +55,7 @@ let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
 const collapsedRecords = new Set();
-const INITIAL_COLLAPSED_CARD_KEYS = ["diary", "characters", "skills", "resources", "marks"];
+const INITIAL_COLLAPSED_CARD_KEYS = ["prompt", "memories", "diary", "characters", "skills", "resources", "marks"];
 
 const promptState = createPromptState();
 
@@ -279,8 +278,14 @@ const syncSelectedTraits = (selectedIds) => {
 
 const createEmptyRecord = (message) => {
   const item = document.createElement("li");
-  item.className = "empty-note hand";
-  item.textContent = message;
+  item.className = "record record-empty";
+  const body = document.createElement("div");
+  body.className = "record-body";
+  const text = document.createElement("p");
+  text.className = "supporting";
+  text.textContent = message;
+  body.append(text);
+  item.append(body);
   return item;
 };
 
@@ -324,6 +329,20 @@ const createButton = (label, className, handler, options = {}) => {
   return button;
 };
 
+const createInlineIconButton = (label, iconName, className, handler, { pressed = false } = {}) => {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = className;
+  button.append(createMaterialIcon(iconName));
+  button.title = label;
+  button.setAttribute("aria-label", label);
+  button.setAttribute("aria-pressed", String(Boolean(pressed)));
+  button.addEventListener("click", (event) => {
+    event.stopPropagation();
+    handler();
+  });
+  return button;
+};
 
 const renderTraitSelector = (container, selectedIds) => {
   container.innerHTML = "";
@@ -452,6 +471,20 @@ const togglePendingTrait = (traitId) => {
   renderPlayLists();
 };
 
+const formatStatusTags = (item, kind) => {
+  const tags = [];
+  if (kind === "resource" && item.stationary) tags.push("Stationary");
+  if (item.used) tags.push("Checked");
+  if (item.lost) tags.push("Struck");
+  return tags;
+};
+
+const getLostMemoryTags = (memory) => {
+  if (memory.lostReason === "diary") return ["Lost with Diary"];
+  if (memory.lost) return ["Lost from Mind"];
+  return [];
+};
+
 const renderComposerColumn = (title, values = [], highlighted = false) => {
   const column = document.createElement("div");
   column.className = highlighted ? "composer-column composer-column-highlighted" : "composer-column";
@@ -499,10 +532,8 @@ const renderPlayComposer = () => {
   const targetIndex = targetMemoryId === null ? null : character.memories.findIndex((memory) => memory.id === targetMemoryId);
   const memory = targetIndex === null ? null : character.memories[targetIndex];
   const hasTarget = Boolean(memory);
-  // The composer scrap only appears while writing to a chosen memory.
-  elements.playExperienceForm.hidden = !hasTarget;
-  elements.playExperienceFormTitle.textContent = hasTarget ? `Writing on Memory ${targetIndex + 1}` : "Add experience";
-  elements.playExperienceSubmit.textContent = "write it down";
+  elements.playExperienceFormTitle.textContent = "Add experience";
+  elements.playExperienceSubmit.textContent = "Add experience";
   updatePlayExperienceActionState({ hasTarget });
   const usedTraits = getTraitGroups()
     .flatMap((group) => group.options)
@@ -537,347 +568,315 @@ const renderPlayComposer = () => {
   );
 };
 
-// ---------- desk building blocks ----------
+const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
+  const item = document.createElement("li");
+  item.id = `play-memory-${memory.id}`;
+  item.className = lost ? "record play-memory lost" : "record play-memory";
+  if (memory.lost) setRecordCollapsed("memory", memory.id, true);
+  const collapsed = isRecordCollapsed("memory", memory.id);
 
-const PHOTO_CORNERS = ["tl", "tr", "bl", "br"];
-const appendPhotoCorners = (element) => {
-  PHOTO_CORNERS.forEach((position) => {
-    const corner = document.createElement("i");
-    corner.className = `pc ${position}`;
-    element.append(corner);
-  });
-};
+  const body = document.createElement("div");
+  body.className = "record-body";
 
-const TICK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="#4a3826" stroke-width="2.4" stroke-linecap="round"><path d="M5 13 C8 15, 9 18, 10.5 17.5 C13 11, 17 6, 21 4"/></svg>';
-
-const createVerb = (label, handler, { quiet = false } = {}) => {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = quiet ? "verb quiet" : "verb";
-  button.textContent = label;
-  button.addEventListener("click", (event) => {
-    event.stopPropagation();
-    handler();
-  });
-  return button;
-};
-
-const moveMemoryToDiaryFlow = (memory) => {
-  if (!window.confirm("Copy this Memory into the Diary? Once written there it can gain no new Experiences.")) return;
-  if (character.diaryResource) {
-    if (!character.moveMemoryToDiary(memory.id)) return;
-    markDirty();
+  const titleRow = document.createElement("div");
+  titleRow.className = "record-title-row";
+  const titleGroup = document.createElement("div");
+  titleGroup.className = "record-title-group";
+  const toggleMemoryCollapsed = () => {
+    toggleRecordCollapsed("memory", memory.id);
     render();
-    return;
-  }
-  pendingDiaryMemoryId = memory.id;
-  activeModal = "diary";
-  render();
-};
-
-const buildMemorySlip = ({ memory, memoryIndex, lost = false }) => {
-  const item = document.createElement("li");
-  item.id = `play-memory-${memory.id}`;
-  item.className = lost ? "slip smoothed" : "slip";
-  item.tabIndex = 0;
-  appendPhotoCorners(item);
-
-  const title = document.createElement("div");
-  title.className = "stitle";
+  };
+  const title = document.createElement("strong");
   title.textContent = `Memory ${memoryIndex + 1}`;
+  titleGroup.append(title);
+  titleRow.append(titleGroup);
 
-  const lines = document.createElement("ul");
-  memory.experiences.forEach((experience) => {
-    const line = document.createElement("li");
-    line.textContent = experience.text;
-    lines.append(line);
-  });
-  const remaining = MAX_EXPERIENCES_PER_MEMORY - memory.experiences.length;
-  for (let index = 0; index < remaining; index += 1) {
-    const blank = document.createElement("li");
-    blank.className = "blank";
-    blank.innerHTML = index === 0 && !lost ? "a line remains&hellip;" : "&nbsp;";
-    lines.append(blank);
-  }
-
-  if (lost) {
-    // A smoothed (lost) slip is read flat on the desk floor — no fold mount.
-    item.append(title, lines);
-  } else {
-    // The .slip-body is the fold target: fixed to one mount height at rest,
-    // unfolded when the slip is lifted (see desk.js measureFolds).
-    const body = document.createElement("div");
-    body.className = "slip-body";
-    body.append(title, lines);
-    item.append(body);
-  }
-
-  const verbs = document.createElement("div");
-  verbs.className = lost ? "verbs always" : "verbs";
-  if (lost) {
-    verbs.append(createVerb("smooth it back in", () => {
-      character.setMemoryLost(memoryIndex, false);
-      markDirty();
-      render();
-    }));
-  } else {
-    if (memory.experiences.length >= MAX_EXPERIENCES_PER_MEMORY) {
-      const note = document.createElement("span");
-      note.className = "hand";
-      note.style.cssText = "font-size:1.02rem;color:var(--pen-faint);font-style:italic";
-      note.textContent = "full — no line remains";
-      verbs.append(note);
-    } else {
-      verbs.append(createVerb("write here", () => {
-        openExperienceComposer(memory.id);
+  const titleActions = document.createElement("div");
+  titleActions.className = "record-item-actions";
+  if (!lost && !memory.storedInDiary && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY && character.diaryMemories.length < MAX_DIARY_MEMORIES) {
+    titleActions.append(createInlineIconButton(
+      "Move to diary",
+      "notebook",
+      "record-inline-button",
+      () => {
+        if (!window.confirm("Move this Memory to the Diary? This cannot be undone. The Memory can no longer gain new Experiences.")) return;
+        if (character.diaryResource) {
+          if (!character.moveMemoryToDiary(memory.id)) return;
+          markDirty();
+          render();
+          return;
+        }
+        pendingDiaryMemoryId = memory.id;
+        activeModal = "diary";
         render();
-        elements.playExperienceText.focus();
-      }));
-    }
-    if (!memory.storedInDiary && character.diaryMemories.length < MAX_DIARY_MEMORIES) {
-      verbs.append(createVerb("copy into the diary", () => moveMemoryToDiaryFlow(memory)));
-    }
-    verbs.append(createVerb("rewrite", () => {
-      editingTrait = { kind: "memory", index: memoryIndex };
-      activeModal = "memory";
-      render();
-    }, { quiet: true }));
-    verbs.append(createVerb("lose it", () => {
-      character.setMemoryLost(memoryIndex, true);
+      },
+    ));
+  }
+  if (!lost) {
+    titleActions.append(createInlineIconButton(
+      experienceComposer.target === memory.id ? "Untarget memory" : "Target memory",
+      experienceComposer.target === memory.id ? "radio_button_checked" : "radio_button_unchecked",
+      "record-inline-button",
+      () => {
+        openExperienceComposer(experienceComposer.target === memory.id ? null : memory.id);
+        render();
+      },
+      { pressed: experienceComposer.target === memory.id },
+    ));
+    titleActions.append(createInlineIconButton(
+      "Edit memory experiences",
+      "edit",
+      "record-inline-button",
+      () => {
+        editingTrait = { kind: "memory", index: memoryIndex };
+        activeModal = "memory";
+        render();
+      },
+    ));
+  }
+  titleActions.append(createInlineIconButton(
+    lost ? "Restore memory" : "Strike out memory",
+    "x",
+    "record-inline-button",
+    () => {
+      character.setMemoryLost(memoryIndex, !memory.lost);
       markDirty();
       render();
-    }, { quiet: true }));
-  }
-  item.append(verbs);
-  return item;
-};
+    },
+    { pressed: lost },
+  ));
+  titleActions.append(createInlineIconButton(
+    collapsed ? "Expand memory" : "Collapse memory",
+    "keyboard_arrow_down",
+    "record-inline-button record-chevron-toggle",
+    toggleMemoryCollapsed,
+    { pressed: !collapsed },
+  ));
+  titleRow.append(titleActions);
 
-const buildDiaryEntry = ({ memory, memoryIndex }) => {
-  const item = document.createElement("li");
-  item.id = `play-memory-${memory.id}`;
-  item.className = "diary-entry";
-  const title = document.createElement("div");
-  title.className = "dtitle";
-  title.textContent = `Memory ${memoryIndex + 1}`;
-  item.append(title);
+  body.append(titleRow);
+  const details = document.createElement("div");
+  details.hidden = collapsed;
+
+  const experienceList = document.createElement("ol");
+  experienceList.className = "experience-list";
   memory.experiences.forEach((experience) => {
-    const paragraph = document.createElement("p");
-    paragraph.textContent = experience.text;
-    item.append(paragraph);
+    const experienceItem = document.createElement("li");
+    const text = document.createElement("p");
+    text.textContent = experience.text;
+    experienceItem.append(text);
+    experienceList.append(experienceItem);
   });
-  const note = document.createElement("p");
-  note.className = "dnote";
-  note.textContent = "written forever — this page can hold no more experiences";
-  item.append(note);
+  details.append(experienceList);
+
+  const memoryTags = lost ? getLostMemoryTags(memory) : (memory.storedInDiary ? ["In Diary"] : []);
+  if (memoryTags.length) {
+    const tags = document.createElement("div");
+    tags.className = "record-tags";
+    memoryTags.forEach((label) => {
+      const tag = document.createElement("span");
+      tag.className = "record-tag";
+      tag.textContent = label;
+      tags.append(tag);
+    });
+    details.append(tags);
+  }
+
+  body.append(details);
+  item.append(body);
   return item;
 };
 
 const renderDiaryCard = () => {
-  // The diary is a real, always-present second book (swapped in from the
-  // closed-book prop). Its content shows whatever has been written forever.
   const diaryResource = character.diaryResource;
+  elements.diaryCard.hidden = !diaryResource;
   elements.diaryDescription.textContent = diaryResource?.description
     ? `${diaryResource.description} (${character.diaryMemories.length}/${MAX_DIARY_MEMORIES})`
-    : `Nothing is written here yet (0/${MAX_DIARY_MEMORIES})`;
+    : `Diary (${character.diaryMemories.length}/${MAX_DIARY_MEMORIES})`;
   elements.diaryMemoryList.innerHTML = "";
 
+  if (!diaryResource) return;
   if (!character.diaryMemories.length) {
-    elements.diaryMemoryList.append(createEmptyRecord("No memories are stored in the diary."));
+    elements.diaryMemoryList.append(createEmptyRecord("No memories are stored in the Diary."));
     return;
   }
 
   character.diaryMemories.forEach((memory) => {
     const memoryIndex = character.memories.findIndex((entry) => entry.id === memory.id);
-    elements.diaryMemoryList.append(buildDiaryEntry({ memory, memoryIndex }));
+    elements.diaryMemoryList.append(renderMemoryRecord({ memory, memoryIndex }));
   });
-};
-
-const buildEmptyMount = () => {
-  const slot = document.createElement("li");
-  slot.className = "empty-slot";
-  appendPhotoCorners(slot);
-  const hint = document.createElement("div");
-  hint.className = "hint";
-  hint.textContent = "an empty mount — its memory lies crumpled on the desk";
-  slot.append(hint);
-  return slot;
 };
 
 const renderPlayMemoryList = () => {
   elements.playMemoryList.innerHTML = "";
   elements.playLostMemoryList.innerHTML = "";
-  const mountsPage = document.getElementById("play-memory-mounts");
-  if (mountsPage) mountsPage.innerHTML = "";
+  elements.lostMemoriesCard.hidden = true;
+  elements.playLostMemoryList.hidden = true;
+  elements.lostMemoriesToggle.setAttribute("aria-expanded", "false");
 
-  const nonDiary = character.memories
+  const visibleMemories = character.memories
     .map((memory, index) => ({ memory, index }))
     .filter(({ memory }) => !memory.storedInDiary);
-  const activeMemories = nonDiary.filter(({ memory }) => !memory.lost);
-  const lostMemories = nonDiary.filter(({ memory }) => memory.lost);
 
-  // Each memory slot is either a held slip or an empty photo-corner mount
-  // (remaining capacity is spatial, never a counter). The leaf splits the
-  // slots across the two pages: 2 sit at the bottom of the left page (under
-  // the explanatory blurb), the rest continue on the right page.
-  const LEFT_PAGE_SLOTS = 2;
-  const slotCount = Math.max(character.memorySlots, activeMemories.length);
-  const rightHost = mountsPage || elements.playMemoryList;
-  for (let slot = 0; slot < slotCount; slot += 1) {
-    const held = activeMemories[slot];
-    const element = held
-      ? buildMemorySlip({ memory: held.memory, memoryIndex: held.index })
-      : buildEmptyMount();
-    (slot < LEFT_PAGE_SLOTS ? elements.playMemoryList : rightHost).append(element);
-  }
-
-  // Lost memories become crumpled wads on the desk floor.
-  const hasLost = lostMemories.length > 0;
-  elements.lostMemoriesCard.hidden = !hasLost;
-  const lostExpanded = collapsedCards.has("lost-memories");
-  elements.playLostMemoryList.hidden = !lostExpanded;
-  elements.lostMemoriesToggle.setAttribute("aria-expanded", String(lostExpanded));
-  const wadLabel = elements.lostMemoriesToggle.querySelector(".wlabel");
-  if (wadLabel) {
-    wadLabel.textContent = lostMemories.length === 1
-      ? "one memory, crumpled — sort through it"
-      : `${lostMemories.length} memories, crumpled — sort through them`;
-  }
-  if (hasLost) {
-    lostMemories.forEach(({ memory, index }) => {
-      elements.playLostMemoryList.append(buildMemorySlip({ memory, memoryIndex: index, lost: true }));
+  if (!visibleMemories.length) {
+    elements.playMemoryList.append(createEmptyRecord("No active memories."));
+  } else {
+    visibleMemories.forEach(({ memory, index }) => {
+      elements.playMemoryList.append(renderMemoryRecord({ memory, memoryIndex: index, lost: memory.lost }));
     });
   }
   renderDiaryCard();
 };
 
-const traitMeta = (item, kind, selectedForExperience) => {
-  const parts = [];
-  if (kind === "character") parts.push(item.type === "mortal" ? "mortal" : "immortal");
-  if (kind === "resource" && item.stationary) parts.push("stationary");
-  if (item.used) parts.push("checked");
-  if (item.lost) parts.push("struck out");
-  if (selectedForExperience) parts.push("included");
-  return parts.join(" · ");
-};
-
-const applyTraitUsed = (kind, index, nextUsed) => {
-  if (kind === "character") {
-    character.setCharacterUsed(index, nextUsed);
-    if (nextUsed) character.setCharacterLost(index, false);
-  }
-  if (kind === "skill") {
-    character.setSkillUsed(index, nextUsed);
-    if (nextUsed) character.setSkillLost(index, false);
-  }
-  if (kind === "resource") {
-    character.setResourceUsed(index, nextUsed);
-    if (nextUsed) character.setResourceLost(index, false);
-  }
-};
-
-const applyTraitLost = (kind, index, nextLost) => {
-  if (kind === "character") {
-    character.setCharacterLost(index, nextLost);
-    if (nextLost) character.setCharacterUsed(index, false);
-  }
-  if (kind === "skill") {
-    character.setSkillLost(index, nextLost);
-    if (nextLost) character.setSkillUsed(index, false);
-  }
-  if (kind === "resource") {
-    character.setResourceLost(index, nextLost);
-    if (nextLost) character.setResourceUsed(index, false);
-  }
-};
-
 const renderTraitList = (listElement, items, kind) => {
   listElement.innerHTML = "";
   if (!items.length) {
-    listElement.append(createEmptyRecord(`Nothing written under ${kind}s yet.`));
+    listElement.append(createEmptyRecord(`No ${kind}s available.`));
     return;
   }
 
   items.forEach((item, index) => {
+    if (item.used || item.lost) setRecordCollapsed(kind, item.id, true);
+    const collapsed = isRecordCollapsed(kind, item.id);
+    const entry = document.createElement("li");
     const traitId = item.id;
     const selectedForExperience = pendingExperienceTraitIds.has(traitId);
-    const entry = document.createElement("li");
-    entry.className = ["entry", item.lost ? "gone" : "", selectedForExperience ? "included" : ""].filter(Boolean).join(" ");
-    entry.tabIndex = 0;
+    entry.className = ["record", item.used ? "used" : "", item.lost ? "lost" : ""].filter(Boolean).join(" ");
+    if (selectedForExperience) entry.classList.add("tag-target-active");
 
-    const eline = document.createElement("div");
-    eline.className = "eline";
-    if (kind === "skill" || kind === "resource") {
-      const tick = document.createElement("span");
-      tick.className = "tickbox";
-      if (item.used) tick.innerHTML = TICK_SVG;
-      eline.append(tick);
-    }
-    const name = document.createElement("span");
-    name.className = "ename";
-    name.textContent = item.name;
-    eline.append(name);
-    const metaText = traitMeta(item, kind, selectedForExperience);
-    if (metaText) {
-      const meta = document.createElement("span");
-      meta.className = "emeta";
-      meta.textContent = metaText;
-      eline.append(meta);
-    }
-    entry.append(eline);
+    const body = document.createElement("div");
+    body.className = "record-select";
+    const tagCurrentExperience = () => {
+      if (!experienceComposer.open) return;
+      pendingExperienceTraitIds.add(traitId);
+    };
+    const toggleCurrentExperienceSelection = () => {
+      togglePendingTrait(traitId);
+    };
 
-    if (item.description) {
-      const note = document.createElement("div");
-      note.className = "enote";
-      note.textContent = item.description;
-      entry.append(note);
-    }
+    const toggleChecked = () => {
+      if (kind === "mark") return;
+      const nextUsed = !item.used;
+      if (kind === "character") {
+        character.setCharacterUsed(index, nextUsed);
+        if (nextUsed) character.setCharacterLost(index, false);
+      }
+      if (kind === "skill") {
+        character.setSkillUsed(index, nextUsed);
+        if (nextUsed) character.setSkillLost(index, false);
+      }
+      if (kind === "resource") {
+        character.setResourceUsed(index, nextUsed);
+        if (nextUsed) character.setResourceLost(index, false);
+      }
+      if (nextUsed) tagCurrentExperience();
+      markDirty();
+      render();
+    };
+    const toggleStruck = () => {
+      if (kind === "mark") return;
+      const nextLost = !item.lost;
+      if (kind === "character") {
+        character.setCharacterLost(index, nextLost);
+        if (nextLost) character.setCharacterUsed(index, false);
+      }
+      if (kind === "skill") {
+        character.setSkillLost(index, nextLost);
+        if (nextLost) character.setSkillUsed(index, false);
+      }
+      if (kind === "resource") {
+        character.setResourceLost(index, nextLost);
+        if (nextLost) character.setResourceUsed(index, false);
+      }
+      if (nextLost) tagCurrentExperience();
+      markDirty();
+      render();
+    };
 
-    const verbs = document.createElement("div");
-    verbs.className = "verbs";
+    const bodyInner = document.createElement("div");
+    bodyInner.className = "record-body";
 
-    if (experienceComposer.open) {
-      verbs.append(createVerb(selectedForExperience ? "leave out" : "include here", () => {
-        togglePendingTrait(traitId);
-      }));
-    }
+    const contentColumn = document.createElement("div");
+    contentColumn.className = "record-trait-content";
+    const titleRow = document.createElement("div");
+    titleRow.className = "record-title-row";
+    const titleGroup = document.createElement("div");
+    titleGroup.className = "record-title-group";
 
+    const tags = formatStatusTags(item, kind);
+    if (kind === "character") tags.unshift(item.type === "mortal" ? "Mortal" : "Immortal");
+    if (selectedForExperience) tags.unshift("Included");
+    const hasSubitems = Boolean(item.description || tags.length);
+    const toggleTraitCollapsed = () => {
+      toggleRecordCollapsed(kind, item.id);
+      renderPlayLists();
+    };
+    const title = document.createElement("strong");
+    title.textContent = item.name;
+    titleGroup.append(title);
+    titleRow.append(titleGroup);
+
+    const actionRow = document.createElement("div");
+    actionRow.className = "record-item-actions";
+    actionRow.append(createInlineIconButton(
+      selectedForExperience ? "Remove from current experience" : "Include in current experience",
+      selectedForExperience ? "radio_button_checked" : "radio_button_unchecked",
+      "record-inline-button",
+      toggleCurrentExperienceSelection,
+      { pressed: selectedForExperience },
+    ));
+    actionRow.append(createInlineIconButton(`Edit ${kind}`, "edit", "record-inline-button", () => {
+      editingTrait = { kind, index };
+      activeModal = kind;
+      render();
+    }));
     if (kind === "mark") {
-      verbs.append(createVerb("rewrite", () => {
-        editingTrait = { kind, index };
-        activeModal = kind;
-        render();
-      }, { quiet: true }));
-      verbs.append(createVerb("remove", () => {
+      actionRow.append(createInlineIconButton("Remove mark", "delete", "record-inline-button", () => {
         character.removeMark(index);
         markDirty();
         render();
-      }, { quiet: true }));
-    } else {
-      verbs.append(createVerb(item.used ? "uncheck" : "check", () => {
-        const nextUsed = !item.used;
-        applyTraitUsed(kind, index, nextUsed);
-        if (nextUsed && experienceComposer.open) pendingExperienceTraitIds.add(traitId);
-        markDirty();
-        render();
       }));
-      if (kind === "resource" && character.diaryResource && character.diaryResource.id === traitId) {
-        verbs.append(createVerb("open the diary", () => showBook("diary")));
-      }
-      verbs.append(createVerb("rewrite", () => {
-        editingTrait = { kind, index };
-        activeModal = kind;
-        render();
-      }, { quiet: true }));
-      verbs.append(createVerb(item.lost ? "write it back" : "strike out", () => {
-        const nextLost = !item.lost;
-        applyTraitLost(kind, index, nextLost);
-        if (nextLost && experienceComposer.open) pendingExperienceTraitIds.add(traitId);
-        markDirty();
-        render();
-      }, { quiet: true }));
+    } else {
+      actionRow.append(
+        createInlineIconButton(item.used ? `Uncheck ${kind}` : `Check ${kind}`, item.used ? "square-check" : "square", "record-inline-button", toggleChecked, { pressed: item.used }),
+        createInlineIconButton(item.lost ? `Restore ${kind}` : `Strike out ${kind}`, "x", "record-inline-button", toggleStruck, { pressed: item.lost }),
+      );
+    }
+    actionRow.append(createInlineIconButton(
+      collapsed ? `Expand ${kind}` : `Collapse ${kind}`,
+      "keyboard_arrow_down",
+      "record-inline-button record-chevron-toggle",
+      toggleTraitCollapsed,
+      { pressed: !collapsed },
+    ));
+    titleRow.append(actionRow);
+
+    contentColumn.append(titleRow);
+    const details = document.createElement("div");
+    details.hidden = collapsed;
+    if (item.description) {
+      const text = document.createElement("p");
+      text.textContent = item.description;
+      details.append(text);
     }
 
-    entry.append(verbs);
+    if (tags.length) {
+      const tagWrap = document.createElement("div");
+      tagWrap.className = "record-tags";
+      tags.forEach((label) => {
+        const tag = document.createElement("span");
+        tag.className = label === "Included" ? "record-tag selected-trait" : "record-tag";
+        tag.textContent = label;
+        tagWrap.append(tag);
+      });
+      details.append(tagWrap);
+    }
+    if (hasSubitems) contentColumn.append(details);
+
+    bodyInner.append(contentColumn);
+    body.append(bodyInner);
+
+    entry.append(body);
     listElement.append(entry);
   });
 };
@@ -992,10 +991,6 @@ const renderPlayLists = () => {
   renderFormState("memory");
   renderFormState("character", editingTrait?.kind === "character" ? character.characters[editingTrait.index] : null);
   renderFormState("mark", editingTrait?.kind === "mark" ? character.marks[editingTrait.index] : null);
-
-  // Re-measure memory slips against their fixed mount so overflow folds under
-  // (creases + fold edge). Runs after layout settles for freshly-built slips.
-  requestAnimationFrame(() => measureFolds());
 };
 
 const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
@@ -1004,9 +999,6 @@ const renderPromptPanel = () => {
   const model = getPromptPanelViewModel(promptState);
   elements.promptButton.disabled = model.disabled;
   elements.promptText.textContent = model.text;
-  // Mirror the prompt onto the gutter tab (the mobile filed-sheet preview).
-  const promptTabText = document.getElementById("prompt-tab-text");
-  if (promptTabText) promptTabText.textContent = model.text;
 };
 
 const loadPromptDeck = async () => {
@@ -1254,8 +1246,18 @@ const initialize = () => {
   const vampires = loadStoredVampires();
   selectedVampireId = vampires[0]?.id ?? "";
   INITIAL_COLLAPSED_CARD_KEYS.forEach((key) => collapsedCards.add(key));
+  [
+    elements.addMemoryButton,
+    elements.addSkillButton,
+    elements.addResourceButton,
+    elements.addCharacterButton,
+    elements.addMarkButton,
+  ].forEach((button) => {
+    if (!button) return;
+    button.replaceChildren(createMaterialIcon("plus"));
+  });
+  if (elements.promptButton) elements.promptButton.replaceChildren(createMaterialIcon("casino"));
   hydrateStaticIcons();
-  initDeskInteractions();
   bindModalCloseEvents(closeModalAndResetPlayForms);
   bindEscapeKeyHandler(() => activeModal !== null, closeModalAndResetPlayForms);
   bindCardToggleEvents((key) => {

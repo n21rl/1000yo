@@ -63,25 +63,6 @@ export const MATERIAL_ICON_NODES = {
   local_fire_department: [
     ["path", { d: "M12 3c1.5 2.5 4.5 4.4 4.5 8.1A4.5 4.5 0 1 1 7.5 11c0-1.8.8-3.2 2.3-4.8.2 1.5 1 2.4 2.2 3.1C13 7.8 13 5.7 12 3z" }],
   ],
-  edit: [
-    ["path", { d: "M5 19h3l10-10-3-3L5 16v3z" }],
-    ["path", { d: "M13.5 7.5l3 3" }],
-  ],
-  casino: [
-    ["rect", { x: "4.5", y: "4.5", width: "15", height: "15", rx: "3" }],
-    ["circle", { cx: "9", cy: "9", r: "0.8", fill: "currentColor" }],
-    ["circle", { cx: "15", cy: "9", r: "0.8", fill: "currentColor" }],
-    ["circle", { cx: "12", cy: "12", r: "0.8", fill: "currentColor" }],
-    ["circle", { cx: "9", cy: "15", r: "0.8", fill: "currentColor" }],
-    ["circle", { cx: "15", cy: "15", r: "0.8", fill: "currentColor" }],
-  ],
-  radio_button_unchecked: [
-    ["circle", { cx: "12", cy: "12", r: "8" }],
-  ],
-  radio_button_checked: [
-    ["circle", { cx: "12", cy: "12", r: "8" }],
-    ["circle", { cx: "12", cy: "12", r: "3.5", fill: "currentColor", stroke: "none" }],
-  ],
 };
 
 export const resolveMaterialIconName = (name) => ({
@@ -115,7 +96,6 @@ export const createMaterialFallbackIcon = (name, classNames = []) => {
 
 export const createMaterialIcon = (name, classNames = []) => {
   const resolvedName = resolveMaterialIconName(name);
-  if (MATERIAL_ICON_NODES[resolvedName]) return createMaterialFallbackIcon(resolvedName, classNames);
   const img = document.createElement("img");
   img.classList.add("material-icon", ...classNames);
   img.alt = "";

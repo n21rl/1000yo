@@ -593,7 +593,7 @@ const renderMemoryRecord = ({ memory, memoryIndex, lost = false }) => {
 
   const titleActions = document.createElement("div");
   titleActions.className = "record-item-actions";
-  if (!lost && !memory.storedInDiary && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY && character.diaryMemories.length < MAX_DIARY_MEMORIES) {
+  if (!lost && !memory.storedInDiary && character.diaryMemories.length < MAX_DIARY_MEMORIES) {
     titleActions.append(createInlineIconButton(
       "Move to diary",
       "notebook",
@@ -728,6 +728,36 @@ const renderPlayMemoryList = () => {
   renderDiaryCard();
 };
 
+const applyTraitUsed = (kind, index, nextUsed) => {
+  if (kind === "character") {
+    character.setCharacterUsed(index, nextUsed);
+    if (nextUsed) character.setCharacterLost(index, false);
+  }
+  if (kind === "skill") {
+    character.setSkillUsed(index, nextUsed);
+    if (nextUsed) character.setSkillLost(index, false);
+  }
+  if (kind === "resource") {
+    character.setResourceUsed(index, nextUsed);
+    if (nextUsed) character.setResourceLost(index, false);
+  }
+};
+
+const applyTraitLost = (kind, index, nextLost) => {
+  if (kind === "character") {
+    character.setCharacterLost(index, nextLost);
+    if (nextLost) character.setCharacterUsed(index, false);
+  }
+  if (kind === "skill") {
+    character.setSkillLost(index, nextLost);
+    if (nextLost) character.setSkillUsed(index, false);
+  }
+  if (kind === "resource") {
+    character.setResourceLost(index, nextLost);
+    if (nextLost) character.setResourceUsed(index, false);
+  }
+};
+
 const renderTraitList = (listElement, items, kind) => {
   listElement.innerHTML = "";
   if (!items.length) {
@@ -757,18 +787,7 @@ const renderTraitList = (listElement, items, kind) => {
     const toggleChecked = () => {
       if (kind === "mark") return;
       const nextUsed = !item.used;
-      if (kind === "character") {
-        character.setCharacterUsed(index, nextUsed);
-        if (nextUsed) character.setCharacterLost(index, false);
-      }
-      if (kind === "skill") {
-        character.setSkillUsed(index, nextUsed);
-        if (nextUsed) character.setSkillLost(index, false);
-      }
-      if (kind === "resource") {
-        character.setResourceUsed(index, nextUsed);
-        if (nextUsed) character.setResourceLost(index, false);
-      }
+      applyTraitUsed(kind, index, nextUsed);
       if (nextUsed) tagCurrentExperience();
       markDirty();
       render();
@@ -776,18 +795,7 @@ const renderTraitList = (listElement, items, kind) => {
     const toggleStruck = () => {
       if (kind === "mark") return;
       const nextLost = !item.lost;
-      if (kind === "character") {
-        character.setCharacterLost(index, nextLost);
-        if (nextLost) character.setCharacterUsed(index, false);
-      }
-      if (kind === "skill") {
-        character.setSkillLost(index, nextLost);
-        if (nextLost) character.setSkillUsed(index, false);
-      }
-      if (kind === "resource") {
-        character.setResourceLost(index, nextLost);
-        if (nextLost) character.setResourceUsed(index, false);
-      }
+      applyTraitLost(kind, index, nextLost);
       if (nextLost) tagCurrentExperience();
       markDirty();
       render();

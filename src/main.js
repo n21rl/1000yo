@@ -50,7 +50,7 @@ const selectedLaterTraitIds = new Set();
 const selectedCurseTraitIds = new Set();
 const pendingExperienceTraitIds = new Set();
 let editingTrait = null;
-let experienceComposer = { open: true, target: null };
+let experienceComposer = { target: null };
 let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
@@ -160,7 +160,7 @@ const persistCurrentCharacter = () => {
 const resetPlayState = () => {
   pendingExperienceTraitIds.clear();
   editingTrait = null;
-  experienceComposer = { open: true, target: null };
+  experienceComposer = { target: null };
   activeModal = null;
   pendingDiaryMemoryId = "";
 };
@@ -465,7 +465,6 @@ const renderDetailList = (listElement, items, removeItem) => {
 };
 
 const togglePendingTrait = (traitId) => {
-  if (!experienceComposer.open) return;
   if (pendingExperienceTraitIds.has(traitId)) pendingExperienceTraitIds.delete(traitId);
   else pendingExperienceTraitIds.add(traitId);
   renderPlayLists();
@@ -512,11 +511,11 @@ const renderComposerColumn = (title, values = [], highlighted = false) => {
 };
 
 const openExperienceComposer = (target = null) => {
-  experienceComposer = { open: true, target };
+  experienceComposer = { target };
 };
 
 const closeExperienceComposer = () => {
-  experienceComposer = { open: true, target: null };
+  experienceComposer = { target: null };
   pendingExperienceTraitIds.clear();
   elements.playExperienceForm.reset();
 };
@@ -777,7 +776,6 @@ const renderTraitList = (listElement, items, kind) => {
     const body = document.createElement("div");
     body.className = "record-select";
     const tagCurrentExperience = () => {
-      if (!experienceComposer.open) return;
       pendingExperienceTraitIds.add(traitId);
     };
     const toggleCurrentExperienceSelection = () => {

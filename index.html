@@ -12,18 +12,18 @@
   </head>
   <body>
     <main class="app">
-      <section id="app-hero" class="hero">
-        <div class="hero-title-row">
-          <h1 id="hero-title">1000yo</h1>
-        </div>
-      </section>
-
       <section id="menu-screen" class="menu-screen">
         <ul id="vampire-list" class="menu-vampire-list"></ul>
         <button type="button" id="new-vampire-button" class="menu-new-button">New character</button>
       </section>
 
       <section id="creation-screen" class="wizard" hidden>
+        <div class="play-header">
+          <div class="play-header-identity">
+            <span class="play-header-dot"></span>
+            <span id="wizard-header-name" class="play-header-name">New Vampire</span>
+          </div>
+        </div>
         <div class="wizard-header">
           <span id="wizard-step-label" class="wizard-step-label">Identity</span>
           <span id="step-progress" class="wizard-step-count">1 / 8</span>
@@ -32,6 +32,7 @@
           <div id="step-progress-fill" class="wizard-progress-fill"></div>
         </div>
 
+        <div class="wizard-steps-scroll">
         <section class="step-panel" data-step-panel="0">
           <h2 class="wizard-step-title">Name your vampire</h2>
           <p class="wizard-step-hint">Choose a name and write your first defining memory.</p>
@@ -182,6 +183,7 @@
 
           <ul id="curse-memory-list" class="wizard-added-list"></ul>
         </section>
+        </div>
 
         <div class="wizard-nav">
           <button type="button" class="wizard-back-button" id="back-button">Back</button>

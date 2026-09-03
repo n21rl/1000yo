@@ -1120,14 +1120,8 @@ const renderCollapsibleCards = () => {
   });
 };
 
-const renderHero = () => {
-  if (elements.heroSection) elements.heroSection.hidden = currentScreen === "play";
-  elements.heroTitle.textContent = "1000yo";
-};
-
 const render = () => {
   setScreen(currentScreen);
-  renderHero();
   renderMenu();
   renderCreation();
   renderPlayLists();

@@ -33,7 +33,8 @@
 
 body {
   margin: 0;
-  min-height: 100vh;
+  height: 100%;
+  overflow: hidden;
   background: var(--color-bg);
 }
 
@@ -48,24 +49,20 @@ select {
   font: inherit;
 }
 
+html {
+  height: 100%;
+}
+
 .app {
   margin: 0;
   padding: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
-.hero {
-  padding: 0.5rem 0 0.35rem;
-}
-
-.hero-title-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-}
-
-.hero-title-row h1 {
-  margin-bottom: 0;
+.app > section {
+  height: 100%;
+  overflow: hidden;
 }
 
 h1,
@@ -288,16 +285,25 @@ button:disabled {
 }
 
 .menu-screen {
-  min-height: 100vh;
-  padding: 1.5rem 0.9rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 1.5rem 0.9rem calc(0.9rem + var(--safe-bottom));
   background: var(--color-bg);
   font-family: var(--font-sans);
 }
 
 .menu-vampire-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   list-style: none;
   margin: 0 0 1rem;
   padding: 0;
+}
+
+.menu-new-button {
+  flex-shrink: 0;
 }
 
 .menu-vampire-item {
@@ -423,18 +429,39 @@ button:disabled {
    bleed into the still-legacy-styled play screen (Phase 6+), which
    reuses some of the same base classes (label/input/textarea/.record-tag). */
 .wizard {
-  min-height: 100vh;
-  padding: 1.25rem 0.9rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
   background: var(--color-bg);
   font-family: var(--font-sans);
   color: var(--color-text-primary);
+  padding-top: var(--safe-top);
+}
+
+.wizard .play-header {
+  flex-shrink: 0;
+  padding-left: 0.9rem;
+  padding-right: 0.9rem;
+}
+
+.wizard-steps-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 0.9rem;
+}
+
+.step-panel {
+  padding: 0.75rem 0 1.5rem;
 }
 
 .wizard-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
   margin-bottom: 0.5rem;
+  padding: 0.75rem 0.9rem 0;
 }
 
 .wizard-step-label {
@@ -454,8 +481,8 @@ button:disabled {
 .wizard-progress-track {
   height: 2px;
   background: var(--color-border);
-  width: 100%;
-  margin-bottom: 1.5rem;
+  flex-shrink: 0;
+  margin: 0 0.9rem 1.5rem;
 }
 
 .wizard-progress-fill {
@@ -661,6 +688,8 @@ button:disabled {
 .wizard-nav {
   display: flex;
   gap: 0.75rem;
+  flex-shrink: 0;
+  padding: 0.75rem 0.9rem calc(0.75rem + var(--safe-bottom));
 }
 
 .wizard-back-button,
@@ -692,7 +721,8 @@ button:disabled {
 }
 
 .wizard-save-confirmation {
-  margin: 1rem 0 0;
+  flex-shrink: 0;
+  margin: 0 0.9rem calc(0.9rem + var(--safe-bottom));
   padding: 0.75rem 0.9rem;
   border: 1px solid var(--color-positive);
   border-radius: var(--radius);
@@ -912,7 +942,7 @@ button:disabled {
 /* Play screen (Phases 6-9). Fully scoped under .play-shell — the shared
    trait modal (#play-trait-modal) is restyled separately, below. */
 .play-shell {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
   background: var(--color-bg);
@@ -1091,6 +1121,7 @@ button:disabled {
 
 .play-tabs-body {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 0 1.25rem;
 }

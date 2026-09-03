@@ -37,6 +37,7 @@ export const renderCreation = ({
   syncSelectedTraits(selectedLaterTraitIds);
   syncSelectedTraits(selectedCurseTraitIds);
   elements.nameInput.value = character.name;
+  if (elements.wizardHeaderName) elements.wizardHeaderName.textContent = character.name || "New Vampire";
   renderMemoryList(elements.identityMemoryList, 0, 1);
   renderCharacterList(elements.mortalList, "mortal");
   renderDetailList(elements.skillList, character.skills, (index) => character.removeSkill(index));

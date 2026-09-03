@@ -16,6 +16,11 @@ export const handleRouteChange = async ({
     render();
     return;
   }
+  if (screen === "saves") {
+    setScreen("saves");
+    render();
+    return;
+  }
   if (screen === "creation") {
     if (!getSelectedVampireId()) {
       startNewVampire();
@@ -38,5 +43,5 @@ export const handleRouteChange = async ({
   }
   loadCharacter(storedCharacter);
   resetCreationForms();
-  await startPlay(true);
+  await startPlay();
 };

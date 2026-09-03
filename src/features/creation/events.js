@@ -19,9 +19,7 @@ export const bindCreationEvents = ({
   setHasSavedSetup,
   persistCurrentCharacter,
   startPlay,
-  startNewVampire,
 }) => {
-  elements.newVampireButton.addEventListener("click", () => startNewVampire());
   elements.nameInput.addEventListener("input", () => {
     markDirty();
     getCharacter().rename(elements.nameInput.value);

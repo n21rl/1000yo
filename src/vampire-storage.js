@@ -42,3 +42,15 @@ export const upsertVampireRecord = (vampires, record) => {
   else next.push(record);
   return next;
 };
+
+export const sortVampiresByUpdatedAt = (vampires) => (
+  [...vampires].sort((a, b) => new Date(b?.updatedAt ?? 0).getTime() - new Date(a?.updatedAt ?? 0).getTime())
+);
+
+export const getLatestVampire = (vampires, excludeId = "") => (
+  sortVampiresByUpdatedAt(vampires.filter((entry) => entry?.id !== excludeId))[0] ?? null
+);
+
+export const getLatestIncompleteVampire = (vampires, excludeId = "") => (
+  sortVampiresByUpdatedAt(vampires.filter((entry) => entry?.id !== excludeId && !entry?.isComplete))[0] ?? null
+);

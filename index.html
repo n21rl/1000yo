@@ -13,8 +13,27 @@
   <body>
     <main class="app">
       <section id="menu-screen" class="menu-screen">
-        <ul id="vampire-list" class="menu-vampire-list"></ul>
-        <button type="button" id="new-vampire-button" class="menu-new-button">New character</button>
+        <div class="menu-brand">
+          <h1 class="menu-title">1000yo</h1>
+        </div>
+        <div class="menu-actions">
+          <button type="button" id="menu-continue-button" class="menu-continue-button" hidden>
+            <span class="menu-continue-label">Continue</span>
+            <span id="menu-continue-name" class="menu-continue-name"></span>
+          </button>
+          <button type="button" id="new-vampire-button" class="menu-new-button">New Vampire</button>
+          <button type="button" id="menu-saves-button" class="menu-new-button">Saves</button>
+        </div>
+      </section>
+
+      <section id="saves-screen" class="saves-screen" hidden>
+        <div class="play-header">
+          <button type="button" id="saves-back-button" class="play-header-back">← Home</button>
+          <div class="play-header-identity">
+            <span class="play-header-name">Saves</span>
+          </div>
+        </div>
+        <ul id="saves-vampire-list" class="menu-vampire-list"></ul>
       </section>
 
       <section id="creation-screen" class="wizard" hidden>

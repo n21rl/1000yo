@@ -287,10 +287,64 @@ button:disabled {
 .menu-screen {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  gap: 2.5rem;
   height: 100%;
-  padding: 1.5rem 0.9rem calc(0.9rem + var(--safe-bottom));
+  padding: 1.5rem 1.25rem calc(1.5rem + var(--safe-bottom));
   background: var(--color-bg);
   font-family: var(--font-sans);
+}
+
+.menu-brand {
+  text-align: center;
+}
+
+.menu-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2.4rem, 10vw, 3.4rem);
+  letter-spacing: 0.02em;
+  color: var(--color-text-primary);
+}
+
+.menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.menu-continue-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  width: 100%;
+  padding: 1rem;
+}
+
+.menu-continue-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.menu-continue-name {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+}
+
+.saves-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  padding-top: var(--safe-top);
+}
+
+.saves-screen .menu-vampire-list {
+  padding: 0.5rem 0.9rem calc(0.9rem + var(--safe-bottom));
 }
 
 .menu-vampire-list {
@@ -300,10 +354,6 @@ button:disabled {
   list-style: none;
   margin: 0 0 1rem;
   padding: 0;
-}
-
-.menu-new-button {
-  flex-shrink: 0;
 }
 
 .menu-vampire-item {
@@ -374,7 +424,7 @@ button:disabled {
   color: var(--color-accent);
 }
 
-.menu-vampire-delete {
+.menu-vampire-more {
   flex-shrink: 0;
   width: 1.75rem;
   height: 1.75rem;
@@ -388,14 +438,24 @@ button:disabled {
   cursor: pointer;
 }
 
-.menu-vampire-delete .material-icon {
+.menu-vampire-more .material-icon {
   width: 1rem;
   height: 1rem;
   color: inherit;
 }
 
-.menu-vampire-delete:hover {
+.menu-vampire-more:hover {
   color: var(--color-accent);
+}
+
+.menu-vampire-status {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-accent);
+  margin-top: 0.15rem;
 }
 
 .menu-new-button {
@@ -1788,6 +1848,7 @@ button:disabled {
    redesigned screen is full-bleed with no outer card/margin. */
 @media (min-width: 640px) {
   .menu-screen,
+  .saves-screen,
   .wizard,
   .play-shell {
     max-width: 26rem;

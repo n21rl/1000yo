@@ -6,12 +6,15 @@ This is an unofficial fan project and is not affiliated with Tim Hutchings or th
 
 ## Features
 
-- Multi-character save menu backed by browser `localStorage`
+- Multi-character save menu backed by browser `localStorage`, with a
+  Continue/Saves/New Vampire home screen — saves that haven't finished
+  character creation are kept but can't be entered into play until
+  they're complete
 - 8-step character creation wizard with validation and step autofill
 - Prompt play screen that loads `refs/prompts.csv` (`a`, `b`, `c` entries per prompt)
 - Memory model: `5` active memory slots, up to `3` experiences per memory, and optional diary storage for up to `4` preserved memories
 - Trait tracking for characters, skills, resources, and marks (used/lost states)
-- Hash routes for direct navigation: `#/menu`, `#/create`, `#/play/<vampire-id>`
+- Hash routes for direct navigation: `#/menu`, `#/saves`, `#/create`, `#/play/<vampire-id>`
 
 ## Tech Stack
 

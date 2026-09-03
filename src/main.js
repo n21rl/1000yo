@@ -5,6 +5,8 @@ import {
 } from "./prompt-deck.js";
 import {
   createStoredRecord,
+  getLatestIncompleteVampire,
+  getLatestVampire,
   getStoredVampires,
   saveStoredVampires,
   upsertVampireRecord,
@@ -34,6 +36,8 @@ import {
 } from "./navigation.js";
 import { parseRouteHash } from "./router.js";
 import { renderMenu as renderMenuView } from "./features/menu/rendering.js";
+import { bindMenuEvents } from "./features/menu/events.js";
+import { renderSaves as renderSavesView } from "./features/saves/rendering.js";
 import { renderCreation as renderCreationView, renderStep as renderStepView } from "./features/creation/rendering.js";
 import { bindCreationEvents } from "./features/creation/events.js";
 import { bindPlayEvents } from "./features/play/events.js";
@@ -238,6 +242,52 @@ const startNewVampire = () => {
   render();
 };
 
+const openVampireEntry = (vampire) => {
+  loadCharacter(vampire);
+  resetCreationForms();
+  void startPlay();
+};
+
+const renameVampireRecord = (vampireId, nextName) => {
+  const cleanedName = cleanText(nextName);
+  if (!cleanedName) return false;
+  if (vampireId === selectedVampireId) {
+    if (!character.rename(cleanedName)) return false;
+    markDirty();
+    return true;
+  }
+  const vampires = loadStoredVampires();
+  if (!vampires.some((entry) => entry.id === vampireId)) return false;
+  const updated = vampires.map((entry) => (
+    entry.id === vampireId
+      ? { ...entry, updatedAt: new Date().toISOString(), data: { ...entry.data, name: cleanedName } }
+      : entry
+  ));
+  persistStoredVampires(updated);
+  return true;
+};
+
+const startNewVampireFlow = async () => {
+  const latestIncomplete = getLatestIncompleteVampire(loadStoredVampires(), TEST_VAMPIRE_ID);
+  if (!latestIncomplete) {
+    startNewVampire();
+    return;
+  }
+  const displayName = latestIncomplete.data?.name || "Unnamed Vampire";
+  const choice = await openActionSheet({
+    title: "Unfinished vampire",
+    actions: [
+      { id: "continue", label: `Continue ${displayName}` },
+      { id: "fresh", label: "Start a new vampire" },
+    ],
+  });
+  if (choice === "continue") {
+    openVampireEntry(latestIncomplete);
+    return;
+  }
+  if (choice === "fresh") startNewVampire();
+};
+
 const markDirty = () => {
   hasSavedSetup = false;
   persistCurrentCharacter();
@@ -387,11 +437,16 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
 const renderMenu = () => renderMenuView({
   elements,
   loadStoredVampires,
-  loadCharacter,
-  resetCreationForms,
-  startPlay,
+  getLatestVampire,
+  testVampireId: TEST_VAMPIRE_ID,
+});
+
+const renderSaves = () => renderSavesView({
+  elements,
+  loadStoredVampires,
   persistStoredVampires,
-  setScreen,
+  openVampireEntry,
+  renameVampire: renameVampireRecord,
   render,
   getSelectedVampireId: () => selectedVampireId,
   setSelectedVampireId: (value) => {
@@ -400,6 +455,8 @@ const renderMenu = () => renderMenuView({
   testVampireId: TEST_VAMPIRE_ID,
   createIcon: createMaterialFallbackIcon,
   openConfirmDialog,
+  openActionSheet,
+  openPromptDialog,
 });
 
 const getMemoryRecords = (startIndex, endIndexExclusive) => character.memories
@@ -1047,8 +1104,16 @@ const loadPromptDeck = async () => {
   }
 };
 
-const startPlay = async (skipCreationGate = false) => {
-  if (!skipCreationGate && !character.isReadyForPromptOne()) {
+const getFirstIncompleteStepIndex = () => {
+  for (let index = 0; index < totalSteps; index += 1) {
+    if (!isStepComplete(index)) return index;
+  }
+  return 0;
+};
+
+const startPlay = async () => {
+  if (!character.isReadyForPromptOne()) {
+    currentStep = getFirstIncompleteStepIndex();
     setScreen("creation", { updateRoute: true });
     render();
     return;
@@ -1123,6 +1188,7 @@ const renderCollapsibleCards = () => {
 const render = () => {
   setScreen(currentScreen);
   renderMenu();
+  renderSaves();
   renderCreation();
   renderPlayLists();
   renderPromptPanel();
@@ -1215,7 +1281,17 @@ bindCreationEvents({
   },
   persistCurrentCharacter,
   startPlay,
-  startNewVampire,
+});
+
+bindMenuEvents({
+  elements,
+  startNewVampireFlow,
+  openVampireEntry,
+  loadStoredVampires,
+  getLatestVampire,
+  testVampireId: TEST_VAMPIRE_ID,
+  setScreen,
+  render,
 });
 
 bindPlayEvents({
@@ -1295,7 +1371,13 @@ const initialize = () => {
   if (elements.newVampireButton) {
     elements.newVampireButton.replaceChildren(
       createMaterialFallbackIcon("add"),
-      document.createTextNode("New character"),
+      document.createTextNode("New Vampire"),
+    );
+  }
+  if (elements.menuSavesButton) {
+    elements.menuSavesButton.replaceChildren(
+      createMaterialFallbackIcon("sticky_note_2"),
+      document.createTextNode("Saves"),
     );
   }
   document.querySelectorAll(".play-more-icon, .play-memory-more-icon").forEach((el) => el.replaceChildren(createMaterialFallbackIcon("more_vert")));

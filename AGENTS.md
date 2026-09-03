@@ -60,13 +60,35 @@ shapes. Revisit this once there are players whose games matter.
 `design/MOBILE_REDESIGN_SPEC.md`. That file records the design rationale;
 this section records the load-bearing facts the implementation settled on.
 
-- **Screens**: `#menu-screen` (Home), `#creation-screen` (8-step wizard,
-  unchanged step order/gating logic from before the redesign — only the
-  visual language changed), `#play-screen` (bottom-tab shell: header,
-  collapsible prompt card, Memories/Traits/Diary tabs, bottom nav). All
-  three are full-bleed on mobile; a centered column with side borders
-  applies above 640px (`@media (min-width: 640px)` in `styles.css`) as a
-  placeholder desktop treatment, not a dedicated desktop redesign.
+- **Screens**: `#menu-screen` (Home — Continue / Saves / New Vampire),
+  `#saves-screen` (Saves — every stored vampire, load/rename/delete),
+  `#creation-screen` (8-step wizard, unchanged step order/gating logic
+  from before the redesign — only the visual language changed),
+  `#play-screen` (bottom-tab shell: header, collapsible prompt card,
+  Memories/Traits/Diary tabs, bottom nav). All four are full-bleed on
+  mobile; a centered column with side borders applies above 640px
+  (`@media (min-width: 640px)` in `styles.css`) as a placeholder desktop
+  treatment, not a dedicated desktop redesign. Routes: `#/menu`,
+  `#/saves`, `#/create`, `#/play/<id>` (`src/router.js`,
+  `src/navigation.js`).
+- **Home screen**: Continue jumps to the vampire with the newest
+  `updatedAt` (`getLatestVampire` in `vampire-storage.js`), completed or
+  not. Saves lists every stored vampire (including the always-present
+  preset Test Vampire, non-renameable/non-deletable) with a per-row More
+  menu for rename/delete, reusing the existing action-sheet + prompt/
+  confirm-dialog pattern from the Play screen's More menu — not a new
+  dialog system. New Vampire checks for an in-progress save
+  (`getLatestIncompleteVampire`, excluding the preset) and asks
+  Continue-vs-fresh before creating a new blank character; the old
+  unfinished save is left in Saves either way, never auto-deleted.
+- **Completion gate**: `startPlay()` (`src/main.js`) is the single choke
+  point — it checks `character.isReadyForPromptOne()` itself and routes
+  to creation (resuming at the first incomplete step) instead of Play
+  when unmet. Every entry point that opens a stored vampire (Continue,
+  a Saves row, the direct `#/play/<id>` route) must call `startPlay()`
+  and let it decide; nothing upstream may skip that check to force entry
+  into Play. A save's completeness never affects whether it's kept in
+  storage — only whether it's playable.
 - **Design tokens**: `--color-*`/`--font-*`/`--radius`/`--safe-*` custom
   properties in `styles.css`'s `:root`. New UI should read these, not
   hardcode hex/font values — the pre-redesign palette (`#f6eddc`,

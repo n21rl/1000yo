@@ -13,12 +13,16 @@ const buildRequirement = (label, count, minimum) => ({
   met: count >= minimum,
 });
 
+const cleanOrder = (value) => (Number.isFinite(value) ? value : null);
+
 const createTrackableItem = (item = {}, prefix = "trait") => ({
   id: cleanText(item?.id) || createId(prefix),
   name: cleanText(item?.name),
   description: cleanText(item?.description),
   used: Boolean(item?.used),
   lost: Boolean(item?.lost),
+  createdOrder: cleanOrder(item?.createdOrder),
+  usedOrder: cleanOrder(item?.usedOrder),
 });
 
 const createResource = (item = {}) => ({
@@ -30,6 +34,7 @@ const createMark = (item = {}) => ({
   id: cleanText(item?.id) || createId("mark"),
   name: cleanText(item?.name),
   description: cleanText(item?.description),
+  createdOrder: cleanOrder(item?.createdOrder),
 });
 
 const createExperience = (experience = {}, traitLookup = new Map()) => {
@@ -40,6 +45,7 @@ const createExperience = (experience = {}, traitLookup = new Map()) => {
 
   return {
     text: cleanText(experience?.text),
+    prompt: cleanText(experience?.prompt),
     traitIds: traitIds
       .map((traitId) => {
         const cleanedId = cleanText(traitId);
@@ -57,10 +63,12 @@ const createMemory = (memory = {}, traitLookup = new Map()) => {
 
   return {
     id: cleanText(memory?.id) || createId("memory"),
+    title: cleanText(memory?.title),
     experiences: experiences.slice(0, MAX_EXPERIENCES_PER_MEMORY),
     lost: Boolean(memory?.lost),
     storedInDiary: Boolean(memory?.storedInDiary),
     lostReason: cleanText(memory?.lostReason),
+    createdOrder: cleanOrder(memory?.createdOrder),
   };
 };
 
@@ -85,6 +93,8 @@ const parseMemorySlots = (value) => {
 };
 
 export class Character {
+  #orderCounter = 0;
+
   constructor(name = "") {
     this.name = cleanText(name);
     this.memorySlots = DEFAULT_MEMORY_SLOTS;
@@ -144,6 +154,16 @@ export class Character {
       : [];
     character.diary = createDiary(data.diary, character.resources);
     character.#syncDiaryState();
+
+    const seenOrders = [
+      ...character.skills.flatMap((item) => [item.createdOrder, item.usedOrder]),
+      ...character.resources.flatMap((item) => [item.createdOrder, item.usedOrder]),
+      ...character.characters.flatMap((item) => [item.createdOrder, item.usedOrder]),
+      ...character.marks.map((item) => item.createdOrder),
+      ...character.memories.map((item) => item.createdOrder),
+    ].filter((value) => Number.isFinite(value));
+    character.#orderCounter = seenOrders.length ? Math.max(...seenOrders) : 0;
+
     return character;
   }
 
@@ -159,8 +179,8 @@ export class Character {
     return true;
   }
 
-  addMemory(experience, traitIds = [], memoryId = null) {
-    const cleanedExperience = createExperience({ text: experience, traitIds }, this.#buildTraitLookup());
+  addMemory(experience, traitIds = [], memoryId = null, promptStamp = "") {
+    const cleanedExperience = createExperience({ text: experience, traitIds, prompt: promptStamp }, this.#buildTraitLookup());
     if (!cleanedExperience.text) return false;
 
     if (memoryId !== null) {
@@ -173,11 +193,20 @@ export class Character {
     if (this.activeMemories.length >= this.memorySlots) return false;
     this.memories.push({
       id: createId("memory"),
+      title: "",
       experiences: [cleanedExperience],
       lost: false,
       storedInDiary: false,
       lostReason: "",
+      createdOrder: this.#nextOrder(),
     });
+    return true;
+  }
+
+  renameMemory(index, title) {
+    const memory = this.memories[index];
+    if (!memory) return false;
+    memory.title = cleanText(title);
     return true;
   }
 
@@ -237,7 +266,7 @@ export class Character {
   }
 
   setSkillUsed(index, used) {
-    return this.#setBoolean(this.skills, index, "used", used);
+    return this.#setUsed(this.skills, index, used);
   }
 
   setSkillLost(index, lost) {
@@ -257,7 +286,7 @@ export class Character {
   }
 
   setResourceUsed(index, used) {
-    return this.#setBoolean(this.resources, index, "used", used);
+    return this.#setUsed(this.resources, index, used);
   }
 
   setResourceLost(index, lost) {
@@ -288,6 +317,8 @@ export class Character {
       used: false,
       lost: false,
       stationary: false,
+      createdOrder: this.#nextOrder(),
+      usedOrder: null,
     });
     const resourceId = this.resources.at(-1)?.id;
     if (!resourceId) return false;
@@ -333,7 +364,12 @@ export class Character {
     const cleanedName = cleanText(name);
     const cleanedDescription = cleanText(description);
     if (!cleanedName) return false;
-    this.marks.push({ id: createId("mark"), name: cleanedName, description: cleanedDescription });
+    this.marks.push({
+      id: createId("mark"),
+      name: cleanedName,
+      description: cleanedDescription,
+      createdOrder: this.#nextOrder(),
+    });
     return true;
   }
 
@@ -366,6 +402,8 @@ export class Character {
       type: cleanedType,
       used: false,
       lost: false,
+      createdOrder: this.#nextOrder(),
+      usedOrder: null,
     });
     return true;
   }
@@ -387,7 +425,7 @@ export class Character {
   }
 
   setCharacterUsed(index, used) {
-    return this.#setBoolean(this.characters, index, "used", used);
+    return this.#setUsed(this.characters, index, used);
   }
 
   setCharacterLost(index, lost) {
@@ -477,6 +515,8 @@ export class Character {
       description: cleanedDescription,
       used: false,
       lost: false,
+      createdOrder: this.#nextOrder(),
+      usedOrder: null,
       ...extra,
     });
     return true;
@@ -498,6 +538,20 @@ export class Character {
     if (!item) return false;
     item[key] = Boolean(value);
     return true;
+  }
+
+  #setUsed(list, index, used) {
+    const item = list[index];
+    if (!item) return false;
+    const nextUsed = Boolean(used);
+    if (nextUsed && !item.used) item.usedOrder = this.#nextOrder();
+    item.used = nextUsed;
+    return true;
+  }
+
+  #nextOrder() {
+    this.#orderCounter += 1;
+    return this.#orderCounter;
   }
 
   #removeAt(list, index) {

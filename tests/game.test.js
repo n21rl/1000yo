@@ -13,15 +13,18 @@ test("Character tracks memories as collections of experiences with stable trait 
   assert.deepEqual(character.memories, [
     {
       id: character.memories[0].id,
+      title: "",
       experiences: [
         {
           text: "I was born beside the sea.",
+          prompt: "",
           traitIds: [character.skills[0].id],
         },
       ],
       lost: false,
       storedInDiary: false,
       lostReason: "",
+      createdOrder: 2,
     },
   ]);
 });
@@ -173,7 +176,9 @@ test("Character stores stable IDs plus optional descriptions and status flags fo
   assert.match(character.resources[0].id, /^resource-/);
   assert.match(character.characters[0].id, /^character-/);
   assert.match(character.marks[0].id, /^mark-/);
-  assert.deepEqual(character.skills, [{ id: character.skills[0].id, name: "Swordplay", description: "", used: true, lost: false }]);
+  assert.deepEqual(character.skills, [
+    { id: character.skills[0].id, name: "Swordplay", description: "", used: true, lost: false, createdOrder: 1, usedOrder: 5 },
+  ]);
   assert.deepEqual(character.resources, [
     {
       id: character.resources[0].id,
@@ -182,6 +187,8 @@ test("Character stores stable IDs plus optional descriptions and status flags fo
       used: false,
       lost: true,
       stationary: false,
+      createdOrder: 2,
+      usedOrder: null,
     },
   ]);
   assert.deepEqual(character.characters, [
@@ -192,10 +199,12 @@ test("Character stores stable IDs plus optional descriptions and status flags fo
       type: "mortal",
       used: true,
       lost: true,
+      createdOrder: 3,
+      usedOrder: 6,
     },
   ]);
   assert.deepEqual(character.marks, [
-    { id: character.marks[0].id, name: "Broken neck", description: "Always hidden beneath high collars." },
+    { id: character.marks[0].id, name: "Broken neck", description: "Always hidden beneath high collars.", createdOrder: 4 },
   ]);
 });
 
@@ -256,4 +265,71 @@ test("Character becomes ready for Prompt 1 after the full setup is complete", ()
     character.getSetupRequirements().map((requirement) => requirement.met),
     [true, true, true, true, true, true],
   );
+});
+
+test("Character stamps experiences with their originating prompt", () => {
+  const character = new Character("Aster");
+  assert.equal(character.addMemory("I was born beside the sea.", [], null, "1a"), true);
+  assert.equal(character.memories[0].experiences[0].prompt, "1a");
+
+  const memoryId = character.memories[0].id;
+  assert.equal(character.addMemory("The tide came for me.", [], memoryId, "7b"), true);
+  assert.equal(character.memories[0].experiences[1].prompt, "7b");
+
+  assert.equal(character.addMemory("Unstamped.", [], memoryId), true);
+  assert.equal(character.memories[0].experiences[2].prompt, "");
+});
+
+test("Character can rename and clear a memory's title", () => {
+  const character = new Character("Aster");
+  character.addMemory("First");
+
+  assert.equal(character.renameMemory(0, "  The Rebellion  "), true);
+  assert.equal(character.memories[0].title, "The Rebellion");
+
+  assert.equal(character.renameMemory(0, ""), true);
+  assert.equal(character.memories[0].title, "");
+
+  assert.equal(character.renameMemory(1, "No such memory"), false);
+});
+
+test("Character stamps monotonically increasing createdOrder across all trait kinds and memories, surviving a save/load round trip", () => {
+  const character = new Character("Aster");
+  character.addSkill("Swordplay");
+  character.addResource("A warhorse");
+  character.addCharacter("Rhea", "", "mortal");
+  character.addMark("Broken neck");
+  character.addMemory("First memory");
+
+  assert.deepEqual(
+    [
+      character.skills[0].createdOrder,
+      character.resources[0].createdOrder,
+      character.characters[0].createdOrder,
+      character.marks[0].createdOrder,
+      character.memories[0].createdOrder,
+    ],
+    [1, 2, 3, 4, 5],
+  );
+
+  const restored = Character.from(JSON.parse(JSON.stringify(character)));
+  assert.equal(restored.addSkill("Stealth"), true);
+  assert.equal(restored.skills[1].createdOrder, 6);
+});
+
+test("Character stamps usedOrder only when transitioning to used, leaving it in place on uncheck", () => {
+  const character = new Character("Aster");
+  character.addSkill("Swordplay");
+
+  assert.equal(character.skills[0].usedOrder, null);
+
+  character.setSkillUsed(0, true);
+  const firstStamp = character.skills[0].usedOrder;
+  assert.equal(typeof firstStamp, "number");
+
+  character.setSkillUsed(0, false);
+  assert.equal(character.skills[0].usedOrder, firstStamp);
+
+  character.setSkillUsed(0, true);
+  assert.notEqual(character.skills[0].usedOrder, firstStamp);
 });

@@ -53,30 +53,11 @@ fine for a change to invalidate or discard existing saves. Prefer the
 clean model over the compatible one, and don't spend effort reading old
 shapes. Revisit this once there are players whose games matter.
 
-# Mobile redesign decisions
+# Mobile redesign
 
-Decisions settled for the mobile/bottom-tab redesign handed off from
-Claude Design (Memories / Traits / Diary tabs, eight-step creation
-wizard). Recorded here because several of them change the engine rather
-than just the markup, so they bear on both UI lines.
+Design decisions for the mobile redesign (Memories / Traits / Diary tabs,
+eight-step creation wizard) are documented in `design/MOBILE_REDESIGN_SPEC.md`.
 
-- **Memories get a title.** `Memory N` by default, N being the memory's
-  position in order; the player can write their own. The engine had no
-  name field at all before this — memories were labelled positionally at
-  render time.
-- **Experiences record their prompt.** Each Experience is stamped with
-  the prompt that produced it (index plus visit letter, e.g. `14b`).
-  Shown only when opening that Experience's detail, not in list rows.
-- **Icons are type-derived for now.** One default icon per trait kind,
-  with mortal and immortal distinguished. Player-chosen custom icons
-  (game-icons.net style) are planned, so resolve icons through a single
-  lookup rather than inlining an SVG per item.
-- **Traits record creation and use order.** Store the order a trait was
-  created in and the order it was checked in — sequence only, no
-  timestamps. This is what "Recent" sorting reads.
-- **All four trait kinds are addable during play**, not just Marks.
-  Prompts routinely instruct the player to create a Character, Skill or
-  Resource mid-game.
-- **Every memory carries its own forget action.** Striking out a memory
-  to make room is the rulebook's central tension, so it belongs on the
-  memory itself rather than buried in a menu.
+Settled decisions that change the engine live there; once implementation
+begins, load-bearing decisions move to this file as they become codebase
+facts.

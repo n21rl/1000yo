@@ -10,7 +10,8 @@ import {
   upsertVampireRecord,
 } from "./vampire-storage.js";
 import { getElements } from "./ui/elements.js";
-import { createMaterialIcon, hydrateStaticIcons } from "./ui/icons.js";
+import { createMaterialFallbackIcon, createMaterialIcon, hydrateStaticIcons } from "./ui/icons.js";
+import { openConfirmDialog } from "./ui/dialog.js";
 import {
   bindCardToggleEvents,
   bindEscapeKeyHandler,
@@ -435,7 +436,8 @@ const renderMenu = () => renderMenuView({
     selectedVampireId = value;
   },
   testVampireId: TEST_VAMPIRE_ID,
-  createMaterialIcon,
+  createIcon: createMaterialFallbackIcon,
+  openConfirmDialog,
 });
 
 const getMemoryRecords = (startIndex, endIndexExclusive) => character.memories
@@ -1265,6 +1267,12 @@ const initialize = () => {
     button.replaceChildren(createMaterialIcon("plus"));
   });
   if (elements.promptButton) elements.promptButton.replaceChildren(createMaterialIcon("casino"));
+  if (elements.newVampireButton) {
+    elements.newVampireButton.replaceChildren(
+      createMaterialFallbackIcon("add"),
+      document.createTextNode("New character"),
+    );
+  }
   hydrateStaticIcons();
   bindModalCloseEvents(closeModalAndResetPlayForms);
   bindEscapeKeyHandler(() => activeModal !== null, closeModalAndResetPlayForms);

@@ -809,64 +809,136 @@ button:disabled {
 }
 
 .menu-screen {
-  max-width: 28rem;
+  max-width: 26rem;
+  margin: 0 auto;
+  padding: 1.5rem 0.9rem 2.5rem;
+  background: var(--color-bg);
+  font-family: var(--font-sans);
 }
 
-.vampire-record {
-  align-items: center;
-  gap: 0.5rem;
-  cursor: pointer;
-}
-
-.vampire-record:focus-visible {
-  outline: 2px solid #c9a370;
-  outline-offset: 2px;
-}
-
-.vampire-option {
-  width: auto;
-  flex: 1;
-  text-align: left;
-  border: 0;
+.menu-vampire-list {
+  list-style: none;
+  margin: 0 0 1rem;
   padding: 0;
-  background: transparent;
 }
 
-.vampire-option strong {
-  display: block;
-}
-
-.vampire-record:hover .vampire-option strong,
-.vampire-record:focus-visible .vampire-option strong {
-  color: #fff5e2;
-}
-
-.menu-record-actions {
+.menu-vampire-item {
   display: flex;
   align-items: center;
+  border-bottom: 1px solid var(--color-border);
 }
 
-.menu-delete-control {
-  width: 1.25rem;
-  min-width: 1.25rem;
-  height: 1.25rem;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: #d9cbb4;
-  opacity: 0.78;
-  display: inline-flex;
+.menu-vampire-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+  padding: 0.85rem 0.25rem;
+  border: none;
+  background: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.menu-vampire-row:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+
+.menu-vampire-icon,
+.menu-vampire-chevron {
+  flex-shrink: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.menu-delete-control:hover {
-  opacity: 1;
-  filter: none;
+.menu-vampire-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.menu-vampire-icon .material-icon,
+.menu-vampire-chevron .material-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: inherit;
+}
+
+.menu-vampire-chevron {
+  color: var(--color-border);
+}
+
+.menu-vampire-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.menu-vampire-name {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--color-text-primary);
+}
+
+.menu-vampire-row:hover .menu-vampire-name,
+.menu-vampire-row:focus-visible .menu-vampire-name {
+  color: var(--color-accent);
+}
+
+.menu-vampire-delete {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--color-text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.menu-vampire-delete .material-icon {
+  width: 1rem;
+  height: 1rem;
+  color: inherit;
+}
+
+.menu-vampire-delete:hover {
+  color: var(--color-accent);
 }
 
 .menu-new-button {
-  max-width: 12rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  padding: 0.85rem;
+  background: none;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.menu-new-button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.menu-new-button .material-icon {
+  width: 1rem;
+  height: 1rem;
+  color: var(--color-accent);
 }
 
 @media (max-width: 720px) {

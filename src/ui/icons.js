@@ -82,6 +82,9 @@ export const MATERIAL_ICON_NODES = {
     ["circle", { cx: "12", cy: "12", r: "8" }],
     ["circle", { cx: "12", cy: "12", r: "3.5", fill: "currentColor", stroke: "none" }],
   ],
+  chevron_right: [
+    ["path", { d: "m9 18 6-6-6-6" }],
+  ],
 };
 
 export const resolveMaterialIconName = (name) => ({

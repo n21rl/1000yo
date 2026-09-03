@@ -82,6 +82,31 @@ export const MATERIAL_ICON_NODES = {
     ["circle", { cx: "12", cy: "12", r: "8" }],
     ["circle", { cx: "12", cy: "12", r: "3.5", fill: "currentColor", stroke: "none" }],
   ],
+  chevron_right: [
+    ["path", { d: "m9 18 6-6-6-6" }],
+  ],
+  more_vert: [
+    ["circle", { cx: "12", cy: "5", r: "1", fill: "currentColor", stroke: "none" }],
+    ["circle", { cx: "12", cy: "12", r: "1", fill: "currentColor", stroke: "none" }],
+    ["circle", { cx: "12", cy: "19", r: "1", fill: "currentColor", stroke: "none" }],
+  ],
+  sort: [
+    ["path", { d: "M3 6h18M3 12h12M3 18h6" }],
+  ],
+  menu: [
+    ["path", { d: "M3 6h18M3 12h18M3 18h18" }],
+  ],
+  skull: [
+    ["path", { d: "M12 2a9 9 0 0 0-9 9c0 3.6 2.2 6.7 5 8.1V22h8v-2.9c2.8-1.4 5-4.5 5-8.1a9 9 0 0 0-9-9z" }],
+    ["path", { d: "M9 14h.01" }],
+    ["path", { d: "M15 14h.01" }],
+  ],
+  grid_view: [
+    ["rect", { x: "3", y: "3", width: "7", height: "7" }],
+    ["rect", { x: "14", y: "3", width: "7", height: "7" }],
+    ["rect", { x: "3", y: "14", width: "7", height: "7" }],
+    ["rect", { x: "14", y: "14", width: "7", height: "7" }],
+  ],
 };
 
 export const resolveMaterialIconName = (name) => ({

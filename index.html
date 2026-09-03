@@ -4,309 +4,335 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>1000yo</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
     <main class="app">
-      <section class="hero">
-        <div class="hero-title-row">
-          <h1 id="hero-title">1000yo</h1>
-          <button type="button" id="edit-hero-name-button" class="ghost-button symbolic-button" aria-label="Edit vampire name" hidden>
-            <span data-material-icon="edit" aria-hidden="true"></span>
-          </button>
-        </div>
-      </section>
-
-      <section id="menu-screen" class="card menu-screen">
-        <ul id="vampire-list" class="record-list"></ul>
+      <section id="menu-screen" class="menu-screen">
+        <ul id="vampire-list" class="menu-vampire-list"></ul>
         <button type="button" id="new-vampire-button" class="menu-new-button">New character</button>
       </section>
 
-      <section id="creation-screen" class="wizard card" hidden>
+      <section id="creation-screen" class="wizard" hidden>
+        <div class="play-header">
+          <div class="play-header-identity">
+            <span class="play-header-dot"></span>
+            <span id="wizard-header-name" class="play-header-name">New Vampire</span>
+          </div>
+        </div>
         <div class="wizard-header">
-          <h2 class="wizard-title">Vampire Creation</h2>
-          <span id="step-progress" class="section-status">1/8</span>
+          <span id="wizard-step-label" class="wizard-step-label">Identity</span>
+          <span id="step-progress" class="wizard-step-count">1 / 8</span>
+        </div>
+        <div class="wizard-progress-track">
+          <div id="step-progress-fill" class="wizard-progress-fill"></div>
         </div>
 
+        <div class="wizard-steps-scroll">
         <section class="step-panel" data-step-panel="0">
-          <label for="name">Vampire name *</label>
-          <input id="name" placeholder="Enter vampire name" />
+          <h2 class="wizard-step-title">Name your vampire</h2>
+          <p class="wizard-step-hint">Choose a name and write your first defining memory.</p>
 
-          <label for="memory-identity">First memory *</label>
-          <textarea id="memory-identity" rows="4" placeholder="Describe the first defining memory"></textarea>
+          <div class="wizard-field">
+            <label for="name">Vampire name *</label>
+            <input id="name" placeholder="Enter vampire name" />
+          </div>
+          <div class="wizard-field">
+            <label for="memory-identity">First memory *</label>
+            <textarea id="memory-identity" rows="4" placeholder="Describe the first defining memory"></textarea>
+          </div>
 
-          <ul id="identity-memory-list" class="record-list"></ul>
+          <ul id="identity-memory-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="1" hidden>
-          <p class="supporting">Add at least 3 mortals before continuing.</p>
+          <h2 class="wizard-step-title">Mortals</h2>
+          <p class="wizard-step-hint">Add at least 3 mortals — people from your human life.</p>
 
-          <form id="mortal-form" class="stack">
-            <label for="mortal-name">Mortal name *</label>
-            <input id="mortal-name" placeholder="Enter mortal name" />
-
-            <label for="mortal-description">Description</label>
-            <textarea id="mortal-description" rows="3" placeholder="How they relate to the vampire"></textarea>
-
-            <button type="submit">Add mortal</button>
+          <form id="mortal-form" class="wizard-form">
+            <div class="wizard-field">
+              <label for="mortal-name">Mortal name *</label>
+              <input id="mortal-name" placeholder="Enter mortal name" />
+            </div>
+            <div class="wizard-field">
+              <label for="mortal-description">Description</label>
+              <textarea id="mortal-description" rows="3" placeholder="How they relate to the vampire"></textarea>
+            </div>
+            <button type="submit" class="wizard-add-button">Add mortal</button>
           </form>
 
-          <ul id="mortal-list" class="record-list"></ul>
+          <ul id="mortal-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="2" hidden>
-          <p class="supporting">Add at least 3 skills before continuing.</p>
+          <h2 class="wizard-step-title">Skills</h2>
+          <p class="wizard-step-hint">Add at least 3 skills your vampire has acquired.</p>
 
-          <form id="skill-form" class="stack">
-            <label for="skill-name">Skill *</label>
-            <input id="skill-name" placeholder="Enter skill name" />
-
-            <label for="skill-description">Description</label>
-            <textarea id="skill-description" rows="3" placeholder="How this skill was learned or used"></textarea>
-
-            <button type="submit">Add skill</button>
+          <form id="skill-form" class="wizard-form">
+            <div class="wizard-field">
+              <label for="skill-name">Skill *</label>
+              <input id="skill-name" placeholder="Enter skill name" />
+            </div>
+            <div class="wizard-field">
+              <label for="skill-description">Description</label>
+              <textarea id="skill-description" rows="3" placeholder="How this skill was learned or used"></textarea>
+            </div>
+            <button type="submit" class="wizard-add-button">Add skill</button>
           </form>
 
-          <ul id="skill-list" class="record-list"></ul>
+          <ul id="skill-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="3" hidden>
-          <p class="supporting">Add at least 3 resources before continuing.</p>
+          <h2 class="wizard-step-title">Resources</h2>
+          <p class="wizard-step-hint">Add at least 3 resources your vampire possesses.</p>
 
-          <form id="resource-form" class="stack">
-            <label for="resource-name">Resource *</label>
-            <input id="resource-name" placeholder="Enter resource name" />
-
-            <label for="resource-description">Description</label>
-            <textarea id="resource-description" rows="3" placeholder="Why this resource matters"></textarea>
-
-            <button type="submit">Add resource</button>
+          <form id="resource-form" class="wizard-form">
+            <div class="wizard-field">
+              <label for="resource-name">Resource *</label>
+              <input id="resource-name" placeholder="Enter resource name" />
+            </div>
+            <div class="wizard-field">
+              <label for="resource-description">Description</label>
+              <textarea id="resource-description" rows="3" placeholder="Why this resource matters"></textarea>
+            </div>
+            <button type="submit" class="wizard-add-button">Add resource</button>
           </form>
 
-          <ul id="resource-list" class="record-list"></ul>
+          <ul id="resource-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="4" hidden>
-          <p class="supporting">Add 3 more memories here before continuing.</p>
+          <h2 class="wizard-step-title">More Memories</h2>
+          <p class="wizard-step-hint">Add 3 more memories. Tag each with at least 2 traits.</p>
 
-          <form id="memory-form-later" class="stack">
-            <label for="memory-later">Memory *</label>
-            <textarea id="memory-later" rows="4" placeholder="Describe another major memory"></textarea>
-
-            <label>Traits *</label>
-            <p class="supporting trait-guidance">Select at least 2 traits this memory combines.</p>
-            <div id="memory-traits-later" class="trait-groups"></div>
-
-            <button type="submit">Add memory</button>
+          <form id="memory-form-later" class="wizard-form">
+            <div class="wizard-field">
+              <label for="memory-later">Memory *</label>
+              <textarea id="memory-later" rows="4" placeholder="Describe another major memory"></textarea>
+            </div>
+            <div class="wizard-field">
+              <label>Traits *</label>
+              <p class="wizard-step-hint wizard-trait-hint">Select at least 2 traits this memory combines.</p>
+              <div id="memory-traits-later" class="trait-groups"></div>
+            </div>
+            <button type="submit" class="wizard-add-button">Add memory</button>
           </form>
 
-          <ul id="later-memory-list" class="record-list"></ul>
+          <ul id="later-memory-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="5" hidden>
-          <form id="immortal-form" class="stack">
-            <label for="immortal-name">Immortal name *</label>
-            <input id="immortal-name" placeholder="Enter immortal name" />
+          <h2 class="wizard-step-title">The Immortal</h2>
+          <p class="wizard-step-hint">Add at least 1 immortal — another vampire or eternal being.</p>
 
-            <label for="immortal-description">Description</label>
-            <textarea id="immortal-description" rows="3" placeholder="How they relate to the vampire"></textarea>
-
-            <button type="submit">Add immortal</button>
+          <form id="immortal-form" class="wizard-form">
+            <div class="wizard-field">
+              <label for="immortal-name">Immortal name *</label>
+              <input id="immortal-name" placeholder="Enter immortal name" />
+            </div>
+            <div class="wizard-field">
+              <label for="immortal-description">Description</label>
+              <textarea id="immortal-description" rows="3" placeholder="How they relate to the vampire"></textarea>
+            </div>
+            <button type="submit" class="wizard-add-button">Add immortal</button>
           </form>
 
-          <ul id="immortal-list" class="record-list"></ul>
+          <ul id="immortal-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="6" hidden>
-          <form id="mark-form" class="stack">
-            <label for="mark-input">Mark *</label>
-            <input id="mark-input" placeholder="Enter mark" />
+          <h2 class="wizard-step-title">Your Mark</h2>
+          <p class="wizard-step-hint">Add at least 1 mark — something that sets you apart.</p>
 
-            <label for="mark-description">Description</label>
-            <textarea id="mark-description" rows="3" placeholder="How the mark appears or affects them"></textarea>
-
-            <button type="submit">Add mark</button>
+          <form id="mark-form" class="wizard-form">
+            <div class="wizard-field">
+              <label for="mark-input">Mark *</label>
+              <input id="mark-input" placeholder="Enter mark" />
+            </div>
+            <div class="wizard-field">
+              <label for="mark-description">Description</label>
+              <textarea id="mark-description" rows="3" placeholder="How the mark appears or affects them"></textarea>
+            </div>
+            <button type="submit" class="wizard-add-button">Add mark</button>
           </form>
 
-          <ul id="mark-list" class="record-list"></ul>
+          <ul id="mark-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="7" hidden>
-          <form id="memory-form-curse" class="stack">
-            <label for="memory-curse">Curse memory *</label>
-            <textarea id="memory-curse" rows="4" placeholder="Describe the memory of becoming a vampire"></textarea>
+          <h2 class="wizard-step-title">The Curse</h2>
+          <p class="wizard-step-hint">Write the memory of becoming a vampire. Tag at least 2 traits.</p>
 
-            <label>Traits *</label>
-            <p class="supporting trait-guidance">Select at least 2 traits this memory combines.</p>
-            <div id="memory-traits-curse" class="trait-groups"></div>
-
-            <button type="submit">Add curse memory</button>
+          <form id="memory-form-curse" class="wizard-form">
+            <div class="wizard-field">
+              <label for="memory-curse">Curse memory *</label>
+              <textarea id="memory-curse" rows="4" placeholder="Describe the memory of becoming a vampire"></textarea>
+            </div>
+            <div class="wizard-field">
+              <label>Traits *</label>
+              <p class="wizard-step-hint wizard-trait-hint">Select at least 2 traits this memory combines.</p>
+              <div id="memory-traits-curse" class="trait-groups"></div>
+            </div>
+            <button type="submit" class="wizard-add-button">Add curse memory</button>
           </form>
 
-          <ul id="curse-memory-list" class="record-list"></ul>
+          <ul id="curse-memory-list" class="wizard-added-list"></ul>
         </section>
+        </div>
 
         <div class="wizard-nav">
-          <button type="button" class="ghost-button" id="back-button">Back</button>
-          <button type="button" id="next-button">Next</button>
+          <button type="button" class="wizard-back-button" id="back-button">Back</button>
+          <button type="button" class="wizard-next-button" id="next-button">Next</button>
         </div>
-        <p id="save-confirmation" class="save-confirmation" hidden>
+        <p id="save-confirmation" class="wizard-save-confirmation" hidden>
           Vampire creation saved. All setup fields are complete.
         </p>
       </section>
 
-      <section id="play-screen" class="play-layout" hidden>
-        <section class="play-grid">
-          <article class="card play-card prompt-card" data-card-key="prompt">
-            <div class="section-heading" data-card-toggle>
-              <div class="card-title-row">
-                <h2><span class="card-heading-icon" data-material-icon="sticky_note_2" aria-hidden="true"></span><span>Prompt</span></h2>
-              </div>
-              <div class="card-heading-actions">
-                <button type="button" id="next-prompt-button" class="ghost-button small-button" aria-label="Roll prompt">
-                  <span data-material-icon="casino" aria-hidden="true"></span>
-                </button>
-                <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle prompt card">
-                  <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
-                </button>
-              </div>
+      <section id="play-screen" class="play-shell" hidden>
+        <div class="play-header">
+          <button type="button" id="play-header-back" class="play-header-back" hidden>← Back</button>
+          <div id="play-header-identity" class="play-header-identity">
+            <span class="play-header-dot"></span>
+            <span id="play-header-name" class="play-header-name">Vampire</span>
+          </div>
+          <div class="play-header-menus">
+            <button type="button" id="play-memory-detail-more" class="play-header-more" aria-label="Memory options" hidden>
+              <span class="play-memory-more-icon" aria-hidden="true"></span>
+            </button>
+            <button type="button" id="play-more-button" class="play-header-more" aria-label="More options">
+              <span class="play-more-icon" aria-hidden="true"></span>
+            </button>
+          </div>
+        </div>
+
+        <article class="play-prompt-card" data-card-key="prompt">
+          <div class="play-prompt-head" data-card-toggle>
+            <div class="play-prompt-meta">
+              <span id="prompt-stamp-label" class="play-prompt-stamp"></span>
+              <span id="prompt-status-label" class="play-prompt-status">Prompt unresolved</span>
             </div>
-            <div data-card-content>
-              <p id="prompt-text" class="prompt-text">Loading prompt data...</p>
-              <form id="play-experience-form" class="stack inline-form">
-                <h3 id="play-experience-form-title" class="modal-form-title">Add experience</h3>
-                <label for="play-experience-text">Current experience</label>
-                <textarea id="play-experience-text" rows="3" placeholder="Write a short experience for this prompt"></textarea>
-                <div id="play-composer-columns" class="composer-columns"></div>
-                <div class="form-actions form-actions-equal">
-                  <button type="submit" id="play-experience-submit">Add experience</button>
-                  <button type="button" class="ghost-button" id="play-experience-cancel">Clear</button>
+            <div class="play-prompt-actions">
+              <button type="button" id="next-prompt-button" class="play-prompt-roll" aria-label="Roll">Roll</button>
+              <button type="button" class="card-chevron-button play-prompt-chevron" data-card-chevron aria-label="Toggle prompt card">
+                <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+              </button>
+            </div>
+          </div>
+          <div data-card-content>
+            <p id="prompt-text" class="play-prompt-text">Loading prompt data...</p>
+          </div>
+        </article>
+
+        <div class="play-tabs-body">
+          <div id="play-tab-memories" class="play-tab-panel">
+            <div id="play-memory-list-view">
+              <div class="play-tab-heading">
+                <span>Memories</span>
+                <span id="memory-slots-meta" class="play-tab-heading-meta">0/0</span>
+              </div>
+              <ul id="play-memory-list" class="play-memory-list"></ul>
+              <ul id="play-lost-memory-list" class="play-memory-list play-memory-list-lost"></ul>
+              <p class="play-memory-hint">When full, you may need to forget one.</p>
+              <button type="button" id="add-memory-button" class="play-tab-add">Add memory</button>
+            </div>
+
+            <div id="play-memory-detail-view" class="play-memory-detail" hidden>
+              <div class="play-memory-detail-head">
+                <span class="play-memory-detail-label">MEMORY</span>
+                <span id="play-memory-detail-title" class="play-memory-detail-title"></span>
+              </div>
+
+              <ol id="play-memory-experience-list" class="play-experience-list"></ol>
+
+              <form id="play-experience-form" class="play-experience-form">
+                <label for="play-experience-text" class="play-field-label">New Experience</label>
+                <textarea id="play-experience-text" rows="3" placeholder="Write a single evocative sentence…"></textarea>
+                <div id="play-composer-columns" class="play-composer-columns"></div>
+                <div class="play-experience-actions">
+                  <button type="submit" id="play-experience-submit">Save Experience</button>
+                  <button type="button" id="play-experience-cancel">Clear</button>
                 </div>
               </form>
             </div>
-          </article>
+          </div>
 
-          <article class="card play-card" data-card-key="memories">
-            <div class="section-heading" data-card-toggle>
-              <div class="card-title-row">
-                <h2><span class="card-heading-icon" data-material-icon="cognition" aria-hidden="true"></span><span>Memories</span></h2>
-              </div>
-              <div class="card-heading-actions">
-                <button type="button" id="decrease-memory-slots-button" class="ghost-button small-button" aria-label="Remove memory">-</button>
-                <button type="button" id="add-memory-button" class="ghost-button small-button" aria-label="Add memory">+</button>
-                <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle memories card">
-                  <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
+          <div id="play-tab-traits" class="play-tab-panel" hidden>
+            <div class="play-trait-subtabs">
+              <button type="button" class="play-trait-subtab" data-trait-subtab="characters">Characters</button>
+              <button type="button" class="play-trait-subtab" data-trait-subtab="skills">Skills</button>
+              <button type="button" class="play-trait-subtab" data-trait-subtab="resources">Resources</button>
+              <button type="button" class="play-trait-subtab" data-trait-subtab="marks">Marks</button>
+            </div>
+            <div class="play-trait-controls">
+              <button type="button" id="trait-sort-button" class="play-trait-sort">
+                <span class="play-trait-sort-icon" aria-hidden="true"></span>
+                Recent
+              </button>
+              <div class="play-trait-view-toggle" role="group" aria-label="List or grid view">
+                <button type="button" id="trait-view-list-button" class="play-trait-view-button" aria-pressed="true" aria-label="List view">
+                  <span class="play-trait-view-icon" aria-hidden="true"></span>
+                </button>
+                <button type="button" id="trait-view-grid-button" class="play-trait-view-button" disabled aria-label="Grid view (coming soon)">
+                  <span class="play-trait-view-icon" aria-hidden="true"></span>
                 </button>
               </div>
             </div>
-            <div data-card-content>
-              <ul id="play-memory-list" class="record-list"></ul>
-              <section id="lost-memories-card" class="subcard" hidden>
-                <button
-                  type="button"
-                  id="lost-memories-toggle"
-                  class="subcard-header"
-                  aria-expanded="false"
-                  aria-controls="play-lost-memory-list"
-                >
-                  <span class="card-title-row">
-                    <strong>Lost memories</strong>
-                    <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
-                  </span>
-                </button>
-                <ul id="play-lost-memory-list" class="record-list" hidden></ul>
-              </section>
-              <p id="memory-slots-meta" class="supporting memory-slots-counter">0/0</p>
+
+            <div id="play-trait-panel-characters" class="play-trait-panel" data-trait-panel="characters">
+              <ul id="play-character-list" class="play-trait-list"></ul>
+              <button type="button" id="add-character-button" class="play-tab-add">Add Character</button>
             </div>
-          </article>
-
-          <article id="diary-card" class="card play-card" data-card-key="diary" hidden>
-            <div class="section-heading" data-card-toggle>
-              <div class="card-title-row">
-                <h2><span class="card-heading-icon" data-material-icon="book_2" aria-hidden="true"></span><span>Diary</span></h2>
-              </div>
-              <div class="card-heading-actions">
-                <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle diary card">
-                  <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
-                </button>
-              </div>
+            <div id="play-trait-panel-skills" class="play-trait-panel" data-trait-panel="skills" hidden>
+              <ul id="play-skill-list" class="play-trait-list"></ul>
+              <button type="button" id="add-skill-button" class="play-tab-add">Add Skill</button>
             </div>
-            <div data-card-content>
-              <p id="diary-description" class="supporting"></p>
-              <ul id="diary-memory-list" class="record-list"></ul>
+            <div id="play-trait-panel-resources" class="play-trait-panel" data-trait-panel="resources" hidden>
+              <ul id="play-resource-list" class="play-trait-list"></ul>
+              <button type="button" id="add-resource-button" class="play-tab-add">Add Resource</button>
             </div>
-          </article>
+            <div id="play-trait-panel-marks" class="play-trait-panel" data-trait-panel="marks" hidden>
+              <ul id="play-mark-list" class="play-trait-list"></ul>
+              <button type="button" id="add-mark-button" class="play-tab-add">Add Mark</button>
+            </div>
+          </div>
 
-          <div class="play-traits-column">
-            <article class="card play-card" data-card-key="characters">
-              <div class="section-heading" data-card-toggle>
-                <div class="card-title-row">
-                  <h2><span class="card-heading-icon" data-material-icon="person" aria-hidden="true"></span><span>Characters</span></h2>
-                </div>
-                <div class="card-heading-actions">
-                  <button type="button" id="add-character-button" class="add-card-button" title="Add character" aria-label="Add character"></button>
-                  <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle characters card">
-                    <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
-                  </button>
-                </div>
-              </div>
-              <div data-card-content hidden>
-                <ul id="play-character-list" class="record-list"></ul>
-              </div>
+          <div id="play-tab-diary" class="play-tab-panel" hidden>
+            <div id="diary-empty-state" class="play-diary-empty" hidden>
+              <span class="play-diary-empty-label">Diary</span>
+              <p class="play-diary-empty-text">No diary yet. Move a memory here to preserve it.</p>
+              <button type="button" id="create-diary-button" class="play-tab-add">Create Diary</button>
+            </div>
+            <article id="diary-card" class="play-diary-populated" hidden>
+              <p id="diary-description" class="play-diary-description"></p>
+              <ul id="diary-memory-list" class="play-memory-list"></ul>
             </article>
-
-            <article class="card play-card" data-card-key="skills">
-              <div class="section-heading" data-card-toggle>
-                <div class="card-title-row">
-                  <h2><span class="card-heading-icon" data-material-icon="bolt" aria-hidden="true"></span><span>Skills</span></h2>
-                </div>
-                <div class="card-heading-actions">
-                  <button type="button" id="add-skill-button" class="add-card-button" title="Add skill" aria-label="Add skill"></button>
-                  <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle skills card">
-                    <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
-                  </button>
-                </div>
-              </div>
-              <div data-card-content hidden>
-                <ul id="play-skill-list" class="record-list"></ul>
-              </div>
-            </article>
-
-            <article class="card play-card" data-card-key="resources">
-              <div class="section-heading" data-card-toggle>
-                <div class="card-title-row">
-                  <h2><span class="card-heading-icon" data-material-icon="deployed_code" aria-hidden="true"></span><span>Resources</span></h2>
-                </div>
-                <div class="card-heading-actions">
-                  <button type="button" id="add-resource-button" class="add-card-button" title="Add resource" aria-label="Add resource"></button>
-                  <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle resources card">
-                    <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
-                  </button>
-                </div>
-              </div>
-              <div data-card-content hidden>
-                <ul id="play-resource-list" class="record-list"></ul>
-              </div>
-            </article>
-
-            <article class="card play-card" data-card-key="marks">
-              <div class="section-heading" data-card-toggle>
-                <div class="card-title-row">
-                  <h2><span class="card-heading-icon" data-material-icon="local_fire_department" aria-hidden="true"></span><span>Marks</span></h2>
-                </div>
-                <div class="card-heading-actions">
-                  <button type="button" id="add-mark-button" class="add-card-button" title="Add mark" aria-label="Add mark"></button>
-                  <button type="button" class="card-chevron-button" data-card-chevron aria-label="Toggle marks card">
-                    <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
-                  </button>
-                </div>
-              </div>
-              <div data-card-content hidden>
-                <ul id="play-mark-list" class="record-list"></ul>
-              </div>
+            <article id="lost-diary-card" class="play-diary-lost" hidden>
+              <span class="play-diary-lost-label">Lost Diary</span>
+              <ul id="lost-diary-memory-list" class="play-memory-list play-memory-list-lost"></ul>
             </article>
           </div>
-        </section>
+        </div>
+
+        <nav class="play-bottom-tabs">
+          <button type="button" class="play-bottom-tab" data-play-tab="memories">
+            <span class="play-bottom-tab-icon" aria-hidden="true"></span>
+            <span>MEMORIES</span>
+          </button>
+          <button type="button" class="play-bottom-tab" data-play-tab="traits">
+            <span class="play-bottom-tab-icon" aria-hidden="true"></span>
+            <span>TRAITS</span>
+          </button>
+          <button type="button" class="play-bottom-tab" data-play-tab="diary">
+            <span class="play-bottom-tab-icon" aria-hidden="true"></span>
+            <span>DIARY</span>
+          </button>
+        </nav>
       </section>
     </main>
 
@@ -392,6 +418,8 @@
         </form>
       </section>
     </div>
+
+    <div id="app-dialog-root" hidden></div>
 
     <script type="module" src="/src/main.js"></script>
   </body>

@@ -1,84 +1,185 @@
+import { formatPromptStamp } from "../prompt-flow.js";
+import { openActionSheet, openConfirmDialog, openPromptDialog } from "../../ui/dialog.js";
+
 export const bindPlayEvents = ({
   elements,
   promptState,
   rollDie,
   advanceToNextPromptEntry,
-  collapseSettledRecords,
   persistCurrentCharacter,
   render,
-  collapsedCards,
   setActiveModal,
   getCharacter,
-  getExperienceComposer,
   pendingExperienceTraitIds,
   markDirty,
   closeExperienceComposer,
   openTraitForm,
   getEditingTrait,
   setEditingTrait,
-  getActiveModal,
   setPendingDiaryMemoryId,
   getPendingDiaryMemoryId,
   updatePlayExperienceActionState,
+  getActivePlayTab,
+  setActivePlayTab,
+  getActiveTraitSubtab,
+  setActiveTraitSubtab,
+  getActiveMemoryDetailId,
+  setActiveMemoryDetailId,
+  toggleTraitSortRecent,
+  loadStoredVampires,
+  persistStoredVampires,
+  setScreen,
+  getSelectedVampireId,
+  setSelectedVampireId,
+  testVampireId,
+  openMemoryMoreMenu,
 }) => {
+  const currentPromptStamp = () =>
+    formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
+
   elements.promptButton.addEventListener("click", () => {
     if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
     const delta = rollDie(10) - rollDie(6);
     const target = promptState.currentPrompt + delta;
     advanceToNextPromptEntry(promptState, target);
-    collapseSettledRecords();
     persistCurrentCharacter();
     render();
   });
 
-  elements.addMemoryButton.addEventListener("click", (event) => {
-    event.stopPropagation();
-    const character = getCharacter();
-    if (character.activeMemories.length >= character.memorySlots) {
-      if (character.memorySlots >= 5 && !window.confirm("5 memory slots is the standard limit. Are you sure you want to add one?")) return;
-      const didAddSlot = character.setMemorySlots(character.memorySlots + 1);
-      if (!didAddSlot) {
-        window.alert("Unable to add a new memory slot.");
-        return;
-      }
-      markDirty();
-    }
-    const nextMemory = window.prompt("Add a memory", "");
-    if (nextMemory === null) return;
-    const didSave = character.addMemory(nextMemory, []);
+  elements.playBottomTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      setActivePlayTab(tab.dataset.playTab);
+      setActiveMemoryDetailId(null);
+      render();
+    });
+  });
+
+  elements.traitSubtabButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      setActiveTraitSubtab(button.dataset.traitSubtab);
+      render();
+    });
+  });
+
+  elements.traitSortButton.addEventListener("click", () => {
+    toggleTraitSortRecent();
+    render();
+  });
+
+  elements.playHeaderBack.addEventListener("click", () => {
+    setActiveMemoryDetailId(null);
+    render();
+  });
+
+  elements.addMemoryButton.addEventListener("click", async () => {
+    const text = await openPromptDialog({ title: "Add a memory", label: "First experience" });
+    if (text === null) return;
+    const didSave = getCharacter().addMemory(text, [], null, currentPromptStamp());
     if (!didSave) return;
-    collapsedCards.delete("memories");
-    closeExperienceComposer();
-    setActiveModal(null);
     markDirty();
     render();
   });
 
-  elements.lostMemoriesToggle.addEventListener("click", () => {
-    if (collapsedCards.has("lost-memories")) collapsedCards.delete("lost-memories");
-    else collapsedCards.add("lost-memories");
+  elements.createDiaryButton.addEventListener("click", () => {
+    setActiveModal("diary");
     render();
   });
 
+  elements.playMoreButton.addEventListener("click", async () => {
+    const character = getCharacter();
+    const choice = await openActionSheet({
+      title: character.name || "Vampire",
+      actions: [
+        { id: "rename", label: "Rename vampire" },
+        { id: "home", label: "Home" },
+        { id: "delete", label: "Delete save", danger: true },
+        { id: "add-slot", label: "Add memory slot" },
+        { id: "remove-slot", label: "Remove memory slot" },
+      ],
+    });
+
+    if (choice === "rename") {
+      const nextName = await openPromptDialog({ title: "Rename vampire", label: "Name", initialValue: character.name });
+      if (nextName === null) return;
+      if (!character.rename(nextName)) return;
+      markDirty();
+      render();
+      return;
+    }
+    if (choice === "home") {
+      setScreen("menu", { updateRoute: true });
+      render();
+      return;
+    }
+    if (choice === "delete") {
+      const confirmed = await openConfirmDialog({
+        title: "Delete save?",
+        body: `Delete ${character.name || "this vampire"}? This cannot be undone.`,
+        confirmLabel: "Delete",
+        danger: true,
+      });
+      if (!confirmed) return;
+      const vampireId = getSelectedVampireId();
+      const remaining = loadStoredVampires().filter((entry) => entry.id !== vampireId && entry.id !== testVampireId);
+      persistStoredVampires(remaining);
+      setSelectedVampireId("");
+      setScreen("menu", { updateRoute: true });
+      render();
+      return;
+    }
+    if (choice === "add-slot") {
+      if (character.memorySlots >= 5) {
+        const confirmed = await openConfirmDialog({
+          title: "Add memory slot?",
+          body: "5 memory slots is the standard limit. This isn't standard play, but some prompts can require it.",
+          confirmLabel: "Add slot",
+        });
+        if (!confirmed) return;
+      }
+      if (!character.setMemorySlots(character.memorySlots + 1)) return;
+      markDirty();
+      render();
+      return;
+    }
+    if (choice === "remove-slot") {
+      const confirmed = await openConfirmDialog({
+        title: "Remove memory slot?",
+        body: "This isn't standard play, but some prompts can require it.",
+      });
+      if (!confirmed) return;
+      if (!character.setMemorySlots(character.memorySlots - 1)) {
+        await openConfirmDialog({
+          title: "Unable to remove slot",
+          body: "Forget or move a memory first to free up room.",
+          confirmLabel: "OK",
+          cancelLabel: "OK",
+        });
+        return;
+      }
+      markDirty();
+      render();
+    }
+  });
+
+  elements.playMemoryDetailMoreButton.addEventListener("click", () => {
+    const memoryId = getActiveMemoryDetailId();
+    const memory = getCharacter().memories.find((entry) => entry.id === memoryId);
+    if (!memory) return;
+    openMemoryMoreMenu(memory);
+  });
 
   elements.playExperienceText.addEventListener("input", () => {
-    const { target } = getExperienceComposer();
-    updatePlayExperienceActionState({ hasTarget: Boolean(target) });
+    updatePlayExperienceActionState();
   });
 
   elements.playExperienceForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    const experienceComposer = getExperienceComposer();
-    const memoryId = experienceComposer.target;
-    if (!memoryId) {
-      window.alert("Select a memory target before adding an experience.");
-      return;
-    }
-    const didSave = getCharacter().addMemory(elements.playExperienceText.value, [...pendingExperienceTraitIds], memoryId);
+    const memoryId = getActiveMemoryDetailId();
+    if (!memoryId) return;
+    const didSave = getCharacter().addMemory(elements.playExperienceText.value, [...pendingExperienceTraitIds], memoryId, currentPromptStamp());
     if (!didSave) return;
     markDirty();
     closeExperienceComposer();
-    setActiveModal(null);
     render();
   });
 
@@ -103,50 +204,6 @@ export const bindPlayEvents = ({
   elements.addMarkButton.addEventListener("click", (event) => {
     event.stopPropagation();
     openTraitForm("mark");
-  });
-  const handleEditName = (event) => {
-    event.stopPropagation();
-    const nextName = window.prompt("Edit vampire name", getCharacter().name);
-    if (nextName === null) return;
-    const didSave = getCharacter().rename(nextName);
-    if (!didSave) return;
-    markDirty();
-    render();
-  };
-  [elements.editHeroNameButton].forEach((button) => {
-    if (!button) return;
-    button.addEventListener("click", handleEditName);
-  });
-  elements.decreaseMemorySlotsButton.addEventListener("click", () => {
-    const memories = getCharacter().memories;
-    const removableMemories = memories
-      .map((memory, index) => ({ memory, index }))
-      .filter(({ memory }) => memory && !memory.lost && !memory.storedInDiary);
-    if (!removableMemories.length) {
-      window.alert("No active memory available to remove.");
-      return;
-    }
-    const options = removableMemories.map(({ index }) => `Memory ${index + 1}`).join(", ");
-    const selected = window.prompt(`Which memory should be removed?\n${options}`, `${removableMemories.at(-1).index + 1}`);
-    if (selected === null) return;
-    const selectedNumber = Number.parseInt(selected, 10);
-    if (!Number.isFinite(selectedNumber)) {
-      window.alert("Enter a valid memory number.");
-      return;
-    }
-    const removableIndex = removableMemories.find(({ index }) => index + 1 === selectedNumber)?.index;
-    if (removableIndex === undefined) {
-      window.alert("That memory cannot be removed.");
-      return;
-    }
-    if (!window.confirm(`Remove Memory ${selectedNumber}?`)) return;
-    const didSave = getCharacter().removeMemory(removableIndex);
-    if (!didSave) {
-      window.alert("Unable to remove memory.");
-      return;
-    }
-    markDirty();
-    render();
   });
 
   elements.playSkillForm.addEventListener("submit", (event) => {
@@ -193,8 +250,10 @@ export const bindPlayEvents = ({
   elements.playDiaryForm.addEventListener("submit", (event) => {
     event.preventDefault();
     const pendingDiaryMemoryId = getPendingDiaryMemoryId();
-    if (!pendingDiaryMemoryId) return;
-    const didSave = getCharacter().moveMemoryToDiary(pendingDiaryMemoryId, elements.playDiaryDescription.value);
+    const character = getCharacter();
+    const didSave = pendingDiaryMemoryId
+      ? character.moveMemoryToDiary(pendingDiaryMemoryId, elements.playDiaryDescription.value)
+      : character.createDiary(elements.playDiaryDescription.value);
     if (!didSave) return;
     markDirty();
     setActiveModal(null);

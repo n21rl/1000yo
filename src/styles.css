@@ -21,11 +21,9 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-  font-family: "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
-  color: #f6eddc;
-  background:
-    radial-gradient(circle at top, rgba(167, 39, 51, 0.28), transparent 36%),
-    linear-gradient(180deg, #1d1313 0%, #110d0d 100%);
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  background: var(--color-bg);
   line-height: 1.45;
 }
 
@@ -36,6 +34,7 @@
 body {
   margin: 0;
   min-height: 100vh;
+  background: var(--color-bg);
 }
 
 [hidden] {
@@ -50,9 +49,8 @@ select {
 }
 
 .app {
-  max-width: 76rem;
-  margin: 0 auto;
-  padding: 1.25rem 0.9rem 2.5rem;
+  margin: 0;
+  padding: 0;
 }
 
 .hero {
@@ -766,8 +764,7 @@ button:disabled {
 }
 
 .menu-screen {
-  max-width: 26rem;
-  margin: 0 auto;
+  min-height: 100vh;
   padding: 1.5rem 0.9rem 2.5rem;
   background: var(--color-bg);
   font-family: var(--font-sans);
@@ -902,8 +899,7 @@ button:disabled {
    bleed into the still-legacy-styled play screen (Phase 6+), which
    reuses some of the same base classes (label/input/textarea/.record-tag). */
 .wizard {
-  max-width: 26rem;
-  margin: 0 auto;
+  min-height: 100vh;
   padding: 1.25rem 0.9rem 2.5rem;
   background: var(--color-bg);
   font-family: var(--font-sans);
@@ -1377,4 +1373,912 @@ button:disabled {
 
 .app-dialog-confirm-danger {
   background: var(--color-accent);
+}
+
+.app-action-sheet {
+  padding: 0.5rem;
+}
+
+.app-action-sheet .app-dialog-title {
+  padding: 0.6rem 0.6rem 0.4rem;
+}
+
+.app-action-sheet-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.app-action-sheet-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.75rem 0.6rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+
+.app-action-sheet-item:last-child {
+  border-bottom: none;
+}
+
+.app-action-sheet-item:hover {
+  color: var(--color-accent);
+}
+
+.app-action-sheet-item-danger {
+  color: var(--color-accent);
+}
+
+.app-action-sheet-cancel {
+  width: 100%;
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.6rem;
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  cursor: pointer;
+  text-align: center;
+}
+
+/* Play screen (Phases 6-9). Fully scoped under .play-shell — the shared
+   trait modal (#play-trait-modal) is restyled separately, below. */
+.play-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  padding-top: var(--safe-top);
+}
+
+.play-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.6rem 1.25rem;
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.play-header-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+}
+
+.play-header-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.play-header-name {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  letter-spacing: 0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.play-header-menus {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.play-header-more {
+  width: auto;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: var(--color-text-dim);
+  padding: 0.25rem;
+  cursor: pointer;
+  display: flex;
+}
+
+.play-header-more .material-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: inherit;
+}
+
+.play-header-back {
+  width: auto;
+  background: none;
+  border: none;
+  border-radius: 0;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.3rem 0;
+  cursor: pointer;
+}
+
+.play-header-back:hover {
+  color: var(--color-accent);
+}
+
+.play-prompt-card {
+  border-bottom: 1px solid var(--color-border);
+  flex-shrink: 0;
+}
+
+.play-prompt-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  cursor: pointer;
+}
+
+.play-prompt-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.play-prompt-stamp {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--color-accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.play-prompt-status {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.play-prompt-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.play-prompt-roll {
+  width: auto;
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 0.2rem 0;
+}
+
+.play-prompt-roll:hover:not(:disabled) {
+  color: var(--color-accent);
+}
+
+.play-prompt-roll:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.play-prompt-chevron {
+  width: auto;
+  background: none;
+  border: none;
+  padding: 0;
+  display: flex;
+  cursor: pointer;
+  color: var(--color-text-dim);
+}
+
+.play-prompt-card [data-card-content] {
+  padding: 0 1.25rem 0.9rem;
+}
+
+.play-prompt-text {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  font-style: italic;
+  line-height: 1.4;
+  color: var(--color-text-secondary);
+}
+
+.play-tabs-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1.25rem;
+}
+
+.play-tab-panel {
+  padding: 0.75rem 0 1.25rem;
+}
+
+.play-tab-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.6rem;
+}
+
+.play-memory-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.play-memory-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 0;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.play-memory-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.play-memory-icon .material-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: inherit;
+}
+
+.play-memory-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.play-memory-name {
+  display: block;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.play-memory-subtitle {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--color-text-dim);
+  margin-top: 0.1rem;
+}
+
+.play-memory-chevron {
+  flex-shrink: 0;
+  color: var(--color-border);
+  display: flex;
+}
+
+.play-memory-chevron .material-icon {
+  width: 1rem;
+  height: 1rem;
+  color: inherit;
+}
+
+.play-memory-row-empty {
+  cursor: default;
+  color: var(--color-text-dimmest);
+}
+
+.play-memory-row-empty .play-memory-name {
+  color: var(--color-text-dimmest);
+  font-style: italic;
+}
+
+.play-memory-more {
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.play-memory-more .material-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: inherit;
+}
+
+.play-memory-list-lost .play-memory-row {
+  opacity: 0.45;
+}
+
+.play-memory-list-lost .play-memory-name {
+  text-decoration: line-through;
+}
+
+.play-memory-hint {
+  text-align: center;
+  padding: 1.1rem 0 0.5rem;
+  font-size: 0.7rem;
+  color: var(--color-text-dimmest);
+  margin: 0;
+}
+
+.play-tab-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.7rem;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.play-tab-add:hover:not(:disabled) {
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.play-tab-add:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.play-tab-add .material-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: var(--color-accent);
+}
+
+.play-memory-detail-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.play-memory-detail-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-accent);
+  letter-spacing: 0.06em;
+}
+
+.play-memory-detail-title {
+  font-family: var(--font-serif);
+  font-size: 1.35rem;
+}
+
+.play-experience-list {
+  list-style: none;
+  margin: 0 0 1.25rem;
+  padding: 0;
+}
+
+.play-experience-item {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.play-experience-index {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-accent);
+  padding-top: 0.15rem;
+  width: 0.9rem;
+  flex-shrink: 0;
+}
+
+.play-experience-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.play-experience-text {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 0.92rem;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+}
+
+.play-experience-stamp {
+  display: block;
+  margin-top: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-text-dimmest);
+}
+
+.play-experience-more {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.play-experience-more .material-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: inherit;
+}
+
+.play-field-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.4rem;
+}
+
+.play-experience-form textarea {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.8rem;
+  color: var(--color-text-primary);
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  min-height: 3.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.play-composer-columns {
+  margin-bottom: 0.75rem;
+}
+
+.play-experience-actions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.play-experience-actions button {
+  flex: 1;
+  padding: 0.7rem;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#play-experience-submit {
+  background: var(--color-accent);
+  border: none;
+  color: #fff;
+}
+
+#play-experience-submit:hover {
+  background: var(--color-accent-hover);
+}
+
+#play-experience-cancel {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-tertiary);
+}
+
+.play-trait-subtabs {
+  display: flex;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 0.5rem;
+}
+
+.play-trait-subtab {
+  width: auto;
+  flex: 1;
+  padding: 0.6rem 0;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.play-trait-subtab.active {
+  border-bottom-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.play-trait-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+}
+
+.play-trait-sort {
+  width: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  padding: 0;
+}
+
+.play-trait-sort-icon {
+  display: flex;
+}
+
+.play-trait-sort-icon .material-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  color: inherit;
+}
+
+.play-trait-view-toggle {
+  display: flex;
+  gap: 2px;
+}
+
+.play-trait-view-button {
+  width: 1.75rem;
+  height: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-dim);
+  cursor: pointer;
+  padding: 0;
+}
+
+.play-trait-view-button[aria-pressed="true"] {
+  color: var(--color-accent);
+}
+
+.play-trait-view-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.play-trait-view-icon .material-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+  color: inherit;
+}
+
+.play-trait-panel-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.7rem 0 0.35rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.play-trait-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.play-trait-row {
+  display: flex;
+  gap: 0.75rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.play-trait-row-struck {
+  opacity: 0.4;
+}
+
+.play-trait-row-struck .play-trait-name {
+  text-decoration: line-through;
+}
+
+.play-trait-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+}
+
+.play-trait-icon .material-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: inherit;
+}
+
+.play-trait-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.play-trait-title-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.play-trait-name {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+}
+
+.play-trait-type-label {
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.play-trait-description {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.play-trait-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  align-items: flex-start;
+  min-width: 4.5rem;
+}
+
+.play-trait-action {
+  width: auto;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  padding: 0;
+}
+
+.play-trait-action .material-icon {
+  width: 0.75rem;
+  height: 0.75rem;
+  color: inherit;
+}
+
+.play-trait-action[aria-pressed="true"] {
+  color: var(--color-accent);
+}
+
+.play-trait-restore {
+  width: auto;
+  align-self: flex-start;
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  padding: 0;
+}
+
+.play-diary-empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.play-diary-empty-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-text-dimmest);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.6rem;
+}
+
+.play-diary-empty-text {
+  font-family: var(--font-serif);
+  font-style: italic;
+  color: var(--color-text-dim);
+  margin: 0 0 1.25rem;
+}
+
+.play-diary-description {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin: 0 0 0.75rem;
+}
+
+.play-diary-lost {
+  margin-top: 1.25rem;
+  opacity: 0.6;
+}
+
+.play-diary-lost-label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding-bottom: 0.4rem;
+  border-bottom: 1px solid var(--color-border);
+  margin-bottom: 0.4rem;
+}
+
+.play-bottom-tabs {
+  display: flex;
+  border-top: 1px solid var(--color-border);
+  flex-shrink: 0;
+  padding-bottom: var(--safe-bottom);
+  background: var(--color-bg);
+}
+
+.play-bottom-tab {
+  width: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.6rem 0 0.4rem;
+  color: var(--color-text-dim);
+}
+
+.play-bottom-tab.active {
+  color: var(--color-text-primary);
+}
+
+.play-bottom-tab-icon .material-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  color: inherit;
+}
+
+.play-bottom-tab span:last-child {
+  font-size: 0.58rem;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+
+/* Shared trait add/edit modal, restyled onto tokens (structure/ids unchanged) */
+.modal-shell {
+  background: rgba(12, 10, 9, 0.72);
+}
+
+.modal-card.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.modal-card label {
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 400;
+}
+
+.modal-card input,
+.modal-card textarea,
+.modal-card select {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text-primary);
+}
+
+.modal-card button[type="submit"] {
+  background: var(--color-accent);
+  border: none;
+  color: #fff;
+}
+
+.modal-card button[type="submit"]:hover {
+  background: var(--color-accent-hover);
+}
+
+.modal-card .ghost-button {
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-tertiary);
+}
+
+/* Desktop: the mobile design as a centered column, not full-bleed
+   (spec: "use the mobile design as a centered column on desktop for
+   now; dedicated desktop UI later"). Below this width, every
+   redesigned screen is full-bleed with no outer card/margin. */
+@media (min-width: 640px) {
+  .menu-screen,
+  .wizard,
+  .play-shell {
+    max-width: 26rem;
+    margin: 0 auto;
+    border-left: 1px solid var(--color-border);
+    border-right: 1px solid var(--color-border);
+  }
 }

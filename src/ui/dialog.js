@@ -87,6 +87,62 @@ export const openConfirmDialog = ({
     },
   });
 
+export const openAlertDialog = ({ title = "", body = "" } = {}) =>
+  mountDialog({
+    cancelValue: undefined,
+    render: (card, finish) => {
+      appendHeading(card, title);
+      if (body) {
+        const bodyEl = document.createElement("p");
+        bodyEl.className = "app-dialog-body";
+        bodyEl.textContent = body;
+        card.append(bodyEl);
+      }
+      const actions = document.createElement("div");
+      actions.className = "app-dialog-actions";
+      const okButton = document.createElement("button");
+      okButton.type = "button";
+      okButton.className = "app-dialog-confirm";
+      okButton.textContent = "OK";
+      okButton.addEventListener("click", () => finish(undefined));
+      actions.append(okButton);
+      card.append(actions);
+      return okButton;
+    },
+  });
+
+export const openActionSheet = ({ title = "", actions = [] } = {}) =>
+  mountDialog({
+    cancelValue: null,
+    render: (card, finish) => {
+      card.classList.add("app-action-sheet");
+      appendHeading(card, title);
+
+      const list = document.createElement("div");
+      list.className = "app-action-sheet-list";
+      let firstButton = null;
+      actions.forEach((action) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = action.danger ? "app-action-sheet-item app-action-sheet-item-danger" : "app-action-sheet-item";
+        button.textContent = action.label;
+        button.addEventListener("click", () => finish(action.id));
+        list.append(button);
+        firstButton ??= button;
+      });
+      card.append(list);
+
+      const cancelButton = document.createElement("button");
+      cancelButton.type = "button";
+      cancelButton.className = "app-action-sheet-cancel";
+      cancelButton.textContent = "Cancel";
+      cancelButton.addEventListener("click", () => finish(null));
+      card.append(cancelButton);
+
+      return firstButton;
+    },
+  });
+
 export const openPromptDialog = ({ title = "", label = "", initialValue = "" } = {}) =>
   mountDialog({
     cancelValue: null,

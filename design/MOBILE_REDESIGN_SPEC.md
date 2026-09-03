@@ -1,113 +1,149 @@
 # Mobile Redesign Specification
 
-This document captures design decisions for the mobile redesign of the Thousand Year Old Vampire game, based on mockups from Claude Design. Decisions here are pre-implementation; once implementation begins, load-bearing engine decisions move to AGENTS.md.
+Design decisions for the mobile redesign of Thousand Year Old Vampire
+(Memories / Traits / Diary tabs, eight-step creation wizard), based on
+mockups handed off from Claude Design. Decisions here are
+pre-implementation; once implementation begins, load-bearing engine
+decisions move to AGENTS.md as they become codebase facts.
 
-## Settled Decisions
+Mockup source: `/home/claude/repo/project/` (`Play Screen.dc.html`,
+`Play Screen v1.dc.html`, `ios-frame.jsx`).
 
-### 1. Memory Titles
-- Display: **`Memory N`** by default, where N is the **creation ordinal** (frozen when the memory is created, never renumbered when other memories are forgotten)
-- The player can edit the title to something custom
-- Engine change needed: add `title` field to memory objects (string, optional, defaults to generated "Memory N")
+## Terminology & Core Mechanics
 
-### 2. Experience Prompts
-- Each Experience is stamped with the prompt that produced it: **prompt index + visit letter** (e.g., `14b`)
-- Shown only when opening the Experience's detail view, not in list rows
-- Engine change needed: add `prompt` field to experience objects (string, e.g. "14b")
+- **"Roll", not "Reroll".** The mockup's refresh-arrows icon suggested
+  regenerating the same prompt, which isn't a real mechanic — the game
+  always does a `d10 − d6` roll to move to a different (or, on a 0, the
+  same) prompt entry. Keep the existing "Roll" terminology and mechanic.
+- **Prompt state.** Show "Prompt unresolved" while the current prompt
+  hasn't been acted on; after resolution, show "Prompt resolved" and a
+  Roll button for the next prompt.
+- **Marks have no strike-out/restore.** Only Remove is a gameplay action
+  for Marks (matches the rulebook — only Skills get "checked"; the
+  engine's existing Check extension to Characters/Resources is a
+  deliberate house rule, not extended to Marks). Edit lives in the More
+  menu, not as a gameplay action.
 
-### 3. Icons
-- One default icon per trait **type**, distinguishing mortal and immortal for characters
-- Player-chosen custom icons (game-icons.net style) are planned as a future phase
-- Resolve icons through a single lookup rather than inlining SVGs
-- Engine change needed: none (icon system already exists in `src/ui/icons.js`); UI will call icon resolver with trait type
+## Data Model Changes
 
-### 4. Trait Order Tracking
-- Store the **order a trait was created** (not timestamp, just sequence)
-- Store the **order it was checked/used** (not timestamp, just sequence)
-- This is what the "Recent" sorting reads
-- Engine change needed: add `createdOrder` and `usedOrder` fields to all trait types (skills, resources, characters, marks)
+- **Memory titles.** Optional player-supplied title; falls back to
+  `Memory N`, where N is the memory's **creation ordinal** — frozen when
+  created, never renumbered when other memories are forgotten. Add
+  `title` field to memory objects.
+- **Experience prompt attribution.** Each Experience is stamped with the
+  prompt that produced it (index + visit letter, e.g. `Prompt 1a`,
+  `Prompt 7b`). Shown only in the experience's own row/detail, not
+  summarized elsewhere. Add `prompt` field to experience objects.
+- **Trait creation/use order.** Store the order a trait was created and
+  the order it was checked/used — sequence only, no timestamps. This is
+  what "Recent" sorting reads. Add `createdOrder` and `usedOrder` fields
+  to skills, resources, characters, marks.
+- **Icons are type-derived for now.** One default icon per trait type
+  (mortal/immortal distinguished for Characters). Custom game-icon
+  selection and custom picture upload are later phases. Resolve icons
+  through a single lookup (extend `src/ui/icons.js`) rather than
+  inlining per-item SVGs. Icon set: Google Material icons (matches the
+  existing icon system already in the app — no new icon library).
 
-### 5. All Four Trait Kinds Addable During Play
-- Currently only Marks have an add button wired during play
-- Extend to: Skills, Resources, Characters (both mortal and immortal)
-- UI change needed: add "+" buttons for each trait type in the play view
+## Navigation
 
-### 6. Forget-a-Memory Button
-- Every memory carries its own forget action on the memory row itself
-- Striking out a memory to make room is the rulebook's central tension
-- Should not be buried in a menu
-- UI change needed: add explicit "forget" or "strike" button on each memory card
+- **Home screen.** The existing menu/vampire-list screen
+  (`features/menu/rendering.js`), restyled to the new visual language —
+  not a new concept. Play → Home via the header's More menu; Home → New
+  vampire → wizard; Home → Play by selecting an existing vampire.
+- **Header "More" menu** (on the Play screen): Rename vampire / Home /
+  Delete save / Add Memory slot.
 
-## Pending Decisions
+## Memories
 
-The following questions must be answered before implementation begins:
+- Five memory slots are **always shown**, including empty ones.
+- **Forgetting a memory**: available via a More menu on each memory row
+  (forget / move to Diary) *and* as an affordance inside the opened
+  memory detail. Not buried in a single hidden location.
+- **Lost memories**: greyed out, grouped at the bottom by default
+  (grouping may become configurable later).
+- **Adding an experience**: the next-available-slot affordance and the
+  input box are combined into one control, with a single Save button
+  (the mockup's two separate patterns — dashed "Add experience" slot vs.
+  standalone "New Experience" box — collapse into one).
+- **Experience row actions**: a single "More" (⋮) control containing
+  Edit only. No standalone edit pencil, and no per-experience delete —
+  an experience can only be removed by forgetting its containing Memory.
 
-### Branch Strategy
-- Work on `main` (active development line) or create a new `mobile` branch?
-- Should the desktop card UI be preserved alongside the mobile UI, or replaced?
-- If both coexist, how does the user choose which to use?
+## Traits (Characters, Skills, Resources, Marks)
 
-### Forgotten Memories UI
-- How should forgotten memories be displayed/accessed in the play view?
-- Show a "Forgotten" tab or section?
-- Allow viewing the strike-out reason (mind vs diary)?
+- **Memories and Traits stay separate** top-level tabs (per the mockup's
+  IA), not merged into the rulebook's flat five-sibling model.
+- **All four trait kinds are addable during play**: an Add button on
+  each Traits sub-tab, not just Marks.
+- **Sorting**: implemented for real, by creation order (this is what
+  "Recent" means — see Data Model above).
+- **Grid/list toggle**: not implemented yet. Show the grid button in a
+  disabled/greyed state — visible in the UI, non-functional.
+- **Checked state**: show a tick when a trait is checked.
+- **Trait "More" menu**: Edit / Delete / Icon. These are meta actions,
+  not normal gameplay actions (gameplay actions are Check and Strike
+  out, shown directly on the row).
+- **Stationary Resources**: same treatment as Mortal/Immortal on
+  Characters — an icon plus an inline type-label tag next to the name
+  (reusing the mockup's existing `item.typeLabel` pattern, not a new tag
+  style).
+- **Struck-out / settled section**: struck-out traits collapse into a
+  dedicated "struck out" section (greyed, ~40% opacity, name
+  strikethrough) with a Restore action. No other automatic collapsing
+  behavior anywhere in the app except the Prompt card.
+- **Tagged-trait chips** (shown against an experience): one meaning
+  only. Explicit states — tick for used/tagged, a cross/dash for
+  untagged or lost — no colour double-duty (the mockup's border colour
+  had been doing double work for both "tagged" and "selected"; drop
+  that overload).
 
-### Navigation & Routing
-- How does the player navigate to the character creation wizard from the play view?
-- How do they return from the wizard to an existing game?
-- Should there be a menu/home screen, or direct tabs?
+## Diary
 
-### Diary Complexity
-- Current engine: Diary is a resource that holds up to 4 memories
-- Does the mobile redesign keep this mechanic?
-- Or is "Diary" simply a view of play notes (separate from the memory/resource system)?
+- Kept as the existing engine model: a Resource-backed object
+  (`character.diary = {resourceId, memoryIds}`, capped at 4 memories).
+- The **Diary tab** creates the Diary resource if none exists yet.
+- **Resource creation** also gets a "Create Diary" button as a shortcut
+  into the same flow.
+- Memories can be moved into the Diary ("out of the brain") from the
+  memory's More menu / detail view.
+- **Losing the Diary** (the backing Resource is struck) creates a
+  greyed-out **"Lost Diary"** group containing the memories that were
+  stored in it — visually distinct from memories lost directly from
+  mind.
 
-### Menu & Ellipsis Patterns
-- What goes in an app-level menu (if any)?
-- What goes in per-item ellipsis menus (edit, delete, duplicate)?
-- Do ellipsis menus exist, or are actions always visible?
+## Visual System
 
-### Undesigned Screens
-- Character creation wizard: fully specified in mockups
-- Play/game view: partially specified (Memories/Traits tabs shown, Diary tab not shown)
-- Character setup completion screen: not in mockups
-- Post-game/settled records: not in mockups
-- How pixel-perfect should the undesigned parts be?
+- **Fonts**: EB Garamond (serif, body/quotes), DM Sans (UI text), DM
+  Mono (labels, numerals, meta text) — replacing the current
+  Roboto/system stack.
+- **Icons**: Google Material icons via the existing `src/ui/icons.js`
+  lookup (Material-Symbols-style paths, Google Fonts fetch + local SVG
+  fallback). No new icon dependency.
+- **Prompt card**: collapsible, open by default.
+- **Safe areas**: use `env(safe-area-inset-*)` for top/bottom spacing,
+  not the mockup's literal iOS-frame padding values (54px/28px were
+  frame compensation, not real spec numbers).
 
-### Fonts & Typography
-- Which fonts should the mobile redesign use?
-- What's the relationship to the existing desktop font choices?
+## Scope & Architecture
 
-### "Recent" Sorting
-- How should "Recent" traits be determined?
-- By `usedOrder` (most recently checked), or `createdOrder`?
-- Should this be a sort option in the Traits tab?
-
-### Checked State Visual Treatment
-- How are checked/used traits displayed visually?
-- Strikethrough, faded, moved to a "Used" section?
-
-### Grid vs. List View
-- Traits shown as cards in a grid, or as rows in a list?
-- Same for skills, resources, characters?
-
-### Stationary Resources
-- The engine has a `stationary` flag on resources (e.g., a home base you don't carry)
-- Should stationary resources be visually distinct in the play view?
-
-### Pinned Prompt Card
-- Should the current prompt stay visible while scrolling through traits/memories?
-- Or does it hide, replaced by a minimal header?
-
-### Collapse/Expand Settled Records
-- Once a trait is checked/used, should it collapse by default, or stay expanded?
-- Should there be a "show settled" / "show unsettled" filter?
-
-## Design Artifacts
-- Mockup export from Claude Design: `/home/claude/repo/` (design handoff bundle)
-- Current codebase: `/home/claude/1000yo/`
-- Two long-lived UI branches: `main` (card-based), `book-style` (frozen gothic-journal redesign)
+- **Branch**: build on `main` (full replacement of the traditional
+  card UI, not a new permanent branch like `book-style`).
+- **Desktop**: use the mobile design as a centered column on desktop for
+  now. A dedicated desktop layout is a later phase.
+- **Architecture**: vanilla ES modules, no build step (matches the
+  existing app; the mockup's React/DCLogic structure is prototype
+  scaffolding, not a target).
+- **Tests**: update `tests/ui-elements.test.js` (and others) for the
+  redesigned UI rather than preserving old element IDs.
+- **Redesign scope**: extend the new visual language to the *entire*
+  app, including screens, modals, and dialogs that weren't in the
+  original mockup (menu/home, populated diary, add/edit modals,
+  lost-memories view, confirmation dialogs).
 
 ## Related Documents
-- AGENTS.md: Branch strategy, data policy, mobile redesign decisions (load-bearing codebase decisions)
-- src/game.js: Character class, trait data structures
-- refs/rules.txt: Thousand Year Old Vampire rulebook
+
+- AGENTS.md — branch strategy, data policy, pointer to this file
+- `src/game.js` — Character class, trait data structures
+- `refs/rules.txt` — Thousand Year Old Vampire rulebook
+- `/home/claude/repo/project/` — mockup source files

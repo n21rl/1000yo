@@ -3,19 +3,20 @@
 This repo carries two long-lived UI lines for the same underlying game
 engine (`src/features/`, state/prompt/trait/memory logic):
 
-- **`main`** — the traditional, card-based UI. This is the active
-  development line; new features and fixes land here by default.
+- **`main`** — the mobile-first bottom-tab UI (Memories / Traits / Diary,
+  eight-step creation wizard), replacing the earlier traditional
+  card-based desktop UI. This is the active development line; new
+  features and fixes land here by default. See "Mobile UI architecture"
+  below for how it's built.
 - **`book-style`** — the gothic-journal/desk redesign (ribbons, sliding
-  book spread, peek-and-pull prompt sheet). Frozen at the point `main`
-  was reverted back to the traditional UI. Kept as a permanent branch,
-  not a tag, so it stays checkable and buildable on its own.
+  book spread, peek-and-pull prompt sheet). Frozen from an earlier point
+  in `main`'s history. Kept as a permanent branch, not a tag, so it stays
+  checkable and buildable on its own.
 
-`main` was reset to its state as of commit `6c42b78` (the last commit
-before the book-style redesign began) rather than rebuilt from scratch,
-because that traditional UI already existed in history — no reason to
-redesign it. `book-style` preserves everything from PRs #31–#33
-(the gothic-journal reskin, the "desk2" book/ribbon rework, and "The
-Desk" mobile layout) exactly as merged.
+`book-style` preserves everything from PRs #31–#33 (the gothic-journal
+reskin, the "desk2" book/ribbon rework, and "The Desk" mobile layout)
+exactly as merged, and predates the mobile bottom-tab redesign on `main`
+— the two lines diverged before this redesign began.
 
 ## Working with Claude Code on mobile/web
 
@@ -53,11 +54,51 @@ fine for a change to invalidate or discard existing saves. Prefer the
 clean model over the compatible one, and don't spend effort reading old
 shapes. Revisit this once there are players whose games matter.
 
-# Mobile redesign
+# Mobile UI architecture
 
-Design decisions for the mobile redesign (Memories / Traits / Diary tabs,
-eight-step creation wizard) are documented in `design/MOBILE_REDESIGN_SPEC.md`.
+`main` implements the mobile bottom-tab redesign specified in
+`design/MOBILE_REDESIGN_SPEC.md`. That file records the design rationale;
+this section records the load-bearing facts the implementation settled on.
 
-Settled decisions that change the engine live there; once implementation
-begins, load-bearing decisions move to this file as they become codebase
-facts.
+- **Screens**: `#menu-screen` (Home), `#creation-screen` (8-step wizard,
+  unchanged step order/gating logic from before the redesign — only the
+  visual language changed), `#play-screen` (bottom-tab shell: header,
+  collapsible prompt card, Memories/Traits/Diary tabs, bottom nav). All
+  three are full-bleed on mobile; a centered column with side borders
+  applies above 640px (`@media (min-width: 640px)` in `styles.css`) as a
+  placeholder desktop treatment, not a dedicated desktop redesign.
+- **Design tokens**: `--color-*`/`--font-*`/`--radius`/`--safe-*` custom
+  properties in `styles.css`'s `:root`. New UI should read these, not
+  hardcode hex/font values — the pre-redesign palette (`#f6eddc`,
+  `#725145`, etc.) only survives in a few reused shared-modal fallbacks.
+- **Icons**: `src/ui/icons.js` exports `createMaterialFallbackIcon`
+  (inline SVG, `stroke=currentColor`) — use this for anything in the
+  redesigned UI, not `createMaterialIcon` (CDN `<img>` + a hardcoded
+  recolor filter that can't express per-element token colors).
+  `hydrateStaticIcons`/`createMaterialIcon` still exist for the one
+  remaining static `data-material-icon` spot (the prompt card's chevron).
+- **Dialogs**: `src/ui/dialog.js` — `openConfirmDialog`, `openPromptDialog`,
+  `openActionSheet`, `openAlertDialog`. Every `window.confirm`/`prompt`/
+  `alert` in the play/menu UI goes through these instead.
+- **Engine fields added for the redesign** (`src/game.js`): memory
+  `title`/`createdOrder` (creation ordinal, frozen at creation — memory
+  labels must never be derived from array position, since hard-delete is
+  a real, reachable action); experience `prompt` (stamp like `"14b"`,
+  set via `Character#addMemory`'s 4th argument); trait `createdOrder`/
+  `usedOrder` on skills/resources/characters/marks (`usedOrder` stamps
+  only on the false→true check transition). `Character#renameMemory` is
+  new. A prompt counts as "resolved" (gates the Roll button) once a
+  stamped experience exists for the current prompt+visit —
+  `isPromptResolved`/`formatPromptStamp` in `src/features/prompt-flow.js`.
+- **Play screen module split**: `src/main.js` still owns state and
+  wiring (same pattern as menu/creation), but the play-screen render
+  functions are organized by tab (memories/traits/diary rendering
+  helpers, `renderPlayHeader`, `renderBottomTabs`) rather than as one
+  flat card grid. `src/features/play/events.js` binds every static
+  control once; per-row interactions (row clicks, More menus, Check/
+  Strike-out) are bound fresh on each render, matching the existing
+  `renderRecords`/`renderMenu` pattern.
+- **No per-record auto-collapse.** The old `collapsedRecords` system is
+  gone. Struck-out traits and lost memories live in a permanent,
+  always-expanded section instead of collapsing in place. The prompt
+  card is the only surface that still collapses (`collapsedCards`).

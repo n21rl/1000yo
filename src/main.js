@@ -10,7 +10,7 @@ import {
   upsertVampireRecord,
 } from "./vampire-storage.js";
 import { getElements } from "./ui/elements.js";
-import { createMaterialFallbackIcon, createMaterialIcon, hydrateStaticIcons } from "./ui/icons.js";
+import { createMaterialFallbackIcon, hydrateStaticIcons } from "./ui/icons.js";
 import { openActionSheet, openAlertDialog, openConfirmDialog, openPromptDialog } from "./ui/dialog.js";
 import {
   bindCardToggleEvents,

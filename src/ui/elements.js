@@ -12,6 +12,8 @@ export const ELEMENT_SELECTORS = {
   nameInput: "#name",
   identityMemoryInput: "#memory-identity",
   stepProgress: "#step-progress",
+  wizardStepLabel: "#wizard-step-label",
+  stepProgressFill: "#step-progress-fill",
   backButton: "#back-button",
   nextButton: "#next-button",
   saveConfirmation: "#save-confirmation",

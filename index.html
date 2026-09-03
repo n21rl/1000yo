@@ -26,135 +26,171 @@
         <button type="button" id="new-vampire-button" class="menu-new-button">New character</button>
       </section>
 
-      <section id="creation-screen" class="wizard card" hidden>
+      <section id="creation-screen" class="wizard" hidden>
         <div class="wizard-header">
-          <h2 class="wizard-title">Vampire Creation</h2>
-          <span id="step-progress" class="section-status">1/8</span>
+          <span id="wizard-step-label" class="wizard-step-label">Identity</span>
+          <span id="step-progress" class="wizard-step-count">1 / 8</span>
+        </div>
+        <div class="wizard-progress-track">
+          <div id="step-progress-fill" class="wizard-progress-fill"></div>
         </div>
 
         <section class="step-panel" data-step-panel="0">
-          <label for="name">Vampire name *</label>
-          <input id="name" placeholder="Enter vampire name" />
+          <h2 class="wizard-step-title">Name your vampire</h2>
+          <p class="wizard-step-hint">Choose a name and write your first defining memory.</p>
 
-          <label for="memory-identity">First memory *</label>
-          <textarea id="memory-identity" rows="4" placeholder="Describe the first defining memory"></textarea>
+          <div class="wizard-field">
+            <label for="name">Vampire name *</label>
+            <input id="name" placeholder="Enter vampire name" />
+          </div>
+          <div class="wizard-field">
+            <label for="memory-identity">First memory *</label>
+            <textarea id="memory-identity" rows="4" placeholder="Describe the first defining memory"></textarea>
+          </div>
 
-          <ul id="identity-memory-list" class="record-list"></ul>
+          <ul id="identity-memory-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="1" hidden>
-          <p class="supporting">Add at least 3 mortals before continuing.</p>
+          <h2 class="wizard-step-title">Mortals</h2>
+          <p class="wizard-step-hint">Add at least 3 mortals — people from your human life.</p>
 
-          <form id="mortal-form" class="stack">
-            <label for="mortal-name">Mortal name *</label>
-            <input id="mortal-name" placeholder="Enter mortal name" />
-
-            <label for="mortal-description">Description</label>
-            <textarea id="mortal-description" rows="3" placeholder="How they relate to the vampire"></textarea>
-
-            <button type="submit">Add mortal</button>
+          <form id="mortal-form" class="wizard-form">
+            <div class="wizard-field">
+              <label for="mortal-name">Mortal name *</label>
+              <input id="mortal-name" placeholder="Enter mortal name" />
+            </div>
+            <div class="wizard-field">
+              <label for="mortal-description">Description</label>
+              <textarea id="mortal-description" rows="3" placeholder="How they relate to the vampire"></textarea>
+            </div>
+            <button type="submit" class="wizard-add-button">Add mortal</button>
           </form>
 
-          <ul id="mortal-list" class="record-list"></ul>
+          <ul id="mortal-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="2" hidden>
-          <p class="supporting">Add at least 3 skills before continuing.</p>
+          <h2 class="wizard-step-title">Skills</h2>
+          <p class="wizard-step-hint">Add at least 3 skills your vampire has acquired.</p>
 
-          <form id="skill-form" class="stack">
-            <label for="skill-name">Skill *</label>
-            <input id="skill-name" placeholder="Enter skill name" />
-
-            <label for="skill-description">Description</label>
-            <textarea id="skill-description" rows="3" placeholder="How this skill was learned or used"></textarea>
-
-            <button type="submit">Add skill</button>
+          <form id="skill-form" class="wizard-form">
+            <div class="wizard-field">
+              <label for="skill-name">Skill *</label>
+              <input id="skill-name" placeholder="Enter skill name" />
+            </div>
+            <div class="wizard-field">
+              <label for="skill-description">Description</label>
+              <textarea id="skill-description" rows="3" placeholder="How this skill was learned or used"></textarea>
+            </div>
+            <button type="submit" class="wizard-add-button">Add skill</button>
           </form>
 
-          <ul id="skill-list" class="record-list"></ul>
+          <ul id="skill-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="3" hidden>
-          <p class="supporting">Add at least 3 resources before continuing.</p>
+          <h2 class="wizard-step-title">Resources</h2>
+          <p class="wizard-step-hint">Add at least 3 resources your vampire possesses.</p>
 
-          <form id="resource-form" class="stack">
-            <label for="resource-name">Resource *</label>
-            <input id="resource-name" placeholder="Enter resource name" />
-
-            <label for="resource-description">Description</label>
-            <textarea id="resource-description" rows="3" placeholder="Why this resource matters"></textarea>
-
-            <button type="submit">Add resource</button>
+          <form id="resource-form" class="wizard-form">
+            <div class="wizard-field">
+              <label for="resource-name">Resource *</label>
+              <input id="resource-name" placeholder="Enter resource name" />
+            </div>
+            <div class="wizard-field">
+              <label for="resource-description">Description</label>
+              <textarea id="resource-description" rows="3" placeholder="Why this resource matters"></textarea>
+            </div>
+            <button type="submit" class="wizard-add-button">Add resource</button>
           </form>
 
-          <ul id="resource-list" class="record-list"></ul>
+          <ul id="resource-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="4" hidden>
-          <p class="supporting">Add 3 more memories here before continuing.</p>
+          <h2 class="wizard-step-title">More Memories</h2>
+          <p class="wizard-step-hint">Add 3 more memories. Tag each with at least 2 traits.</p>
 
-          <form id="memory-form-later" class="stack">
-            <label for="memory-later">Memory *</label>
-            <textarea id="memory-later" rows="4" placeholder="Describe another major memory"></textarea>
-
-            <label>Traits *</label>
-            <p class="supporting trait-guidance">Select at least 2 traits this memory combines.</p>
-            <div id="memory-traits-later" class="trait-groups"></div>
-
-            <button type="submit">Add memory</button>
+          <form id="memory-form-later" class="wizard-form">
+            <div class="wizard-field">
+              <label for="memory-later">Memory *</label>
+              <textarea id="memory-later" rows="4" placeholder="Describe another major memory"></textarea>
+            </div>
+            <div class="wizard-field">
+              <label>Traits *</label>
+              <p class="wizard-step-hint wizard-trait-hint">Select at least 2 traits this memory combines.</p>
+              <div id="memory-traits-later" class="trait-groups"></div>
+            </div>
+            <button type="submit" class="wizard-add-button">Add memory</button>
           </form>
 
-          <ul id="later-memory-list" class="record-list"></ul>
+          <ul id="later-memory-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="5" hidden>
-          <form id="immortal-form" class="stack">
-            <label for="immortal-name">Immortal name *</label>
-            <input id="immortal-name" placeholder="Enter immortal name" />
+          <h2 class="wizard-step-title">The Immortal</h2>
+          <p class="wizard-step-hint">Add at least 1 immortal — another vampire or eternal being.</p>
 
-            <label for="immortal-description">Description</label>
-            <textarea id="immortal-description" rows="3" placeholder="How they relate to the vampire"></textarea>
-
-            <button type="submit">Add immortal</button>
+          <form id="immortal-form" class="wizard-form">
+            <div class="wizard-field">
+              <label for="immortal-name">Immortal name *</label>
+              <input id="immortal-name" placeholder="Enter immortal name" />
+            </div>
+            <div class="wizard-field">
+              <label for="immortal-description">Description</label>
+              <textarea id="immortal-description" rows="3" placeholder="How they relate to the vampire"></textarea>
+            </div>
+            <button type="submit" class="wizard-add-button">Add immortal</button>
           </form>
 
-          <ul id="immortal-list" class="record-list"></ul>
+          <ul id="immortal-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="6" hidden>
-          <form id="mark-form" class="stack">
-            <label for="mark-input">Mark *</label>
-            <input id="mark-input" placeholder="Enter mark" />
+          <h2 class="wizard-step-title">Your Mark</h2>
+          <p class="wizard-step-hint">Add at least 1 mark — something that sets you apart.</p>
 
-            <label for="mark-description">Description</label>
-            <textarea id="mark-description" rows="3" placeholder="How the mark appears or affects them"></textarea>
-
-            <button type="submit">Add mark</button>
+          <form id="mark-form" class="wizard-form">
+            <div class="wizard-field">
+              <label for="mark-input">Mark *</label>
+              <input id="mark-input" placeholder="Enter mark" />
+            </div>
+            <div class="wizard-field">
+              <label for="mark-description">Description</label>
+              <textarea id="mark-description" rows="3" placeholder="How the mark appears or affects them"></textarea>
+            </div>
+            <button type="submit" class="wizard-add-button">Add mark</button>
           </form>
 
-          <ul id="mark-list" class="record-list"></ul>
+          <ul id="mark-list" class="wizard-added-list"></ul>
         </section>
 
         <section class="step-panel" data-step-panel="7" hidden>
-          <form id="memory-form-curse" class="stack">
-            <label for="memory-curse">Curse memory *</label>
-            <textarea id="memory-curse" rows="4" placeholder="Describe the memory of becoming a vampire"></textarea>
+          <h2 class="wizard-step-title">The Curse</h2>
+          <p class="wizard-step-hint">Write the memory of becoming a vampire. Tag at least 2 traits.</p>
 
-            <label>Traits *</label>
-            <p class="supporting trait-guidance">Select at least 2 traits this memory combines.</p>
-            <div id="memory-traits-curse" class="trait-groups"></div>
-
-            <button type="submit">Add curse memory</button>
+          <form id="memory-form-curse" class="wizard-form">
+            <div class="wizard-field">
+              <label for="memory-curse">Curse memory *</label>
+              <textarea id="memory-curse" rows="4" placeholder="Describe the memory of becoming a vampire"></textarea>
+            </div>
+            <div class="wizard-field">
+              <label>Traits *</label>
+              <p class="wizard-step-hint wizard-trait-hint">Select at least 2 traits this memory combines.</p>
+              <div id="memory-traits-curse" class="trait-groups"></div>
+            </div>
+            <button type="submit" class="wizard-add-button">Add curse memory</button>
           </form>
 
-          <ul id="curse-memory-list" class="record-list"></ul>
+          <ul id="curse-memory-list" class="wizard-added-list"></ul>
         </section>
 
         <div class="wizard-nav">
-          <button type="button" class="ghost-button" id="back-button">Back</button>
-          <button type="button" id="next-button">Next</button>
+          <button type="button" class="wizard-back-button" id="back-button">Back</button>
+          <button type="button" class="wizard-next-button" id="next-button">Next</button>
         </div>
-        <p id="save-confirmation" class="save-confirmation" hidden>
+        <p id="save-confirmation" class="wizard-save-confirmation" hidden>
           Vampire creation saved. All setup fields are complete.
         </p>
       </section>

@@ -356,7 +356,7 @@ const renderTraitSelector = (container, selectedIds) => {
     pill.type = "button";
     pill.className = selectedIds.has(option.id) ? "record-tag selected-trait trait-select-pill" : "record-tag trait-select-pill";
     pill.setAttribute("aria-pressed", String(selectedIds.has(option.id)));
-    pill.append(createMaterialIcon(option.icon, ["record-tag-icon"]), document.createTextNode(option.value));
+    pill.textContent = option.value;
     pill.addEventListener("click", () => {
       if (selectedIds.has(option.id)) selectedIds.delete(option.id);
       else selectedIds.add(option.id);
@@ -374,24 +374,32 @@ const renderTraitSelector = (container, selectedIds) => {
 
 const renderRecords = (listElement, records, removeItem = null, emptyMessage = "No entries yet.") => {
   listElement.innerHTML = "";
+  listElement.classList.add("wizard-added-list");
   if (!records.length) {
     listElement.append(createEmptyRecord(emptyMessage));
     return;
   }
 
-  for (const record of records) {
+  records.forEach((record, position) => {
     const item = document.createElement("li");
-    item.className = "record";
+    item.className = "wizard-added-item";
+
+    const index = document.createElement("span");
+    index.className = "wizard-added-index";
+    index.textContent = String(position + 1).padStart(2, "0");
+
     const body = document.createElement("div");
-    body.className = "record-body";
+    body.className = "wizard-added-body";
 
     if (record.title) {
       const title = document.createElement("strong");
+      title.className = "wizard-added-title";
       title.textContent = record.title;
       body.append(title);
     }
     if (record.text) {
       const text = document.createElement("p");
+      text.className = "wizard-added-text";
       text.textContent = record.text;
       body.append(text);
     }
@@ -407,19 +415,25 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
       body.append(tags);
     }
 
+    item.append(index, body);
+
     if (removeItem) {
-      const removeButton = createButton("Remove", "ghost-button", () => {
+      const removeButton = document.createElement("button");
+      removeButton.type = "button";
+      removeButton.className = "wizard-added-remove";
+      removeButton.setAttribute("aria-label", "Remove");
+      removeButton.append(createMaterialFallbackIcon("delete"));
+      removeButton.addEventListener("click", (event) => {
+        event.stopPropagation();
         removeItem(record.index);
         markDirty();
         render();
       });
-      item.append(body, removeButton);
-    } else {
-      item.append(body);
+      item.append(removeButton);
     }
 
     listElement.append(item);
-  }
+  });
 };
 
 const renderMenu = () => renderMenuView({
@@ -445,7 +459,7 @@ const getMemoryRecords = (startIndex, endIndexExclusive) => character.memories
   .filter(({ index }) => index >= startIndex && index < endIndexExclusive)
   .map(({ memory, index }) => ({
     index,
-    title: `Memory ${index + 1}`,
+    title: memory.title || `Memory ${memory.createdOrder}`,
     text: memory.experiences.map((experience) => experience.text).join(" "),
     tags: [...new Set(memory.experiences.flatMap((experience) => experience.traitIds.map((traitId) => character.getTraitLabel(traitId)).filter(Boolean)))],
   }));

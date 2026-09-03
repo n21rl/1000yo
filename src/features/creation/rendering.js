@@ -1,10 +1,23 @@
+export const WIZARD_STEP_LABELS = [
+  "Identity",
+  "Mortals",
+  "Skills",
+  "Resources",
+  "Memories",
+  "Immortal",
+  "Mark",
+  "Curse",
+];
+
 export const renderStep = ({ elements, currentStep, totalSteps, canAdvanceFromStep }) => {
   elements.stepPanels.forEach((panel, index) => {
     panel.hidden = currentStep !== index;
   });
-  elements.stepProgress.textContent = `${currentStep + 1}/${totalSteps}`;
+  elements.stepProgress.textContent = `${currentStep + 1} / ${totalSteps}`;
+  if (elements.wizardStepLabel) elements.wizardStepLabel.textContent = WIZARD_STEP_LABELS[currentStep] ?? "";
+  if (elements.stepProgressFill) elements.stepProgressFill.style.width = `${((currentStep + 1) / totalSteps) * 100}%`;
   elements.backButton.disabled = currentStep === 0;
-  elements.nextButton.textContent = currentStep === totalSteps - 1 ? "Save" : "Next";
+  elements.nextButton.textContent = currentStep === totalSteps - 1 ? "Save & Play" : "Next";
   elements.nextButton.disabled = !canAdvanceFromStep(currentStep);
 };
 

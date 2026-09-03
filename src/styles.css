@@ -78,8 +78,7 @@ p {
 }
 
 h1,
-h2,
-.wizard-title {
+h2 {
   font-family: "Roboto", "Noto Sans", "Segoe UI", Arial, sans-serif;
   font-weight: 500;
 }
@@ -108,10 +107,6 @@ h2 {
   padding: 0.85rem;
   box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24);
   backdrop-filter: blur(4px);
-}
-
-.wizard {
-  max-width: 56rem;
 }
 
 .play-layout,
@@ -146,20 +141,16 @@ h2 {
   gap: 0.65rem;
 }
 
-.wizard-header,
 .section-heading,
 .record,
 .record-actions,
 .form-actions,
-.wizard-nav,
 .card-title-row {
   display: flex;
   gap: 0.5rem;
 }
 
-.wizard-header,
-.record,
-.wizard-nav {
+.record {
   justify-content: space-between;
   align-items: flex-start;
 }
@@ -284,36 +275,11 @@ img.material-icon {
   padding: 0.35rem 0.65rem;
 }
 
-.wizard-title {
-  margin-bottom: 0;
-  font-size: clamp(1.9rem, 3vw, 2.8rem);
-  line-height: 1;
-}
-
-.section-status {
-  min-width: 3.5rem;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  border: 1px solid #725145;
-  color: #d9cbb4;
-  text-align: center;
-  font-size: 0.9rem;
-}
-
-.section-status.complete {
-  border-color: #5f8f69;
-  color: #99d8ae;
-}
-
 label {
   display: block;
   color: #efe0c0;
   margin-bottom: 0.35rem;
   font-weight: 700;
-}
-
-.trait-guidance {
-  margin: -0.1rem 0 0.25rem;
 }
 
 .trait-groups {
@@ -799,15 +765,6 @@ button:disabled {
   display: list-item;
 }
 
-.save-confirmation {
-  margin: 0.8rem 0 0;
-  padding: 0.85rem 1rem;
-  border: 1px solid #5f8f69;
-  border-radius: 0.65rem;
-  background: rgba(36, 67, 42, 0.3);
-  color: #b8ebc5;
-}
-
 .menu-screen {
   max-width: 26rem;
   margin: 0 auto;
@@ -941,6 +898,280 @@ button:disabled {
   color: var(--color-accent);
 }
 
+/* Creation wizard (Phase 5). Fully scoped under .wizard so it can't
+   bleed into the still-legacy-styled play screen (Phase 6+), which
+   reuses some of the same base classes (label/input/textarea/.record-tag). */
+.wizard {
+  max-width: 26rem;
+  margin: 0 auto;
+  padding: 1.25rem 0.9rem 2.5rem;
+  background: var(--color-bg);
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+}
+
+.wizard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+}
+
+.wizard-step-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.wizard-step-count {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--color-text-dim);
+}
+
+.wizard-progress-track {
+  height: 2px;
+  background: var(--color-border);
+  width: 100%;
+  margin-bottom: 1.5rem;
+}
+
+.wizard-progress-fill {
+  height: 2px;
+  background: var(--color-accent);
+  transition: width 0.3s ease;
+}
+
+.wizard-step-title {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 400;
+  margin: 0 0 0.25rem;
+  line-height: 1.2;
+}
+
+.wizard-step-hint {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0 0 1.25rem;
+  line-height: 1.5;
+}
+
+.wizard-trait-hint {
+  margin: -0.5rem 0 0.6rem;
+}
+
+.wizard-field {
+  margin-bottom: 1rem;
+}
+
+.wizard-field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.4rem;
+  font-weight: 400;
+}
+
+.wizard-field input {
+  width: 100%;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  padding: 0.55rem 0;
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+}
+
+.wizard-field textarea {
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.8rem;
+  color: var(--color-text-primary);
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  min-height: 3.5rem;
+}
+
+.wizard-field input::placeholder,
+.wizard-field textarea::placeholder {
+  color: var(--color-text-dim);
+  font-style: italic;
+}
+
+.wizard .trait-groups {
+  display: block;
+  margin-bottom: 0;
+}
+
+.wizard .trait-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.wizard .record-tag.trait-select-pill {
+  border-radius: 0;
+  border: 1px solid var(--color-border);
+  background: none;
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  padding: 0.4rem 0.7rem;
+}
+
+.wizard .record-tag.selected-trait {
+  border-color: var(--color-accent);
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--color-text-primary);
+}
+
+.wizard-add-button {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  background: var(--color-surface);
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.wizard-add-button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+}
+
+.wizard-added-list {
+  list-style: none;
+  margin: 0.5rem 0 1.25rem;
+  padding: 0;
+  border-top: 1px solid var(--color-border);
+}
+
+.wizard-added-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.wizard .record-empty {
+  display: block;
+  border: none;
+  padding: 0.4rem 0;
+}
+
+.wizard .record-empty .record-body,
+.wizard .record-empty p {
+  color: var(--color-text-dim);
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.wizard-added-index {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.wizard-added-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.wizard-added-title {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.wizard-added-text {
+  margin: 0.15rem 0 0;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.wizard-added-remove {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--color-text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.wizard-added-remove .material-icon {
+  width: 0.9rem;
+  height: 0.9rem;
+  color: inherit;
+}
+
+.wizard-added-remove:hover {
+  color: var(--color-accent);
+}
+
+.wizard-nav {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.wizard-back-button,
+.wizard-next-button {
+  padding: 0.85rem;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.wizard-back-button {
+  flex: 1;
+  background: none;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-tertiary);
+}
+
+.wizard-next-button {
+  flex: 2;
+  background: var(--color-accent);
+  border: none;
+  color: #fff;
+}
+
+.wizard-next-button:hover {
+  background: var(--color-accent-hover);
+}
+
+.wizard-save-confirmation {
+  margin: 1rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--color-positive);
+  border-radius: var(--radius);
+  background: rgba(34, 197, 94, 0.08);
+  color: var(--color-positive);
+  font-size: 0.8rem;
+}
+
 @media (max-width: 720px) {
   .app {
     padding-inline: 0.8rem;
@@ -948,7 +1179,6 @@ button:disabled {
 
   .section-heading,
   .record,
-  .wizard-nav,
   .form-actions:not(.form-actions-equal) {
     flex-direction: column;
   }

@@ -22,6 +22,7 @@ import {
   createPromptState,
   ensurePromptVisit,
   getPromptPanelViewModel,
+  isPromptResolved,
   normalizeLoadedPromptState,
 } from "./features/prompt-flow.js";
 import {
@@ -1002,8 +1003,9 @@ const renderPlayLists = () => {
 const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
 
 const renderPromptPanel = () => {
-  const model = getPromptPanelViewModel(promptState);
-  elements.promptButton.disabled = model.disabled;
+  const resolved = isPromptResolved(promptState, character);
+  const model = getPromptPanelViewModel(promptState, { resolved });
+  elements.promptButton.disabled = model.disabled || model.rollDisabled;
   elements.promptText.textContent = model.text;
 };
 

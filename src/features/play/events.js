@@ -1,3 +1,5 @@
+import { formatPromptStamp } from "../prompt-flow.js";
+
 export const bindPlayEvents = ({
   elements,
   promptState,
@@ -21,6 +23,9 @@ export const bindPlayEvents = ({
   getPendingDiaryMemoryId,
   updatePlayExperienceActionState,
 }) => {
+  const currentPromptStamp = () =>
+    formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
+
   elements.promptButton.addEventListener("click", () => {
     if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
     const delta = rollDie(10) - rollDie(6);
@@ -45,7 +50,7 @@ export const bindPlayEvents = ({
     }
     const nextMemory = window.prompt("Add a memory", "");
     if (nextMemory === null) return;
-    const didSave = character.addMemory(nextMemory, []);
+    const didSave = character.addMemory(nextMemory, [], null, currentPromptStamp());
     if (!didSave) return;
     collapsedCards.delete("memories");
     closeExperienceComposer();
@@ -74,7 +79,7 @@ export const bindPlayEvents = ({
       window.alert("Select a memory target before adding an experience.");
       return;
     }
-    const didSave = getCharacter().addMemory(elements.playExperienceText.value, [...pendingExperienceTraitIds], memoryId);
+    const didSave = getCharacter().addMemory(elements.playExperienceText.value, [...pendingExperienceTraitIds], memoryId, currentPromptStamp());
     if (!didSave) return;
     markDirty();
     closeExperienceComposer();

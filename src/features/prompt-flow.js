@@ -25,22 +25,42 @@ export const advanceToNextPromptEntry = (promptState, targetIndex) => {
   return { prompt: promptState.currentPrompt, visit: promptState.visits.get(promptState.currentPrompt) ?? 1 };
 };
 
-export const getPromptPanelViewModel = (promptState) => {
+export const formatPromptStamp = (promptIndex, visitCount) => {
+  const letter = ["a", "b", "c"][visitCount - 1] ?? "";
+  return `${promptIndex}${letter}`;
+};
+
+export const isPromptResolved = (promptState, character) => {
+  if (!character) return false;
+  const stamp = formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
+  return character.memories.some((memory) => memory.experiences.some((experience) => experience.prompt === stamp));
+};
+
+export const getPromptPanelViewModel = (promptState, { resolved = false } = {}) => {
   if (promptState.isLoading) {
     return {
       disabled: true,
+      rollDisabled: true,
+      resolved: false,
+      statusLabel: "",
       text: "Loading prompts...",
     };
   }
   if (promptState.loadError) {
     return {
       disabled: true,
+      rollDisabled: true,
+      resolved: false,
+      statusLabel: "",
       text: promptState.loadError,
     };
   }
   if (!promptState.deck.length) {
     return {
       disabled: true,
+      rollDisabled: true,
+      resolved: false,
+      statusLabel: "",
       text: "No prompt content is available.",
     };
   }
@@ -49,6 +69,9 @@ export const getPromptPanelViewModel = (promptState) => {
   const visitCount = promptState.visits.get(promptState.currentPrompt) ?? 1;
   return {
     disabled: false,
+    rollDisabled: !resolved,
+    resolved,
+    statusLabel: resolved ? "Prompt resolved" : "Prompt unresolved",
     text: getPromptEntry(currentPrompt, visitCount) || "No remaining prompt entry at this position.",
   };
 };

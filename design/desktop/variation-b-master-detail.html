@@ -1,0 +1,456 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1000yo — Desktop layout B: Master–detail</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../src/styles.css" />
+    <link rel="stylesheet" href="mockup-shared.css" />
+    <style>
+      /* VARIATION B — "Master–detail"
+         The mobile push-navigation is unwound. A narrow icon rail keeps
+         the three tabs; the tabs now switch only the *browse* pane on
+         the left. The right pane is a fixed work surface: the prompt on
+         top, the open memory and its composer below it, never replaced
+         by navigation. So the memory you are writing into stays put
+         while you switch to Traits to check the traits you just used.
+
+         Layout only; component styling comes from src/styles.css. */
+
+      @media (min-width: 640px) {
+        .menu-screen,
+        .saves-screen,
+        .wizard,
+        .play-shell {
+          max-width: none;
+          margin: 0;
+          border-left: none;
+          border-right: none;
+        }
+      }
+
+      .b-frame {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+      }
+
+      /* --- Icon rail: the bottom tabs, narrowed --- */
+      .b-rail {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        width: 5.25rem;
+        flex-shrink: 0;
+        padding: 0.6rem 0;
+        border-top: none;
+        border-right: 1px solid var(--color-border);
+      }
+
+      .b-rail .play-bottom-tab {
+        flex: 0 0 auto;
+        padding: 0.75rem 0;
+        border-left: 2px solid transparent;
+      }
+
+      .b-rail .play-bottom-tab.active {
+        border-left-color: var(--color-accent);
+        background: var(--color-surface);
+      }
+
+      /* --- Browse pane (master) --- */
+      .b-browse {
+        width: 25rem;
+        flex-shrink: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--color-border);
+      }
+
+      .b-browse .play-tabs-body {
+        padding: 0 1.25rem;
+      }
+
+      /* The trait row's action column is too wide for a 25rem pane: the
+         actions drop under the description as a single row instead. */
+      .b-browse .play-trait-row {
+        flex-wrap: wrap;
+      }
+
+      .b-browse .play-trait-actions {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.9rem;
+        min-width: 0;
+        width: 100%;
+        padding: 0.35rem 0 0 calc(var(--icon-slot-size) + 0.75rem);
+      }
+
+      /* --- Work pane (detail) --- */
+      .b-work {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .b-work .play-prompt-head,
+      .b-work .play-prompt-card [data-card-content] {
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+
+      .b-work .play-prompt-text {
+        font-size: 1.15rem;
+        max-width: 42rem;
+      }
+
+      .b-work-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 1.25rem 2rem 2rem;
+      }
+
+      .b-work-inner {
+        max-width: 42rem;
+      }
+
+      /* Nothing open yet: the prompt is the whole work surface. */
+      .b-work-empty {
+        height: 100%;
+      }
+
+      /* --- Creation: steps | form | what's been added so far --- */
+      .b-step-rail {
+        width: 13rem;
+        flex-shrink: 0;
+        padding: 1rem 0.5rem;
+        border-right: 1px solid var(--color-border);
+        overflow-y: auto;
+      }
+
+      .b-step {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.5rem 0.6rem;
+        background: none;
+        border: none;
+        border-left: 2px solid transparent;
+        border-radius: 0;
+        color: var(--color-text-dim);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .b-step:hover {
+        color: var(--color-text-primary);
+        filter: none;
+      }
+
+      .b-step-number {
+        font-size: 0.65rem;
+        color: var(--color-text-dimmest);
+      }
+
+      .b-step.done {
+        color: var(--color-text-muted);
+      }
+
+      .b-step.done .b-step-number {
+        color: var(--color-positive);
+      }
+
+      .b-step.current {
+        border-left-color: var(--color-accent);
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+      }
+
+      .b-step.current .b-step-number {
+        color: var(--color-accent);
+      }
+
+      .b-form-pane {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--color-border);
+      }
+
+      .b-form-pane .wizard-steps-scroll {
+        padding: 0 2rem;
+      }
+
+      .b-form-pane .wizard-steps-scroll .step-panel {
+        max-width: 34rem;
+      }
+
+      .b-form-pane .wizard-nav {
+        justify-content: flex-end;
+        padding: 0.75rem 2rem;
+        border-top: 1px solid var(--color-border);
+      }
+
+      .b-form-pane .wizard-back-button,
+      .b-form-pane .wizard-next-button {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 8rem;
+      }
+
+      .b-added-pane {
+        width: 22rem;
+        flex-shrink: 0;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 1rem 1.25rem 2rem;
+      }
+
+      .b-added-pane .wizard-added-list {
+        margin-top: 0;
+      }
+
+      /* --- Home / Saves --- */
+      .menu-screen {
+        max-width: 26rem;
+        margin: 0 auto;
+      }
+
+      .saves-screen .menu-vampire-list {
+        max-width: 46rem;
+        width: 100%;
+        margin: 0 auto;
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+
+      .saves-screen .play-header {
+        justify-content: flex-start;
+        gap: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <!-- HOME -->
+      <section class="menu-screen" data-mk-screen="menu" hidden>
+        <div class="menu-brand">
+          <h1 class="menu-title">Thousand Year Old Vampire</h1>
+        </div>
+        <div class="menu-actions">
+          <button type="button" class="menu-continue-button">
+            <span class="menu-continue-label">Continue</span>
+            <span class="menu-continue-name">Sister Alazne</span>
+          </button>
+          <button type="button" class="menu-new-button" data-mk-icon-prefix="add">New Vampire</button>
+          <button type="button" class="menu-new-button" data-mk-icon-prefix="sticky_note_2">Saves</button>
+        </div>
+      </section>
+
+      <!-- SAVES -->
+      <section class="saves-screen" data-mk-screen="saves" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-back">← Home</button>
+          <div class="play-header-identity">
+            <span class="play-header-name">Saves</span>
+          </div>
+        </div>
+        <ul class="menu-vampire-list" data-mk-saves-list></ul>
+      </section>
+
+      <!-- CREATION -->
+      <section class="wizard" data-mk-screen="create" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-back">← Home</button>
+          <button type="button" class="play-header-avatar-button" aria-label="Character options">
+            <span class="play-header-name">Sister Alazne</span>
+            <span class="play-header-avatar"><span data-mk-icon="person"></span></span>
+          </button>
+        </div>
+        <div class="wizard-header">
+          <span class="wizard-step-label" data-mk-step-label></span>
+          <span class="wizard-step-count" data-mk-step-count></span>
+        </div>
+        <div class="wizard-progress-track"><div class="wizard-progress-fill" data-mk-step-fill></div></div>
+        <div class="b-frame">
+          <nav class="b-step-rail" data-mk-step-rail data-mk-step-class="b-step"></nav>
+          <div class="b-form-pane">
+            <div class="wizard-steps-scroll">
+              <section class="step-panel" data-mk-step-panel data-mk-step-panel-no-list></section>
+            </div>
+            <div class="wizard-nav">
+              <button type="button" class="wizard-back-button" data-mk-step-back>Back</button>
+              <button type="button" class="wizard-next-button" data-mk-step-next>Next</button>
+            </div>
+          </div>
+          <aside class="b-added-pane" data-mk-step-added></aside>
+        </div>
+      </section>
+
+      <!-- PLAY -->
+      <section class="play-shell" data-mk-screen="play" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-more" aria-label="Menu">
+            <span data-mk-icon="menu"></span>
+          </button>
+          <div class="play-header-menus">
+            <button type="button" class="play-header-avatar-button" aria-label="Character options">
+              <span class="play-header-name">Sister Alazne</span>
+              <span class="play-header-avatar"><span data-mk-icon="person"></span></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="b-frame">
+          <nav class="play-bottom-tabs b-rail">
+            <button type="button" class="play-bottom-tab active" data-mk-tab="memories">
+              <span class="play-bottom-tab-icon" data-mk-icon="menu_book"></span>
+              <span>MEMORIES</span>
+            </button>
+            <button type="button" class="play-bottom-tab" data-mk-tab="traits">
+              <span class="play-bottom-tab-icon" data-mk-icon="cognition"></span>
+              <span>TRAITS</span>
+            </button>
+            <button type="button" class="play-bottom-tab" data-mk-tab="diary">
+              <span class="play-bottom-tab-icon" data-mk-icon="book_2"></span>
+              <span>DIARY</span>
+            </button>
+          </nav>
+
+          <!-- Master -->
+          <div class="b-browse">
+            <div class="play-tabs-body">
+              <div class="play-tab-panel" data-mk-panel="memories">
+                <div data-mk-memory-list-view>
+                  <div class="play-tab-heading">
+                    <span>Memories</span>
+                    <div class="play-tab-heading-actions">
+                      <span class="play-tab-heading-meta" data-mk-slots></span>
+                      <button type="button" class="play-tab-heading-more" aria-label="Memory slot options">
+                        <span data-mk-icon="more_vert"></span>
+                      </button>
+                    </div>
+                  </div>
+                  <ul class="play-memory-list" data-mk-memories></ul>
+                  <ul class="play-memory-list play-memory-list-lost" data-mk-lost-memories></ul>
+                  <p class="play-memory-hint">When full, you may need to forget one.</p>
+                  <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add memory</button>
+                </div>
+              </div>
+
+              <div class="play-tab-panel" data-mk-panel="traits" hidden>
+                <div class="play-trait-subtabs">
+                  <button type="button" class="play-trait-subtab active" data-mk-subtab="characters">Characters</button>
+                  <button type="button" class="play-trait-subtab" data-mk-subtab="skills">Skills</button>
+                  <button type="button" class="play-trait-subtab" data-mk-subtab="resources">Resources</button>
+                  <button type="button" class="play-trait-subtab" data-mk-subtab="marks">Marks</button>
+                </div>
+                <div class="play-trait-controls">
+                  <button type="button" class="play-trait-sort">
+                    <span class="play-trait-sort-icon" data-mk-icon="sort"></span>
+                    Recent
+                  </button>
+                  <div class="play-trait-view-toggle" role="group" aria-label="List or grid view">
+                    <button type="button" class="play-trait-view-button" aria-pressed="true" aria-label="List view">
+                      <span class="play-trait-view-icon" data-mk-icon="menu"></span>
+                    </button>
+                    <button type="button" class="play-trait-view-button" disabled aria-label="Grid view (coming soon)">
+                      <span class="play-trait-view-icon" data-mk-icon="grid_view"></span>
+                    </button>
+                  </div>
+                </div>
+                <div class="play-trait-panel" data-mk-trait-panel="characters">
+                  <ul class="play-trait-list" data-mk-traits="characters"></ul>
+                  <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Character</button>
+                </div>
+                <div class="play-trait-panel" data-mk-trait-panel="skills" hidden>
+                  <ul class="play-trait-list" data-mk-traits="skills"></ul>
+                  <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Skill</button>
+                </div>
+                <div class="play-trait-panel" data-mk-trait-panel="resources" hidden>
+                  <ul class="play-trait-list" data-mk-traits="resources"></ul>
+                  <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Resource</button>
+                </div>
+                <div class="play-trait-panel" data-mk-trait-panel="marks" hidden>
+                  <ul class="play-trait-list" data-mk-traits="marks"></ul>
+                  <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Mark</button>
+                </div>
+              </div>
+
+              <div class="play-tab-panel" data-mk-panel="diary" hidden>
+                <article class="play-diary-populated">
+                  <p class="play-diary-description" data-mk-diary-description></p>
+                  <ul class="play-memory-list" data-mk-diary-memories></ul>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detail -->
+          <div class="b-work">
+            <article class="play-prompt-card">
+              <div class="play-prompt-head" data-mk-prompt-toggle aria-expanded="true">
+                <div class="play-prompt-meta">
+                  <span class="play-prompt-stamp">PROMPT 2A</span>
+                  <span class="play-prompt-status">Prompt unresolved</span>
+                </div>
+                <div class="play-prompt-actions">
+                  <button type="button" class="play-prompt-roll" aria-label="Roll">Roll</button>
+                  <button type="button" class="card-chevron-button play-prompt-chevron" aria-label="Toggle prompt card">
+                    <span class="card-toggle-indicator" data-mk-icon="keyboard_arrow_down"></span>
+                  </button>
+                </div>
+              </div>
+              <div data-mk-prompt-body>
+                <p class="play-prompt-text" data-mk-prompt-text></p>
+              </div>
+            </article>
+
+            <div class="b-work-body">
+              <div class="b-work-inner play-memory-detail" data-mk-memory-detail>
+                <div data-mk-memory-detail-body>
+                  <div class="play-memory-detail-head">
+                    <span class="play-memory-detail-label">MEMORY</span>
+                    <span class="play-memory-detail-title" data-mk-detail-title></span>
+                  </div>
+                  <ol class="play-experience-list" data-mk-experiences></ol>
+                  <form class="play-experience-form" onsubmit="return false">
+                    <label class="play-field-label" for="b-exp">New Experience</label>
+                    <textarea id="b-exp" rows="3" placeholder="Write a single evocative sentence…"></textarea>
+                    <div class="play-composer-columns" data-mk-composer-chips></div>
+                    <div class="play-experience-actions">
+                      <button type="submit" id="play-experience-submit">Save Experience</button>
+                      <button type="button" id="play-experience-cancel">Clear</button>
+                    </div>
+                  </form>
+                </div>
+                <div class="b-work-empty" data-mk-memory-detail-empty hidden></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="mockup-shared.js"></script>
+    <script src="mockup-screens.js"></script>
+    <script>
+      MKScreens.init({ variation: "variation-b-master-detail.html", detailMode: "pane" });
+    </script>
+  </body>
+</html>

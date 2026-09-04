@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1000yo — Desktop layout A: Nav rail</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../src/styles.css" />
+    <link rel="stylesheet" href="mockup-shared.css" />
+    <style>
+      /* VARIATION A — "Nav rail"
+         The most conservative desktop translation: nothing about the
+         information architecture changes. The bottom tab bar rotates to
+         a left rail, the header spans the window, and the mobile column
+         (prompt card pinned above a scrolling tab body) is promoted to a
+         readable centred measure. One screen at a time, exactly as on
+         mobile — a memory detail still replaces the memory list.
+
+         Everything below is layout only; component styling comes from
+         src/styles.css unchanged. */
+
+      /* Replace the placeholder centred-column desktop rule in
+         styles.css (@media min-width:640px) — the shell is full-bleed
+         again, and the measure is controlled per screen instead. */
+      @media (min-width: 640px) {
+        .menu-screen,
+        .saves-screen,
+        .wizard,
+        .play-shell {
+          max-width: none;
+          margin: 0;
+          border-left: none;
+          border-right: none;
+        }
+      }
+
+      /* --- Shared desktop frame: full-width header over rail + body --- */
+      .a-frame {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+      }
+
+      .a-rail {
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: stretch;
+        gap: 0.15rem;
+        width: 11rem;
+        flex-shrink: 0;
+        padding: 0.75rem 0.5rem;
+        border-top: none;
+        border-right: 1px solid var(--color-border);
+      }
+
+      .a-rail .play-bottom-tab {
+        flex: 0 0 auto;
+        flex-direction: row;
+        justify-content: flex-start;
+        gap: 0.6rem;
+        padding: 0.55rem 0.6rem;
+        border-left: 2px solid transparent;
+      }
+
+      .a-rail .play-bottom-tab.active {
+        border-left-color: var(--color-accent);
+        background: var(--color-surface);
+      }
+
+      .a-main {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        justify-content: center;
+      }
+
+      /* The mobile column, promoted: same stacking order, wider measure,
+         side borders kept so the column still reads as the app's body. */
+      .a-column {
+        flex: 1;
+        max-width: 46rem;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border-left: 1px solid var(--color-border);
+        border-right: 1px solid var(--color-border);
+      }
+
+      .a-column .play-tabs-body {
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+
+      .a-column .play-prompt-head,
+      .a-column .play-prompt-card [data-card-content] {
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+
+      /* Desktop has the vertical room the phone didn't: the prompt keeps
+         its serif measure instead of being squeezed to two lines. */
+      .a-column .play-prompt-text {
+        font-size: 1.15rem;
+        max-width: 40rem;
+      }
+
+      /* --- Header --- */
+      .play-header {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+      }
+
+      /* --- Creation --- */
+      .a-wizard-rail {
+        width: 13rem;
+        flex-shrink: 0;
+        padding: 1rem 0.5rem;
+        border-right: 1px solid var(--color-border);
+        overflow-y: auto;
+      }
+
+      .a-step {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.5rem 0.6rem;
+        background: none;
+        border: none;
+        border-left: 2px solid transparent;
+        border-radius: 0;
+        color: var(--color-text-dim);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .a-step:hover {
+        color: var(--color-text-primary);
+        filter: none;
+      }
+
+      .a-step-number {
+        font-size: 0.65rem;
+        color: var(--color-text-dimmest);
+      }
+
+      .a-step.done {
+        color: var(--color-text-muted);
+      }
+
+      .a-step.done .a-step-number {
+        color: var(--color-positive);
+      }
+
+      .a-step.current {
+        border-left-color: var(--color-accent);
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+      }
+
+      .a-step.current .a-step-number {
+        color: var(--color-accent);
+      }
+
+      .a-column .wizard-header,
+      .a-column .wizard-progress-track,
+      .a-column .wizard-steps-scroll,
+      .a-column .wizard-nav {
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+
+      .a-column .wizard-progress-track {
+        margin-left: 0;
+        margin-right: 0;
+      }
+
+      .a-column .wizard-nav {
+        justify-content: flex-end;
+        border-top: 1px solid var(--color-border);
+      }
+
+      .a-column .wizard-back-button,
+      .a-column .wizard-next-button {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 8rem;
+      }
+
+      /* --- Home / Saves: the mobile column, centred in the window --- */
+      .menu-screen {
+        max-width: 26rem;
+        margin: 0 auto;
+      }
+
+      .saves-screen .menu-vampire-list {
+        max-width: 46rem;
+        width: 100%;
+        margin: 0 auto;
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+
+      .saves-screen .play-header {
+        justify-content: flex-start;
+        gap: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <!-- HOME -->
+      <section class="menu-screen" data-mk-screen="menu" hidden>
+        <div class="menu-brand">
+          <h1 class="menu-title">Thousand Year Old Vampire</h1>
+        </div>
+        <div class="menu-actions">
+          <button type="button" class="menu-continue-button">
+            <span class="menu-continue-label">Continue</span>
+            <span class="menu-continue-name">Sister Alazne</span>
+          </button>
+          <button type="button" class="menu-new-button" data-mk-icon-prefix="add">New Vampire</button>
+          <button type="button" class="menu-new-button" data-mk-icon-prefix="sticky_note_2">Saves</button>
+        </div>
+      </section>
+
+      <!-- SAVES -->
+      <section class="saves-screen" data-mk-screen="saves" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-back">← Home</button>
+          <div class="play-header-identity">
+            <span class="play-header-name">Saves</span>
+          </div>
+        </div>
+        <ul class="menu-vampire-list" data-mk-saves-list></ul>
+      </section>
+
+      <!-- CREATION -->
+      <section class="wizard" data-mk-screen="create" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-back">← Home</button>
+          <button type="button" class="play-header-avatar-button" aria-label="Character options">
+            <span class="play-header-name">Sister Alazne</span>
+            <span class="play-header-avatar"><span data-mk-icon="person"></span></span>
+          </button>
+        </div>
+        <div class="a-frame">
+          <nav class="a-wizard-rail" data-mk-step-rail></nav>
+          <div class="a-main">
+            <div class="a-column">
+              <div class="wizard-header">
+                <span class="wizard-step-label" data-mk-step-label></span>
+                <span class="wizard-step-count" data-mk-step-count></span>
+              </div>
+              <div class="wizard-progress-track"><div class="wizard-progress-fill" data-mk-step-fill></div></div>
+              <div class="wizard-steps-scroll">
+                <section class="step-panel" data-mk-step-panel></section>
+              </div>
+              <div class="wizard-nav">
+                <button type="button" class="wizard-back-button" data-mk-step-back>Back</button>
+                <button type="button" class="wizard-next-button" data-mk-step-next>Next</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- PLAY -->
+      <section class="play-shell" data-mk-screen="play" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-back" data-mk-detail-back hidden>← Back</button>
+          <button type="button" class="play-header-more" aria-label="Menu" data-mk-hamburger>
+            <span data-mk-icon="menu"></span>
+          </button>
+          <div class="play-header-menus">
+            <button type="button" class="play-header-more" aria-label="Memory options" data-mk-detail-more hidden>
+              <span data-mk-icon="more_vert"></span>
+            </button>
+            <button type="button" class="play-header-avatar-button" aria-label="Character options">
+              <span class="play-header-name">Sister Alazne</span>
+              <span class="play-header-avatar"><span data-mk-icon="person"></span></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="a-frame">
+          <nav class="play-bottom-tabs a-rail">
+            <button type="button" class="play-bottom-tab active" data-mk-tab="memories">
+              <span class="play-bottom-tab-icon" data-mk-icon="menu_book"></span>
+              <span>MEMORIES</span>
+            </button>
+            <button type="button" class="play-bottom-tab" data-mk-tab="traits">
+              <span class="play-bottom-tab-icon" data-mk-icon="cognition"></span>
+              <span>TRAITS</span>
+            </button>
+            <button type="button" class="play-bottom-tab" data-mk-tab="diary">
+              <span class="play-bottom-tab-icon" data-mk-icon="book_2"></span>
+              <span>DIARY</span>
+            </button>
+          </nav>
+
+          <div class="a-main">
+            <div class="a-column">
+              <article class="play-prompt-card" data-mk-prompt-card>
+                <div class="play-prompt-head" data-mk-prompt-toggle aria-expanded="true">
+                  <div class="play-prompt-meta">
+                    <span class="play-prompt-stamp">PROMPT 2A</span>
+                    <span class="play-prompt-status">Prompt unresolved</span>
+                  </div>
+                  <div class="play-prompt-actions">
+                    <button type="button" class="play-prompt-roll" aria-label="Roll">Roll</button>
+                    <button type="button" class="card-chevron-button play-prompt-chevron" aria-label="Toggle prompt card">
+                      <span class="card-toggle-indicator" data-mk-icon="keyboard_arrow_down"></span>
+                    </button>
+                  </div>
+                </div>
+                <div data-mk-prompt-body>
+                  <p class="play-prompt-text" data-mk-prompt-text></p>
+                </div>
+              </article>
+
+              <div class="play-tabs-body">
+                <!-- Memories -->
+                <div class="play-tab-panel" data-mk-panel="memories">
+                  <div data-mk-memory-list-view>
+                    <div class="play-tab-heading">
+                      <span>Memories</span>
+                      <div class="play-tab-heading-actions">
+                        <span class="play-tab-heading-meta" data-mk-slots></span>
+                        <button type="button" class="play-tab-heading-more" aria-label="Memory slot options">
+                          <span data-mk-icon="more_vert"></span>
+                        </button>
+                      </div>
+                    </div>
+                    <ul class="play-memory-list" data-mk-memories></ul>
+                    <ul class="play-memory-list play-memory-list-lost" data-mk-lost-memories></ul>
+                    <p class="play-memory-hint">When full, you may need to forget one.</p>
+                    <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add memory</button>
+                  </div>
+
+                  <div class="play-memory-detail" data-mk-memory-detail hidden>
+                    <div class="play-memory-detail-head">
+                      <span class="play-memory-detail-label">MEMORY</span>
+                      <span class="play-memory-detail-title" data-mk-detail-title></span>
+                    </div>
+                    <ol class="play-experience-list" data-mk-experiences></ol>
+                    <form class="play-experience-form" onsubmit="return false">
+                      <label class="play-field-label" for="a-exp">New Experience</label>
+                      <textarea id="a-exp" rows="3" placeholder="Write a single evocative sentence…"></textarea>
+                      <div class="play-composer-columns" data-mk-composer-chips></div>
+                      <div class="play-experience-actions">
+                        <button type="submit" id="play-experience-submit">Save Experience</button>
+                        <button type="button" id="play-experience-cancel">Clear</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+
+                <!-- Traits -->
+                <div class="play-tab-panel" data-mk-panel="traits" hidden>
+                  <div class="play-trait-subtabs">
+                    <button type="button" class="play-trait-subtab active" data-mk-subtab="characters">Characters</button>
+                    <button type="button" class="play-trait-subtab" data-mk-subtab="skills">Skills</button>
+                    <button type="button" class="play-trait-subtab" data-mk-subtab="resources">Resources</button>
+                    <button type="button" class="play-trait-subtab" data-mk-subtab="marks">Marks</button>
+                  </div>
+                  <div class="play-trait-controls">
+                    <button type="button" class="play-trait-sort">
+                      <span class="play-trait-sort-icon" data-mk-icon="sort"></span>
+                      Recent
+                    </button>
+                    <div class="play-trait-view-toggle" role="group" aria-label="List or grid view">
+                      <button type="button" class="play-trait-view-button" aria-pressed="true" aria-label="List view">
+                        <span class="play-trait-view-icon" data-mk-icon="menu"></span>
+                      </button>
+                      <button type="button" class="play-trait-view-button" disabled aria-label="Grid view (coming soon)">
+                        <span class="play-trait-view-icon" data-mk-icon="grid_view"></span>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="play-trait-panel" data-mk-trait-panel="characters">
+                    <ul class="play-trait-list" data-mk-traits="characters"></ul>
+                    <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Character</button>
+                  </div>
+                  <div class="play-trait-panel" data-mk-trait-panel="skills" hidden>
+                    <ul class="play-trait-list" data-mk-traits="skills"></ul>
+                    <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Skill</button>
+                  </div>
+                  <div class="play-trait-panel" data-mk-trait-panel="resources" hidden>
+                    <ul class="play-trait-list" data-mk-traits="resources"></ul>
+                    <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Resource</button>
+                  </div>
+                  <div class="play-trait-panel" data-mk-trait-panel="marks" hidden>
+                    <ul class="play-trait-list" data-mk-traits="marks"></ul>
+                    <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Mark</button>
+                  </div>
+                </div>
+
+                <!-- Diary -->
+                <div class="play-tab-panel" data-mk-panel="diary" hidden>
+                  <article class="play-diary-populated">
+                    <p class="play-diary-description" data-mk-diary-description></p>
+                    <ul class="play-memory-list" data-mk-diary-memories></ul>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="mockup-shared.js"></script>
+    <script src="mockup-screens.js"></script>
+    <script>
+      MKScreens.init({ variation: "variation-a-nav-rail.html", detailMode: "replace" });
+    </script>
+  </body>
+</html>

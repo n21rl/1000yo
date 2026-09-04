@@ -1,0 +1,107 @@
+/* Loaded after src/styles.css by every mockup in this folder.
+
+   Two jobs only:
+   1. the mockup's own chrome (variation/screen switcher), namespaced
+      `mk-` so it can never be mistaken for app UI;
+   2. the handful of classes the app renders but styles.css does not yet
+      style (the composer's tagged-trait chips), given the plainest
+      token-based treatment so the composer reads correctly in a layout
+      comparison. Not a proposal about how chips should look. */
+
+.mk-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 0.45rem 0.9rem;
+  background: #100e0d;
+  border-top: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+}
+
+.mk-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.mk-group-label {
+  color: var(--color-text-dimmest);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-right: 0.2rem;
+}
+
+.mk-chip {
+  width: auto;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: 0;
+  background: none;
+  color: var(--color-text-muted);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.mk-chip:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text-primary);
+  background: none;
+  filter: none;
+}
+
+.mk-chip-current {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* The bar is app chrome for the mockup only: keep it clear of the app
+   shell so nothing real is covered by it. */
+.app {
+  padding-bottom: 2.1rem;
+}
+
+/* Rendered by src/main.js (renderPlayComposer), unstyled in styles.css. */
+.play-tagged-trait-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.play-tagged-trait-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-tertiary);
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+}
+
+.play-tagged-trait-tick {
+  color: var(--color-positive);
+}
+
+.play-tagged-trait-cross {
+  color: var(--color-text-dim);
+}
+
+/* Selected row in the layouts that keep a list and a detail side by
+   side — mobile has no such state because the detail replaces the list. */
+.play-memory-row.mk-row-selected {
+  background: var(--color-surface);
+}
+
+.play-memory-row.mk-row-selected .play-memory-name {
+  color: var(--color-accent);
+}

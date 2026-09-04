@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1000yo — Desktop layout C: Workbench</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../src/styles.css" />
+    <link rel="stylesheet" href="mockup-shared.css" />
+    <style>
+      /* VARIATION C — "Workbench"
+         The three bottom tabs dissolve. Desktop shows the whole play
+         loop at once: the prompt is a permanent left column, memories
+         sit in the middle (list above, open memory and its composer
+         below), traits stand open on the right. Nothing is switched to
+         reach anything the loop needs — read prompt, pick memory, check
+         traits, write experience — so there is no tab bar and no rail.
+         Diary becomes the middle column's second state, since it holds
+         memories and nothing else.
+
+         Layout only; component styling comes from src/styles.css. */
+
+      @media (min-width: 640px) {
+        .menu-screen,
+        .saves-screen,
+        .wizard,
+        .play-shell {
+          max-width: none;
+          margin: 0;
+          border-left: none;
+          border-right: none;
+        }
+      }
+
+      .c-frame {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+      }
+
+      /* --- Prompt column: pinned, no collapse (it has a home now) --- */
+      .c-prompt-col {
+        width: 21rem;
+        flex-shrink: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 1.25rem 1.5rem;
+        border-right: 1px solid var(--color-border);
+        background: var(--color-surface);
+      }
+
+      .c-prompt-col .play-prompt-meta {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.35rem;
+        margin-bottom: 1rem;
+      }
+
+      .c-prompt-col .play-prompt-text {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        font-size: 1.2rem;
+        line-height: 1.5;
+      }
+
+      .c-prompt-col .play-prompt-roll {
+        align-self: flex-start;
+        margin-top: 1rem;
+        padding: 0.5rem 0;
+      }
+
+      /* --- Middle column: memories (or diary) over the open memory --- */
+      .c-memory-col {
+        flex: 1.15;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--color-border);
+      }
+
+      .c-col-lists {
+        flex-shrink: 0;
+        max-height: 55%;
+        overflow-y: auto;
+        padding: 0 1.25rem 0.75rem;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .c-col-detail {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 1.25rem;
+      }
+
+      /* Reuse the trait sub-tab control for the Memories/Diary switch —
+         an existing control in a new place, not a new pattern. */
+      .c-segments {
+        flex-shrink: 0;
+        margin-bottom: 0;
+      }
+
+      .c-segments .play-trait-subtab {
+        flex: 0 0 auto;
+        padding: 0.6rem 1.25rem;
+        text-transform: uppercase;
+      }
+
+      /* --- Traits column: always open --- */
+      .c-trait-col {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .c-trait-col .play-trait-subtabs {
+        flex-shrink: 0;
+        margin-bottom: 0;
+      }
+
+      .c-trait-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 0 1.25rem 1.25rem;
+      }
+
+      /* --- Creation: horizontal stepper, form beside the sheet --- */
+      .c-stepper {
+        display: flex;
+        flex-shrink: 0;
+        overflow-x: auto;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      .c-step {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.45rem;
+        padding: 0.7rem 0.5rem;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        border-radius: 0;
+        color: var(--color-text-dim);
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        white-space: nowrap;
+        cursor: pointer;
+      }
+
+      .c-step:hover {
+        color: var(--color-text-primary);
+        filter: none;
+      }
+
+      .c-step-number {
+        font-size: 0.6rem;
+        color: var(--color-text-dimmest);
+      }
+
+      .c-step.done .c-step-number {
+        color: var(--color-positive);
+      }
+
+      .c-step.current {
+        border-bottom-color: var(--color-accent);
+        color: var(--color-accent);
+      }
+
+      .c-step.current .c-step-number {
+        color: var(--color-accent);
+      }
+
+      .c-form-col {
+        flex: 1.15;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--color-border);
+      }
+
+      .c-form-col .wizard-steps-scroll {
+        padding: 0 2rem;
+      }
+
+      .c-form-col .step-panel {
+        max-width: 34rem;
+      }
+
+      .c-form-col .wizard-nav {
+        justify-content: flex-end;
+        padding: 0.75rem 2rem;
+        border-top: 1px solid var(--color-border);
+      }
+
+      .c-form-col .wizard-back-button,
+      .c-form-col .wizard-next-button {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 8rem;
+      }
+
+      .c-sheet-col {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 1rem 1.5rem 2rem;
+      }
+
+      .c-sheet-col .wizard-added-list {
+        margin-top: 0;
+      }
+
+      /* --- Home / Saves --- */
+      .menu-screen {
+        max-width: 26rem;
+        margin: 0 auto;
+      }
+
+      .saves-screen .menu-vampire-list {
+        max-width: 46rem;
+        width: 100%;
+        margin: 0 auto;
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+
+      .saves-screen .play-header {
+        justify-content: flex-start;
+        gap: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <!-- HOME -->
+      <section class="menu-screen" data-mk-screen="menu" hidden>
+        <div class="menu-brand">
+          <h1 class="menu-title">Thousand Year Old Vampire</h1>
+        </div>
+        <div class="menu-actions">
+          <button type="button" class="menu-continue-button">
+            <span class="menu-continue-label">Continue</span>
+            <span class="menu-continue-name">Sister Alazne</span>
+          </button>
+          <button type="button" class="menu-new-button" data-mk-icon-prefix="add">New Vampire</button>
+          <button type="button" class="menu-new-button" data-mk-icon-prefix="sticky_note_2">Saves</button>
+        </div>
+      </section>
+
+      <!-- SAVES -->
+      <section class="saves-screen" data-mk-screen="saves" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-back">← Home</button>
+          <div class="play-header-identity">
+            <span class="play-header-name">Saves</span>
+          </div>
+        </div>
+        <ul class="menu-vampire-list" data-mk-saves-list></ul>
+      </section>
+
+      <!-- CREATION -->
+      <section class="wizard" data-mk-screen="create" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-back">← Home</button>
+          <button type="button" class="play-header-avatar-button" aria-label="Character options">
+            <span class="play-header-name">Sister Alazne</span>
+            <span class="play-header-avatar"><span data-mk-icon="person"></span></span>
+          </button>
+        </div>
+        <nav class="c-stepper" data-mk-step-rail data-mk-step-class="c-step"></nav>
+        <div class="wizard-progress-track"><div class="wizard-progress-fill" data-mk-step-fill></div></div>
+        <div class="c-frame">
+          <div class="c-form-col">
+            <div class="wizard-header">
+              <span class="wizard-step-label" data-mk-step-label></span>
+              <span class="wizard-step-count" data-mk-step-count></span>
+            </div>
+            <div class="wizard-steps-scroll">
+              <section class="step-panel" data-mk-step-panel data-mk-step-panel-no-list></section>
+            </div>
+            <div class="wizard-nav">
+              <button type="button" class="wizard-back-button" data-mk-step-back>Back</button>
+              <button type="button" class="wizard-next-button" data-mk-step-next>Next</button>
+            </div>
+          </div>
+          <aside class="c-sheet-col" data-mk-step-added></aside>
+        </div>
+      </section>
+
+      <!-- PLAY -->
+      <section class="play-shell" data-mk-screen="play" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-more" aria-label="Menu">
+            <span data-mk-icon="menu"></span>
+          </button>
+          <div class="play-header-menus">
+            <button type="button" class="play-header-avatar-button" aria-label="Character options">
+              <span class="play-header-name">Sister Alazne</span>
+              <span class="play-header-avatar"><span data-mk-icon="person"></span></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="c-frame">
+          <!-- Prompt: permanent column -->
+          <aside class="c-prompt-col">
+            <div class="play-prompt-meta">
+              <span class="play-prompt-stamp">PROMPT 2A</span>
+              <span class="play-prompt-status">Prompt unresolved</span>
+            </div>
+            <p class="play-prompt-text" data-mk-prompt-text></p>
+            <button type="button" class="play-prompt-roll" aria-label="Roll">Roll</button>
+          </aside>
+
+          <!-- Memories / Diary over the open memory -->
+          <div class="c-memory-col">
+            <div class="play-trait-subtabs c-segments">
+              <button type="button" class="play-trait-subtab active" data-mk-tab="memories">MEMORIES</button>
+              <button type="button" class="play-trait-subtab" data-mk-tab="diary">DIARY</button>
+            </div>
+
+            <div class="c-col-lists">
+              <div class="play-tab-panel" data-mk-panel="memories">
+                <div class="play-tab-heading">
+                  <span>Memories</span>
+                  <div class="play-tab-heading-actions">
+                    <span class="play-tab-heading-meta" data-mk-slots></span>
+                    <button type="button" class="play-tab-heading-more" aria-label="Memory slot options">
+                      <span data-mk-icon="more_vert"></span>
+                    </button>
+                  </div>
+                </div>
+                <ul class="play-memory-list" data-mk-memories></ul>
+                <ul class="play-memory-list play-memory-list-lost" data-mk-lost-memories></ul>
+                <p class="play-memory-hint">When full, you may need to forget one.</p>
+                <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add memory</button>
+              </div>
+
+              <div class="play-tab-panel" data-mk-panel="diary" hidden>
+                <article class="play-diary-populated">
+                  <p class="play-diary-description" data-mk-diary-description></p>
+                  <ul class="play-memory-list" data-mk-diary-memories></ul>
+                </article>
+              </div>
+            </div>
+
+            <div class="c-col-detail">
+              <div class="play-memory-detail" data-mk-memory-detail>
+                <div data-mk-memory-detail-body>
+                  <div class="play-memory-detail-head">
+                    <span class="play-memory-detail-label">MEMORY</span>
+                    <span class="play-memory-detail-title" data-mk-detail-title></span>
+                  </div>
+                  <ol class="play-experience-list" data-mk-experiences></ol>
+                  <form class="play-experience-form" onsubmit="return false">
+                    <label class="play-field-label" for="c-exp">New Experience</label>
+                    <textarea id="c-exp" rows="3" placeholder="Write a single evocative sentence…"></textarea>
+                    <div class="play-composer-columns" data-mk-composer-chips></div>
+                    <div class="play-experience-actions">
+                      <button type="submit" id="play-experience-submit">Save Experience</button>
+                      <button type="button" id="play-experience-cancel">Clear</button>
+                    </div>
+                  </form>
+                </div>
+                <div data-mk-memory-detail-empty hidden></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Traits: always open -->
+          <div class="c-trait-col">
+            <div class="play-trait-subtabs">
+              <button type="button" class="play-trait-subtab active" data-mk-subtab="characters">Characters</button>
+              <button type="button" class="play-trait-subtab" data-mk-subtab="skills">Skills</button>
+              <button type="button" class="play-trait-subtab" data-mk-subtab="resources">Resources</button>
+              <button type="button" class="play-trait-subtab" data-mk-subtab="marks">Marks</button>
+            </div>
+            <div class="c-trait-scroll">
+              <div class="play-trait-controls">
+                <button type="button" class="play-trait-sort">
+                  <span class="play-trait-sort-icon" data-mk-icon="sort"></span>
+                  Recent
+                </button>
+                <div class="play-trait-view-toggle" role="group" aria-label="List or grid view">
+                  <button type="button" class="play-trait-view-button" aria-pressed="true" aria-label="List view">
+                    <span class="play-trait-view-icon" data-mk-icon="menu"></span>
+                  </button>
+                  <button type="button" class="play-trait-view-button" disabled aria-label="Grid view (coming soon)">
+                    <span class="play-trait-view-icon" data-mk-icon="grid_view"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="play-trait-panel" data-mk-trait-panel="characters">
+                <ul class="play-trait-list" data-mk-traits="characters"></ul>
+                <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Character</button>
+              </div>
+              <div class="play-trait-panel" data-mk-trait-panel="skills" hidden>
+                <ul class="play-trait-list" data-mk-traits="skills"></ul>
+                <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Skill</button>
+              </div>
+              <div class="play-trait-panel" data-mk-trait-panel="resources" hidden>
+                <ul class="play-trait-list" data-mk-traits="resources"></ul>
+                <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Resource</button>
+              </div>
+              <div class="play-trait-panel" data-mk-trait-panel="marks" hidden>
+                <ul class="play-trait-list" data-mk-traits="marks"></ul>
+                <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Mark</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="mockup-shared.js"></script>
+    <script src="mockup-screens.js"></script>
+    <script>
+      MKScreens.init({ variation: "variation-c-workbench.html", detailMode: "pane" });
+    </script>
+  </body>
+</html>

@@ -319,5 +319,5 @@ const MKScreens = (() => {
     MK.mountChrome({ current: variation, initialScreen, extraGroups });
   };
 
-  return { init, state };
+  return { init, state, refreshMemories: renderMemoryLists };
 })();

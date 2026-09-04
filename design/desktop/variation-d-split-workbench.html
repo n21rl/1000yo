@@ -135,13 +135,40 @@
         opacity: 0.45;
       }
 
-      /* Nothing open: the column is the prompt alone, at rest. */
-      .d-work-col.is-empty .d-work-scroll {
+      /* Between prompts, nothing is open yet: choosing the Memory that
+         will hold this prompt's Experience is the first act of answering
+         it, so until that choice the prompt is the only thing to attend
+         to and it takes the column. Picking a memory shrinks it back to
+         its card. */
+      .d-work-col.is-awaiting .d-work-scroll {
         display: none;
       }
 
-      .d-work-col.is-empty .play-prompt-card {
+      .d-work-col.is-awaiting .play-prompt-card {
+        flex: 1;
+        min-height: 0;
         border-bottom: none;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d-work-col.is-awaiting .play-prompt-card [data-mk-prompt-body] {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding-top: 1.5rem;
+      }
+
+      .d-work-col.is-awaiting .play-prompt-text {
+        font-size: 1.45rem;
+        line-height: 1.45;
+        max-width: 34rem;
+      }
+
+      /* Nothing below to make room for, so the collapse control has no
+         job in this state. */
+      .d-work-col.is-awaiting .play-prompt-chevron {
+        display: none;
       }
 
       /* --- Right: traits, always open --- */
@@ -481,13 +508,32 @@
     <script src="mockup-shared.js"></script>
     <script src="mockup-screens.js"></script>
     <script>
-      /* The middle column is the only region of D that can be empty or
-         inactive, so the states it can land in are switchable from the
-         mockup bar rather than described. Every string used here is the
-         app's own: the prompt panel's disabled/error text comes from
-         getPromptPanelViewModel (src/features/prompt-flow.js), and the
-         composer's reason lines are the memory row subtitles the app
-         already renders, plus the diary form's existing warning. */
+      /* D's middle column is the current prompt's workspace, not a memory
+         viewer. The rulebook settles the shape of it: "an Experience is a
+         single sentence that describes the resolution of a Prompt"
+         (refs/rules.txt), "Every time you answer a Prompt you must create
+         an Experience and add it to a Memory unless instructed otherwise",
+         and "An Experience must be placed within a Memory as soon as it is
+         created." So choosing the Memory is part of answering this prompt,
+         and between prompts there is no Experience to write.
+
+         The loop, wired live below — click a memory row, Save Experience,
+         Roll:
+
+           awaiting  no memory chosen; the prompt has the column
+           writing   a memory is chosen; prompt shrinks, composer opens
+           resolved  Experience saved; composer closes, Roll unlocks
+           → Roll returns to awaiting with the next prompt
+
+         The mockup bar also jumps straight to any state, including the
+         three where the memory itself can't take an Experience.
+
+         Every string is the app's own: the prompt panel's disabled and
+         error text from getPromptPanelViewModel (src/features/prompt-flow.js),
+         and the composer's reason lines from the memory-row subtitles the
+         app already renders, the prompt status label, and the diary form's
+         existing warning. */
+
       const workCol = document.querySelector(".d-work-col");
       const detailBody = document.querySelector("[data-mk-memory-detail-body]");
       const composer = document.querySelector(".play-experience-form");
@@ -498,33 +544,17 @@
       const status = document.querySelector(".play-prompt-status");
       const promptText = document.querySelector("[data-mk-prompt-text]");
       const rollButton = document.querySelector(".play-prompt-roll");
-
-      /* Keep the left column's selected row in step with whatever the
-         middle column is showing — including a lost or diary memory,
-         which mobile has no selected state for. */
-      const highlight = (memory) => {
-        document.querySelectorAll(".play-memory-row").forEach((row) => {
-          const name = row.querySelector(".play-memory-name")?.textContent;
-          row.classList.toggle("mk-row-selected", Boolean(memory) && name === memory.title);
-        });
-      };
-
-      const showMemory = (memory, reason, { lost = false } = {}) => {
-        workCol.classList.remove("is-empty");
-        workCol.classList.toggle("is-lost", lost);
-        highlight(memory);
-        detailBody.hidden = false;
-        detailTitle.textContent = memory.title;
-        experienceList.replaceChildren();
-        memory.experiences.forEach((experience, index) => {
-          experienceList.append(MK.experienceItem(experience, index));
-        });
-        composer.hidden = Boolean(reason);
-        stateLine.hidden = !reason;
-        stateLine.textContent = reason ?? "";
-      };
-
       const promptActions = document.querySelector(".play-prompt-actions");
+
+      /* Two real entries from refs/prompts.csv, so Roll actually moves. */
+      const DECK = [
+        { stampText: "PROMPT 2A", text: MK.data.prompt.text },
+        {
+          stampText: "PROMPT 5A",
+          text: "You murder someone you love or respect rather than let them expose you. Kill a Character. Check a Skill. If you have no living Characters, kill no one, and create a beloved mortal Character who you have betrayed.",
+        },
+      ];
+      let deckIndex = 0;
 
       const setPrompt = ({ stampText, statusText, text, rollDisabled, disabled = false }) => {
         stamp.textContent = stampText;
@@ -539,56 +569,166 @@
         promptActions.hidden = disabled;
       };
 
-      const LIVE_PROMPT = {
-        stampText: "PROMPT 2A",
-        statusText: "Prompt unresolved",
-        text: MK.data.prompt.text,
-        rollDisabled: true,
+      /* Keep the left column's selected row in step with the middle
+         column — including a lost or diary memory, which mobile has no
+         selected state for. */
+      const highlight = (memory) => {
+        document.querySelectorAll(".play-memory-row").forEach((row) => {
+          const name = row.querySelector(".play-memory-name")?.textContent;
+          row.classList.toggle("mk-row-selected", Boolean(memory) && name === memory.title);
+        });
       };
 
+      /* The bar's chips are a jump-to control, but they should still read
+         correctly when the loop moves on its own. */
+      const syncChip = (id) => {
+        const label = CHIP_LABELS[id];
+        document.querySelectorAll(".mk-bar .mk-group").forEach((group) => {
+          if (group.querySelector(".mk-group-label")?.textContent !== "Middle column") return;
+          group.querySelectorAll(".mk-chip").forEach((chip) => {
+            chip.classList.toggle("mk-chip-current", chip.textContent === label);
+          });
+        });
+      };
+
+      const showMemory = (memory, reason, { lost = false } = {}) => {
+        workCol.classList.remove("is-awaiting");
+        workCol.classList.toggle("is-lost", lost);
+        detailBody.hidden = false;
+        openMemory = memory;
+        highlight(memory);
+        detailTitle.textContent = memory.title;
+        experienceList.replaceChildren();
+        memory.experiences.forEach((experience, index) => {
+          experienceList.append(MK.experienceItem(experience, index));
+        });
+        composer.hidden = Boolean(reason);
+        stateLine.hidden = !reason;
+        stateLine.textContent = reason ?? "";
+      };
+
+      /* --- The loop --- */
+
+      const CHIP_LABELS = {
+        awaiting: "Awaiting",
+        writing: "Writing",
+        resolved: "Resolved",
+        full: "Memory full",
+        lost: "Memory lost",
+        diary: "In Diary",
+        loading: "Prompt loading",
+        exhausted: "Prompt end",
+      };
+
+      const awaiting = () => {
+        syncChip("awaiting");
+        workCol.classList.add("is-awaiting");
+        workCol.classList.remove("is-lost");
+        openMemory = null;
+        highlight(null);
+        setPrompt({ ...DECK[deckIndex], statusText: "Prompt unresolved", rollDisabled: true });
+      };
+
+      const writing = (memory = MK.data.memories[1]) => {
+        syncChip("writing");
+        setPrompt({ ...DECK[deckIndex], statusText: "Prompt unresolved", rollDisabled: true });
+        showMemory(memory, null);
+      };
+
+      let openMemory = null;
+
+      const resolved = (memory = MK.data.memories[1]) => {
+        syncChip("resolved");
+        /* The Experience for this prompt exists, so the composer has no
+           job until the next one. "Prompt resolved" is the app's own label
+           for exactly that condition, reused as the reason. The memory
+           stays open rather than clearing, so what was just written is
+           still on screen while Roll is taken.
+
+           Caveat worth deciding: the rulebook's "unless instructed
+           otherwise" means some prompts legitimately call for no
+           Experience or more than one, so this should be the default
+           state, not a lock. canAddExperience in src/main.js deliberately
+           doesn't check resolution today. */
+        setPrompt({ ...DECK[deckIndex], statusText: "Prompt resolved", rollDisabled: false });
+        showMemory(memory, "Prompt resolved");
+        /* The left column's row subtitle counts experiences, so it has to
+           be re-rendered for the one just written to show up there. */
+        MKScreens.refreshMemories();
+        highlight(memory);
+      };
+
+      const roll = () => {
+        deckIndex = (deckIndex + 1) % DECK.length;
+        awaiting();
+      };
+
+      document.querySelectorAll("[data-mk-memories], [data-mk-lost-memories], [data-mk-diary-memories]").forEach((list) => {
+        list.addEventListener("click", (event) => {
+          const name = event.target.closest(".play-memory-row")?.querySelector(".play-memory-name")?.textContent;
+          if (!name) return;
+          const pool = [...MK.data.memories, ...MK.data.lostMemories, ...MK.data.diary.memories];
+          const memory = pool.find((entry) => entry.title === name);
+          if (!memory) return;
+          if (MK.data.lostMemories.includes(memory)) return showMemory(memory, "Lost from Mind", { lost: true });
+          if (MK.data.diary.memories.includes(memory)) {
+            return showMemory(memory, "Once moved, the Memory can no longer gain new Experiences.");
+          }
+          if (memory.experiences.length >= MK.MAX_EXPERIENCES) return showMemory(memory, "3 / 3 experiences");
+          writing(memory);
+        });
+      });
+
+      composer.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const field = composer.querySelector("textarea");
+        const memory = openMemory ?? MK.data.memories[1];
+        if (memory.experiences.length < MK.MAX_EXPERIENCES) {
+          memory.experiences.push({
+            text: field.value.trim() || "I take the cellar beneath the old cloister and tell no one it is mine.",
+            prompt: DECK[deckIndex].stampText.replace("PROMPT ", "").toLowerCase(),
+          });
+        }
+        field.value = "";
+        resolved(memory);
+      });
+      rollButton.addEventListener("click", () => {
+        if (!rollButton.disabled) roll();
+      });
+
       const STATES = {
-        default: () => {
-          setPrompt(LIVE_PROMPT);
-          showMemory(MK.data.memories[1], null);
+        awaiting,
+        writing: () => writing(),
+        resolved,
+        full: () => {
+          setPrompt({ ...DECK[deckIndex], statusText: "Prompt unresolved", rollDisabled: true });
+          showMemory(MK.data.memories[0], "3 / 3 experiences");
         },
-        resolved: () => {
-          setPrompt({ ...LIVE_PROMPT, statusText: "Prompt resolved", rollDisabled: false });
-          showMemory(MK.data.memories[1], null);
+        lost: () => {
+          setPrompt({ ...DECK[deckIndex], statusText: "Prompt unresolved", rollDisabled: true });
+          showMemory(MK.data.lostMemories[0], "Lost from Mind", { lost: true });
+        },
+        diary: () => {
+          setPrompt({ ...DECK[deckIndex], statusText: "Prompt unresolved", rollDisabled: true });
+          showMemory(
+            MK.data.diary.memories[0],
+            "Once moved, the Memory can no longer gain new Experiences.",
+          );
         },
         loading: () => {
-          /* getPromptPanelViewModel blanks both the stamp and the status
-             label whenever the panel is disabled. */
+          workCol.classList.add("is-awaiting");
+          highlight(null);
           setPrompt({ stampText: "", statusText: "", text: "Loading prompts...", rollDisabled: true, disabled: true });
-          showMemory(MK.data.memories[1], null);
         },
         exhausted: () => {
+          workCol.classList.add("is-awaiting");
+          highlight(null);
           setPrompt({
             stampText: "PROMPT 80C",
             statusText: "Prompt unresolved",
             text: "No remaining prompt entry at this position.",
             rollDisabled: true,
           });
-          showMemory(MK.data.memories[1], null);
-        },
-        none: () => {
-          workCol.classList.add("is-empty");
-          highlight(null);
-          setPrompt(LIVE_PROMPT);
-        },
-        full: () => {
-          setPrompt(LIVE_PROMPT);
-          showMemory(MK.data.memories[0], "3 / 3 experiences");
-        },
-        lost: () => {
-          setPrompt(LIVE_PROMPT);
-          showMemory(MK.data.lostMemories[0], "Lost from Mind", { lost: true });
-        },
-        diary: () => {
-          setPrompt(LIVE_PROMPT);
-          showMemory(
-            MK.data.diary.memories[0],
-            "Once moved, the Memory can no longer gain new Experiences.",
-          );
         },
       };
 
@@ -599,19 +739,22 @@
           {
             label: "Middle column",
             options: [
-              { id: "default", label: "Live" },
+              { id: "awaiting", label: "Awaiting" },
+              { id: "writing", label: "Writing" },
               { id: "resolved", label: "Resolved" },
-              { id: "loading", label: "Prompt loading" },
-              { id: "exhausted", label: "Prompt end" },
-              { id: "none", label: "No memory" },
               { id: "full", label: "Memory full" },
               { id: "lost", label: "Memory lost" },
               { id: "diary", label: "In Diary" },
+              { id: "loading", label: "Prompt loading" },
+              { id: "exhausted", label: "Prompt end" },
             ],
             onSelect: (id) => STATES[id](),
           },
         ],
       });
+
+      /* Play opens between prompts, with nothing chosen yet. */
+      awaiting();
     </script>
   </body>
 </html>

@@ -91,7 +91,16 @@ this section records the load-bearing facts the implementation settled on.
   a Saves row, the direct `#/play/<id>` route) must call `startPlay()`
   and let it decide; nothing upstream may skip that check to force entry
   into Play. A save's completeness never affects whether it's kept in
-  storage — only whether it's playable.
+  storage — only whether it's playable. One deliberate exception: the
+  preset Test Vampire (`selectedVampireId === TEST_VAMPIRE_ID`) always
+  bypasses this check and goes straight to Play. It's a QA fixture, not
+  a player save — `createStoredRecord()` doesn't preserve the `isPreset`
+  flag once the record gets rewritten by real in-Play edits (e.g.
+  deleting a skill while poking at it), so its live `isReadyForPromptOne()`
+  can legitimately go false even though it's meant to always be "finished."
+  Gating it like a real save would send a QA fixture into the creation
+  wizard instead of Play the moment someone tests deleting something
+  from it.
 - **Header split: identity vs. game management.** The Play/Creation
   header's left slot and right slot each carry one category of action,
   never mixed: left is navigation/session management (hamburger on

@@ -1144,7 +1144,8 @@ const getFirstIncompleteStepIndex = () => {
 };
 
 const startPlay = async () => {
-  if (!character.isReadyForPromptOne()) {
+  const isTestVampire = selectedVampireId === TEST_VAMPIRE_ID;
+  if (!isTestVampire && !character.isReadyForPromptOne()) {
     currentStep = getFirstIncompleteStepIndex();
     setScreen("creation", { updateRoute: true });
     render();

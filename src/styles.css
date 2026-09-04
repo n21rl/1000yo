@@ -23,10 +23,12 @@
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 
-  /* Header slot size: every left/right header control (back/hamburger
-     button, avatar circle, avatar button) is pinned to this so they
-     can't drift apart and break vertical centering again. */
-  --header-slot-size: 2rem;
+  /* Shared small-icon/avatar size: every header control (back/hamburger
+     button, avatar circle, avatar button) and every Memories/Traits row
+     icon is pinned to this, so header controls can't drift apart and
+     break vertical centering again, and row icons stay visually
+     consistent with the header avatar. */
+  --icon-slot-size: 2rem;
 
   /* Overlay stacking order, low to high: the trait add/edit modal sits
      below the shared confirm/prompt/action-sheet dialog layer, since
@@ -1069,7 +1071,7 @@ button:disabled {
 .play-header-avatar-button {
   display: flex;
   align-items: center;
-  height: var(--header-slot-size);
+  height: var(--icon-slot-size);
   gap: 0.5rem;
   width: auto;
   min-width: 0;
@@ -1085,8 +1087,8 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: var(--header-slot-size);
-  height: var(--header-slot-size);
+  width: var(--icon-slot-size);
+  height: var(--icon-slot-size);
   border-radius: 50%;
   border: 1px solid var(--color-border);
   color: var(--color-text-muted);
@@ -1124,7 +1126,7 @@ button:disabled {
 
 .play-header-more {
   width: auto;
-  height: var(--header-slot-size);
+  height: var(--icon-slot-size);
   background: none;
   border: none;
   border-radius: 0;
@@ -1145,7 +1147,7 @@ button:disabled {
 
 .play-header-back {
   width: auto;
-  height: var(--header-slot-size);
+  height: var(--icon-slot-size);
   display: flex;
   align-items: center;
   background: none;
@@ -1265,7 +1267,7 @@ button:disabled {
 }
 
 .play-tab-panel {
-  padding: 0.75rem 0 1.25rem;
+  padding: 0.6rem 0 1rem;
 }
 
 .play-tab-heading {
@@ -1277,7 +1279,7 @@ button:disabled {
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  margin-bottom: 0.6rem;
+  margin-bottom: 0.4rem;
 }
 
 .play-tab-heading-actions {
@@ -1314,7 +1316,7 @@ button:disabled {
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.85rem 0;
+  padding: 0.6rem 0;
   border: none;
   border-bottom: 1px solid var(--color-border);
   background: none;
@@ -1324,8 +1326,8 @@ button:disabled {
 }
 
 .play-memory-icon {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: var(--icon-slot-size);
+  height: var(--icon-slot-size);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1348,7 +1350,7 @@ button:disabled {
 .play-memory-name {
   display: block;
   font-family: var(--font-serif);
-  font-size: 1rem;
+  font-size: 1.05rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1356,7 +1358,7 @@ button:disabled {
 
 .play-memory-subtitle {
   display: block;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   color: var(--color-text-dim);
   margin-top: 0.1rem;
 }
@@ -1413,7 +1415,7 @@ button:disabled {
 
 .play-memory-hint {
   text-align: center;
-  padding: 1.1rem 0 0.5rem;
+  padding: 0.7rem 0 0.4rem;
   font-size: 0.7rem;
   color: var(--color-text-dimmest);
   margin: 0;
@@ -1703,7 +1705,7 @@ button:disabled {
 .play-trait-row {
   display: flex;
   gap: 0.75rem;
-  padding: 0.85rem 0;
+  padding: 0.6rem 0;
   border-bottom: 1px solid var(--color-border);
 }
 
@@ -1716,8 +1718,8 @@ button:disabled {
 }
 
 .play-trait-icon {
-  width: 2.25rem;
-  height: 2.25rem;
+  width: var(--icon-slot-size);
+  height: var(--icon-slot-size);
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -1745,7 +1747,7 @@ button:disabled {
 
 .play-trait-name {
   font-family: var(--font-serif);
-  font-size: 1.05rem;
+  font-size: 1.1rem;
 }
 
 .play-trait-type-label {
@@ -1758,7 +1760,7 @@ button:disabled {
 
 .play-trait-description {
   margin: 0.15rem 0 0;
-  font-size: 0.78rem;
+  font-size: 0.82rem;
   color: var(--color-text-muted);
   line-height: 1.4;
 }

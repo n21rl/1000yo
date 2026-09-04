@@ -5,5 +5,6 @@ export const parseRouteHash = (hash = "") => {
   const routeId = match?.[2] ?? "";
   if (route === "create") return { screen: "creation", vampireId: "" };
   if (route === "play") return { screen: "play", vampireId: routeId };
+  if (route === "saves") return { screen: "saves", vampireId: "" };
   return { screen: "menu", vampireId: "" };
 };

@@ -1,10 +1,22 @@
 import { restoreCampaignState } from "./campaign-state.js";
-import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY } from "./game.js";
+import {
+  Character,
+  MAX_DIARY_MEMORIES,
+  MAX_EXPERIENCES_PER_MEMORY,
+  MAX_MEMORIES,
+  MIN_IMMORTALS,
+  MIN_MARKS,
+  MIN_MORTALS,
+  MIN_RESOURCES,
+  MIN_SKILLS,
+} from "./game.js";
 import {
   parsePromptDeck,
 } from "./prompt-deck.js";
 import {
   createStoredRecord,
+  getLatestCompleteVampire,
+  getLatestIncompleteVampire,
   getStoredVampires,
   saveStoredVampires,
   upsertVampireRecord,
@@ -34,6 +46,8 @@ import {
 } from "./navigation.js";
 import { parseRouteHash } from "./router.js";
 import { renderMenu as renderMenuView } from "./features/menu/rendering.js";
+import { bindMenuEvents } from "./features/menu/events.js";
+import { renderSaves as renderSavesView } from "./features/saves/rendering.js";
 import { renderCreation as renderCreationView, renderStep as renderStepView } from "./features/creation/rendering.js";
 import { bindCreationEvents } from "./features/creation/events.js";
 import { bindPlayEvents } from "./features/play/events.js";
@@ -238,6 +252,52 @@ const startNewVampire = () => {
   render();
 };
 
+const openVampireEntry = (vampire) => {
+  loadCharacter(vampire);
+  resetCreationForms();
+  void startPlay();
+};
+
+const renameVampireRecord = (vampireId, nextName) => {
+  const cleanedName = cleanText(nextName);
+  if (!cleanedName) return false;
+  if (vampireId === selectedVampireId) {
+    if (!character.rename(cleanedName)) return false;
+    markDirty();
+    return true;
+  }
+  const vampires = loadStoredVampires();
+  if (!vampires.some((entry) => entry.id === vampireId)) return false;
+  const updated = vampires.map((entry) => (
+    entry.id === vampireId
+      ? { ...entry, updatedAt: new Date().toISOString(), data: { ...entry.data, name: cleanedName } }
+      : entry
+  ));
+  persistStoredVampires(updated);
+  return true;
+};
+
+const startNewVampireFlow = async () => {
+  const latestIncomplete = getLatestIncompleteVampire(loadStoredVampires(), TEST_VAMPIRE_ID);
+  if (!latestIncomplete) {
+    startNewVampire();
+    return;
+  }
+  const displayName = latestIncomplete.data?.name || "Unnamed Vampire";
+  const choice = await openActionSheet({
+    title: "Unfinished vampire",
+    actions: [
+      { id: "continue", label: `Continue ${displayName}` },
+      { id: "fresh", label: "Start a new vampire" },
+    ],
+  });
+  if (choice === "continue") {
+    openVampireEntry(latestIncomplete);
+    return;
+  }
+  if (choice === "fresh") startNewVampire();
+};
+
 const markDirty = () => {
   hasSavedSetup = false;
   persistCurrentCharacter();
@@ -387,11 +447,16 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
 const renderMenu = () => renderMenuView({
   elements,
   loadStoredVampires,
-  loadCharacter,
-  resetCreationForms,
-  startPlay,
+  getLatestCompleteVampire,
+  testVampireId: TEST_VAMPIRE_ID,
+});
+
+const renderSaves = () => renderSavesView({
+  elements,
+  loadStoredVampires,
   persistStoredVampires,
-  setScreen,
+  openVampireEntry,
+  renameVampire: renameVampireRecord,
   render,
   getSelectedVampireId: () => selectedVampireId,
   setSelectedVampireId: (value) => {
@@ -400,6 +465,8 @@ const renderMenu = () => renderMenuView({
   testVampireId: TEST_VAMPIRE_ID,
   createIcon: createMaterialFallbackIcon,
   openConfirmDialog,
+  openActionSheet,
+  openPromptDialog,
 });
 
 const getMemoryRecords = (startIndex, endIndexExclusive) => character.memories
@@ -438,6 +505,27 @@ const updatePlayExperienceActionState = () => {
   const hasDraft = Boolean(elements.playExperienceText.value.trim()) || pendingExperienceTraitIds.size > 0;
   elements.playExperienceSubmit.disabled = !hasDraft;
   elements.playExperienceCancel.disabled = !hasDraft;
+};
+
+const openIdentityMenu = async () => {
+  const choice = await openActionSheet({
+    title: character.name || "Vampire",
+    actions: [
+      { id: "rename", label: "Rename vampire" },
+      { id: "picture", label: "Change picture" },
+    ],
+  });
+  if (choice === "rename") {
+    const nextName = await openPromptDialog({ title: "Rename vampire", label: "Name", initialValue: character.name });
+    if (nextName === null) return;
+    if (!character.rename(nextName)) return;
+    markDirty();
+    render();
+    return;
+  }
+  if (choice === "picture") {
+    await openAlertDialog({ title: "Change picture", body: "Choosing a picture is coming in a later update." });
+  }
 };
 
 const getMemoryLabel = (memory) => memory.title || `Memory ${memory.createdOrder}`;
@@ -642,8 +730,9 @@ const renderMemoriesTab = () => {
   elements.playMemoryListView.hidden = showDetail;
   elements.playMemoryDetailView.hidden = !showDetail;
   elements.playHeaderBack.hidden = !showDetail;
-  elements.playHeaderIdentity.hidden = showDetail;
+  elements.playHamburgerButton.hidden = showDetail;
   elements.playMemoryDetailMoreButton.hidden = !showDetail;
+  elements.playAvatarButton.hidden = showDetail;
 
   if (showDetail) {
     renderMemoryDetail();
@@ -1047,8 +1136,17 @@ const loadPromptDeck = async () => {
   }
 };
 
-const startPlay = async (skipCreationGate = false) => {
-  if (!skipCreationGate && !character.isReadyForPromptOne()) {
+const getFirstIncompleteStepIndex = () => {
+  for (let index = 0; index < totalSteps; index += 1) {
+    if (!isStepComplete(index)) return index;
+  }
+  return 0;
+};
+
+const startPlay = async () => {
+  const isTestVampire = selectedVampireId === TEST_VAMPIRE_ID;
+  if (!isTestVampire && !character.isReadyForPromptOne()) {
+    currentStep = getFirstIncompleteStepIndex();
     setScreen("creation", { updateRoute: true });
     render();
     return;
@@ -1065,13 +1163,13 @@ const startPlay = async (skipCreationGate = false) => {
 
 const stepRequirements = [
   () => character.memories.length >= 1,
-  () => character.mortalCount >= 3,
-  () => character.skills.length >= 3,
-  () => character.resources.length >= 3,
-  () => character.memories.length >= 4,
-  () => character.immortalCount >= 1,
-  () => character.marks.length >= 1,
-  () => character.memories.length >= 5,
+  () => character.mortalCount >= MIN_MORTALS,
+  () => character.skills.length >= MIN_SKILLS,
+  () => character.resources.length >= MIN_RESOURCES,
+  () => character.memories.length >= MAX_MEMORIES - 1,
+  () => character.immortalCount >= MIN_IMMORTALS,
+  () => character.marks.length >= MIN_MARKS,
+  () => character.memories.length >= MAX_MEMORIES,
 ];
 
 const stepCanAdvance = [
@@ -1082,7 +1180,7 @@ const stepCanAdvance = [
   () => stepRequirements[4](),
   () => true,
   () => true,
-  () => character.memories.length >= 5 || (character.memories.length === 4 && Boolean(cleanText(elements.memoryCurse.value)) && selectedCurseTraitIds.size >= MIN_MEMORY_TRAITS),
+  () => character.memories.length >= MAX_MEMORIES || (character.memories.length === MAX_MEMORIES - 1 && Boolean(cleanText(elements.memoryCurse.value)) && selectedCurseTraitIds.size >= MIN_MEMORY_TRAITS),
 ];
 
 const isStepComplete = (stepIndex) => stepRequirements[stepIndex]();
@@ -1107,6 +1205,7 @@ const renderCreation = () => renderCreationView({
   renderTraitSelector,
   hasSavedSetup,
   renderStep,
+  maxMemories: MAX_MEMORIES,
 });
 
 const renderCollapsibleCards = () => {
@@ -1123,6 +1222,7 @@ const renderCollapsibleCards = () => {
 const render = () => {
   setScreen(currentScreen);
   renderMenu();
+  renderSaves();
   renderCreation();
   renderPlayLists();
   renderPromptPanel();
@@ -1154,7 +1254,7 @@ const saveIdentityStep = () => {
 };
 
 const saveImmortalStep = () => {
-  if (character.immortalCount > 0) return true;
+  if (character.immortalCount >= MIN_IMMORTALS) return true;
   markDirty();
   const didSave = character.addCharacter(elements.immortalName.value, elements.immortalDescription.value, "immortal");
   if (didSave) persistCurrentCharacter();
@@ -1162,7 +1262,7 @@ const saveImmortalStep = () => {
 };
 
 const saveMarkStep = () => {
-  if (character.marks.length > 0) return true;
+  if (character.marks.length >= MIN_MARKS) return true;
   markDirty();
   const didSave = character.addMark(elements.markInput.value, elements.markDescription.value);
   if (didSave) persistCurrentCharacter();
@@ -1170,8 +1270,8 @@ const saveMarkStep = () => {
 };
 
 const saveCurseMemoryStep = () => {
-  if (character.memories.length >= 5) return true;
-  if (character.memories.length !== 4) return false;
+  if (character.memories.length >= MAX_MEMORIES) return true;
+  if (character.memories.length !== MAX_MEMORIES - 1) return false;
   if (selectedCurseTraitIds.size < MIN_MEMORY_TRAITS) return false;
   markDirty();
   const didSave = character.addMemory(elements.memoryCurse.value, getSelectedTraitLabels(selectedCurseTraitIds));
@@ -1215,7 +1315,19 @@ bindCreationEvents({
   },
   persistCurrentCharacter,
   startPlay,
-  startNewVampire,
+  setScreen,
+  openIdentityMenu,
+});
+
+bindMenuEvents({
+  elements,
+  startNewVampireFlow,
+  openVampireEntry,
+  loadStoredVampires,
+  getLatestCompleteVampire,
+  testVampireId: TEST_VAMPIRE_ID,
+  setScreen,
+  render,
 });
 
 bindPlayEvents({
@@ -1266,6 +1378,7 @@ bindPlayEvents({
   },
   testVampireId: TEST_VAMPIRE_ID,
   openMemoryMoreMenu,
+  openIdentityMenu,
 });
 
 const closeModalAndResetPlayForms = () => {
@@ -1295,10 +1408,18 @@ const initialize = () => {
   if (elements.newVampireButton) {
     elements.newVampireButton.replaceChildren(
       createMaterialFallbackIcon("add"),
-      document.createTextNode("New character"),
+      document.createTextNode("New Vampire"),
     );
   }
-  document.querySelectorAll(".play-more-icon, .play-memory-more-icon").forEach((el) => el.replaceChildren(createMaterialFallbackIcon("more_vert")));
+  if (elements.menuSavesButton) {
+    elements.menuSavesButton.replaceChildren(
+      createMaterialFallbackIcon("sticky_note_2"),
+      document.createTextNode("Saves"),
+    );
+  }
+  document.querySelectorAll(".play-memory-more-icon, .play-tab-heading-more-icon").forEach((el) => el.replaceChildren(createMaterialFallbackIcon("more_vert")));
+  document.querySelectorAll(".play-hamburger-icon").forEach((el) => el.replaceChildren(createMaterialFallbackIcon("menu")));
+  document.querySelectorAll(".play-header-avatar-icon").forEach((el) => el.replaceChildren(createMaterialFallbackIcon("person")));
   document.querySelectorAll(".play-trait-sort-icon").forEach((el) => el.replaceChildren(createMaterialFallbackIcon("sort")));
   document.querySelector("#trait-view-list-button .play-trait-view-icon")?.replaceChildren(createMaterialFallbackIcon("menu"));
   document.querySelector("#trait-view-grid-button .play-trait-view-icon")?.replaceChildren(createMaterialFallbackIcon("grid_view"));

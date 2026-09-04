@@ -3,8 +3,11 @@ import assert from "node:assert/strict";
 import {
   createStoredRecord,
   ensurePresetRecord,
+  getLatestCompleteVampire,
+  getLatestIncompleteVampire,
   getStoredVampires,
   saveStoredVampires,
+  sortVampiresByUpdatedAt,
   upsertVampireRecord,
 } from "../src/vampire-storage.js";
 
@@ -76,4 +79,43 @@ test("createStoredRecord assembles serializable campaign save data", () => {
   assert.equal(record.isComplete, true);
   assert.deepEqual(record.data, { name: "Aster" });
   assert.deepEqual(record.campaign, { currentPrompt: 3, visits: [[3, 1]] });
+});
+
+test("sortVampiresByUpdatedAt orders newest first without mutating input", () => {
+  const vampires = [
+    { id: "v-1", updatedAt: "2024-01-01T00:00:00.000Z" },
+    { id: "v-2", updatedAt: "2024-03-01T00:00:00.000Z" },
+    { id: "v-3", updatedAt: "2024-02-01T00:00:00.000Z" },
+  ];
+
+  const sorted = sortVampiresByUpdatedAt(vampires);
+
+  assert.deepEqual(sorted.map((entry) => entry.id), ["v-2", "v-3", "v-1"]);
+  assert.deepEqual(vampires.map((entry) => entry.id), ["v-1", "v-2", "v-3"]);
+});
+
+test("getLatestCompleteVampire returns the most recently updated finished save, excluding a given id and unfinished saves", () => {
+  const vampires = [
+    { id: "preset", updatedAt: "2024-06-01T00:00:00.000Z", isComplete: true },
+    { id: "v-1", updatedAt: "2024-05-01T00:00:00.000Z", isComplete: false },
+    { id: "v-2", updatedAt: "2024-03-01T00:00:00.000Z", isComplete: true },
+    { id: "v-3", updatedAt: "2024-01-01T00:00:00.000Z", isComplete: false },
+  ];
+
+  assert.equal(getLatestCompleteVampire(vampires, "preset")?.id, "v-2");
+  assert.equal(getLatestCompleteVampire(vampires)?.id, "preset");
+  assert.equal(getLatestCompleteVampire([{ id: "v-1", isComplete: false }]), null);
+  assert.equal(getLatestCompleteVampire([], "preset"), null);
+});
+
+test("getLatestIncompleteVampire ignores complete saves and a given id", () => {
+  const vampires = [
+    { id: "preset", updatedAt: "2024-06-01T00:00:00.000Z", isComplete: false },
+    { id: "v-1", updatedAt: "2024-05-01T00:00:00.000Z", isComplete: true },
+    { id: "v-2", updatedAt: "2024-02-01T00:00:00.000Z", isComplete: false },
+    { id: "v-3", updatedAt: "2024-04-01T00:00:00.000Z", isComplete: false },
+  ];
+
+  assert.equal(getLatestIncompleteVampire(vampires, "preset")?.id, "v-3");
+  assert.equal(getLatestIncompleteVampire([{ id: "v-1", isComplete: true }]), null);
 });

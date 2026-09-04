@@ -60,13 +60,66 @@ shapes. Revisit this once there are players whose games matter.
 `design/MOBILE_REDESIGN_SPEC.md`. That file records the design rationale;
 this section records the load-bearing facts the implementation settled on.
 
-- **Screens**: `#menu-screen` (Home), `#creation-screen` (8-step wizard,
-  unchanged step order/gating logic from before the redesign — only the
-  visual language changed), `#play-screen` (bottom-tab shell: header,
-  collapsible prompt card, Memories/Traits/Diary tabs, bottom nav). All
-  three are full-bleed on mobile; a centered column with side borders
-  applies above 640px (`@media (min-width: 640px)` in `styles.css`) as a
-  placeholder desktop treatment, not a dedicated desktop redesign.
+- **Screens**: `#menu-screen` (Home — Continue / Saves / New Vampire),
+  `#saves-screen` (Saves — every stored vampire, load/rename/delete),
+  `#creation-screen` (8-step wizard, unchanged step order/gating logic
+  from before the redesign — only the visual language changed),
+  `#play-screen` (bottom-tab shell: header, collapsible prompt card,
+  Memories/Traits/Diary tabs, bottom nav). All four are full-bleed on
+  mobile; a centered column with side borders applies above 640px
+  (`@media (min-width: 640px)` in `styles.css`) as a placeholder desktop
+  treatment, not a dedicated desktop redesign. Routes: `#/menu`,
+  `#/saves`, `#/create`, `#/play/<id>` (`src/router.js`,
+  `src/navigation.js`).
+- **Home screen**: Continue only targets a vampire that has finished
+  character creation (`isComplete`, via `getLatestCompleteVampire` in
+  `vampire-storage.js`) — it jumps to the newest `updatedAt` among those.
+  A save still mid-creation is never a Continue target — resume it via
+  Saves or the New Vampire continue-vs-fresh prompt instead. Saves lists
+  every stored vampire (including the always-present
+  preset Test Vampire, non-renameable/non-deletable) with a per-row More
+  menu for rename/delete, reusing the existing action-sheet + prompt/
+  confirm-dialog pattern from the Play screen's More menu — not a new
+  dialog system. New Vampire checks for an in-progress save
+  (`getLatestIncompleteVampire`, excluding the preset) and asks
+  Continue-vs-fresh before creating a new blank character; the old
+  unfinished save is left in Saves either way, never auto-deleted.
+- **Completion gate**: `startPlay()` (`src/main.js`) is the single choke
+  point — it checks `character.isReadyForPromptOne()` itself and routes
+  to creation (resuming at the first incomplete step) instead of Play
+  when unmet. Every entry point that opens a stored vampire (Continue,
+  a Saves row, the direct `#/play/<id>` route) must call `startPlay()`
+  and let it decide; nothing upstream may skip that check to force entry
+  into Play. A save's completeness never affects whether it's kept in
+  storage — only whether it's playable. One deliberate exception: the
+  preset Test Vampire (`selectedVampireId === TEST_VAMPIRE_ID`) always
+  bypasses this check and goes straight to Play. It's a QA fixture, not
+  a player save — `createStoredRecord()` doesn't preserve the `isPreset`
+  flag once the record gets rewritten by real in-Play edits (e.g.
+  deleting a skill while poking at it), so its live `isReadyForPromptOne()`
+  can legitimately go false even though it's meant to always be "finished."
+  Gating it like a real save would send a QA fixture into the creation
+  wizard instead of Play the moment someone tests deleting something
+  from it.
+- **Header split: identity vs. game management.** The Play/Creation
+  header's left slot and right slot each carry one category of action,
+  never mixed: left is navigation/session management (hamburger on
+  Play — Home / Saves / Delete save; a direct "← Home" on Creation,
+  since there's nothing else to navigate to mid-wizard), right is
+  character identity (a circular avatar placeholder + name, tap →
+  Rename vampire / Change picture — the same `openIdentityMenu` in
+  `src/main.js`, wired to both screens' avatar buttons so the two
+  headers can't drift apart). Both triggers open the same
+  `openActionSheet` used everywhere else in the app — a second icon
+  (☰ vs ⋮) into one existing mechanism, not a new UI paradigm. A
+  hamburger opens a menu with real choices in it; a chevron/arrow means
+  "go back" and should never be used to trigger one. Memory slot
+  add/remove — not standard play, per `refs/rules.txt` — lives behind
+  its own ⋮ next to the Memories tab's "N/M" heading instead of the
+  header, since it has nothing to do with identity or navigation; it
+  confirms every time (`openConfirmDialog`, both directions, not just
+  overflow past 5) rather than carrying a persistent warning label, to
+  keep the sheet clean.
 - **Design tokens**: `--color-*`/`--font-*`/`--radius`/`--safe-*` custom
   properties in `styles.css`'s `:root`. New UI should read these, not
   hardcode hex/font values — the pre-redesign palette (`#f6eddc`,

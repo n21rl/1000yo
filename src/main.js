@@ -38,7 +38,10 @@ import {
   getPromptPanelViewModel,
   EXPERIENCE_BLOCKED,
   getExperienceAvailability,
-  isPromptResolved,
+  getPlaySignature,
+  getResolutionWarnings,
+  isStampResolved,
+  markPromptResolved,
   normalizeLoadedPromptState,
 } from "./features/prompt-flow.js";
 import {
@@ -196,6 +199,8 @@ const loadCharacter = (storedCharacter) => {
   const restoredCampaign = restoreCampaignState(storedCharacter?.campaign);
   promptState.currentPrompt = restoredCampaign.currentPrompt;
   promptState.visits = restoredCampaign.visits;
+  promptState.resolved = restoredCampaign.resolved;
+  promptState.signature = restoredCampaign.signature;
   resetPlayState();
 };
 
@@ -534,10 +539,11 @@ const getMemoryLabel = (memory) => memory.title || `Memory ${memory.createdOrder
 
 const openMemoryMoreMenu = async (memory) => {
   const actions = [];
-  /* Only offered when the prompt cycle is what's holding the composer
-     back — a full, lost or shelved memory can't take one regardless. */
-  if (getMemoryExperienceAvailability(memory).reason === EXPERIENCE_BLOCKED.PROMPT_RESOLVED) {
-    actions.push({ id: "extra-experience", label: "New Experience" });
+  /* 43c writes an Experience straight into the Diary, so the block is a
+     default the player can step past — with a warning, and for this
+     memory only. */
+  if (getMemoryExperienceAvailability(memory).reason === EXPERIENCE_BLOCKED.DIARY) {
+    actions.push({ id: "diary-experience", label: "New Experience" });
   }
   actions.push({ id: "forget", label: memory.lost ? "Restore" : "Forget" });
   if (!memory.lost && !memory.storedInDiary && character.diaryMemories.length < MAX_DIARY_MEMORIES) {
@@ -546,8 +552,14 @@ const openMemoryMoreMenu = async (memory) => {
   actions.push({ id: "delete", label: "Delete", danger: true });
   const choice = await openActionSheet({ title: getMemoryLabel(memory), actions });
 
-  if (choice === "extra-experience") {
-    extraExperienceStamp = currentPromptStamp();
+  if (choice === "diary-experience") {
+    const confirmed = await openConfirmDialog({
+      title: "Write into the Diary?",
+      body: "A Memory in the Diary normally gains no further Experiences. Only a prompt that says so should override this.",
+      confirmLabel: "Write",
+    });
+    if (!confirmed) return;
+    diaryWriteMemoryId = memory.id;
     activeMemoryDetailId = memory.id;
     render();
     return;
@@ -588,30 +600,50 @@ const openMemoryMoreMenu = async (memory) => {
   }
 };
 
-/* One prompt's Experience is the default (see getExperienceAvailability).
-   A prompt that calls for another one is the exception, so it is opted
-   into explicitly, for that prompt stamp only, from the memory's More
-   menu — and spent as soon as it is used. */
-let extraExperienceStamp = null;
-
 const currentPromptStamp = () =>
   formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
 
+/* A Diary memory takes no further Experiences by default, but the deck
+   itself overrides that (43c), so the memory's More menu can let one
+   through for that memory only, after a warning. */
+let diaryWriteMemoryId = null;
+
 const getMemoryExperienceAvailability = (memory) =>
   getExperienceAvailability(memory, {
-    promptResolved: isPromptResolved(promptState, character),
     maxExperiences: MAX_EXPERIENCES_PER_MEMORY,
-    allowExtra: extraExperienceStamp !== null && extraExperienceStamp === currentPromptStamp(),
+    allowDiary: diaryWriteMemoryId !== null && diaryWriteMemoryId === memory?.id,
   });
 
 /* The composer's absence has to say why. Every string here is one the
-   app already uses elsewhere: the memory row's own subtitles, the diary
-   form's warning, and the prompt panel's status label. */
+   app already uses elsewhere: the memory row's own subtitles and the
+   diary form's warning. */
 const EXPERIENCE_BLOCKED_TEXT = {
   [EXPERIENCE_BLOCKED.LOST]: (memory) => (memory.lostReason === "diary" ? "Lost with Diary" : "Lost from Mind"),
   [EXPERIENCE_BLOCKED.DIARY]: () => "Once moved, the Memory can no longer gain new Experiences.",
   [EXPERIENCE_BLOCKED.FULL]: () => `${MAX_EXPERIENCES_PER_MEMORY} / ${MAX_EXPERIENCES_PER_MEMORY} experiences`,
-  [EXPERIENCE_BLOCKED.PROMPT_RESOLVED]: () => "Prompt resolved",
+};
+
+/* Resolution is the player's call, not the app's: a prompt may ask for
+   no Experience, several, or only a trait change, and custom prompts can
+   ask for anything at all. So this warns about what looks unusual and
+   lets the player through either way. */
+const resolveCurrentPrompt = async () => {
+  const stamp = currentPromptStamp();
+  if (isStampResolved(promptState, stamp)) return;
+
+  const warnings = getResolutionWarnings(character, { stamp, signature: promptState.signature });
+  if (warnings.length) {
+    const confirmed = await openConfirmDialog({
+      title: "Mark as resolved?",
+      body: warnings.join(" "),
+      confirmLabel: "Mark as resolved",
+    });
+    if (!confirmed) return;
+  }
+
+  markPromptResolved(promptState, stamp);
+  markDirty();
+  render();
 };
 
 const renderMemoryRow = (memory, { lost = false } = {}) => {
@@ -749,11 +781,33 @@ const renderMemoryDetail = () => {
     more.setAttribute("aria-label", "Experience options");
     more.append(createMaterialFallbackIcon("more_vert"));
     more.addEventListener("click", async () => {
-      const choice = await openActionSheet({ actions: [{ id: "edit", label: "Edit" }] });
-      if (choice !== "edit") return;
-      editingTrait = { kind: "memory", index: character.memories.indexOf(memory) };
-      activeModal = "memory";
-      render();
+      const choice = await openActionSheet({
+        actions: [
+          { id: "edit", label: "Edit" },
+          { id: "delete", label: "Delete", danger: true },
+        ],
+      });
+      if (choice === "edit") {
+        editingTrait = { kind: "memory", index: character.memories.indexOf(memory) };
+        activeModal = "memory";
+        render();
+        return;
+      }
+      if (choice === "delete") {
+        /* 51a asks for exactly this. Outside a prompt that calls for it,
+           an Experience is only lost with its Memory — hence the warning
+           rather than a plain confirmation. */
+        const confirmed = await openConfirmDialog({
+          title: "Delete this experience?",
+          body: "An Experience is normally only lost with its Memory. Only a prompt that says so should remove one on its own.",
+          confirmLabel: "Delete",
+          danger: true,
+        });
+        if (!confirmed) return;
+        if (!character.removeMemoryExperience(character.memories.indexOf(memory), experienceIndex)) return;
+        markDirty();
+        render();
+      }
     });
 
     item.append(index, body, more);
@@ -1145,9 +1199,12 @@ const renderPlayLists = () => {
 const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
 
 const renderPromptPanel = () => {
-  const resolved = isPromptResolved(promptState, character);
+  const resolved = isStampResolved(promptState, currentPromptStamp());
   const model = getPromptPanelViewModel(promptState, { resolved });
   elements.promptButton.disabled = model.disabled || model.rollDisabled;
+  /* Unresolved: the player says when the prompt is answered. Resolved:
+     Roll is the only thing left to do. */
+  elements.promptResolveButton.hidden = model.disabled || resolved;
   elements.promptText.textContent = model.text;
   elements.promptStatusLabel.textContent = model.statusLabel;
   const stamp = formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
@@ -1196,6 +1253,12 @@ const startPlay = async () => {
   hasSavedSetup = true;
   persistCurrentCharacter();
   setScreen("play", { updateRoute: true });
+  /* The fingerprint has to be taken from the loaded character, not from
+     whatever was on screen before it — see getResolutionWarnings. */
+  if (!promptState.signature) {
+    promptState.signature = getPlaySignature(character);
+    persistCurrentCharacter();
+  }
   if (ensurePromptVisit(promptState)) {
     persistCurrentCharacter();
   }
@@ -1421,11 +1484,7 @@ bindPlayEvents({
   testVampireId: TEST_VAMPIRE_ID,
   openMemoryMoreMenu,
   openIdentityMenu,
-  /* An opt-in for an extra Experience covers exactly one, so writing it
-     spends it; the next one is another deliberate choice. */
-  onExperienceSaved: () => {
-    extraExperienceStamp = null;
-  },
+  resolveCurrentPrompt,
 });
 
 const closeModalAndResetPlayForms = () => {

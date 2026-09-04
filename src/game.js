@@ -238,6 +238,16 @@ export class Character {
     return true;
   }
 
+  /* 51a ("Lose a random Experience from a Memory") needs this; nothing
+     else in normal play removes a single Experience. */
+  removeMemoryExperience(memoryIndex, experienceIndex) {
+    const memory = this.memories[memoryIndex];
+    if (!memory) return false;
+    if (!memory.experiences[experienceIndex]) return false;
+    memory.experiences.splice(experienceIndex, 1);
+    return true;
+  }
+
   removeMemory(index) {
     return this.#removeAt(this.memories, index);
   }

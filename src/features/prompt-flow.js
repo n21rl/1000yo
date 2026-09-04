@@ -6,6 +6,8 @@ export const createPromptState = () => ({
   loadError: "",
   currentPrompt: 1,
   visits: new Map(),
+  resolved: new Set(),
+  signature: null,
 });
 
 export const advanceToNextPromptEntry = (promptState, targetIndex) => {
@@ -27,44 +29,86 @@ export const advanceToNextPromptEntry = (promptState, targetIndex) => {
 
 /* Whether a Memory can take a new Experience right now, and if not, why.
 
-   The rulebook's baseline is one Experience per Prompt: "Every time you
-   answer a Prompt you must create an Experience and add it to a Memory
-   unless instructed otherwise" (refs/rules.txt). So once the current
-   prompt is resolved, the composer has no job until the next one. That
-   is a default, not a lock — entries like 24b ("Do not create an
-   Experience about this") and 37a ("Do not create a new Experience for
-   this Prompt") deviate in one direction, and a prompt may equally call
-   for more than one, which is what `allowExtra` is for. */
+   These are the engine's own limits, not the prompt cycle's: the app
+   does not decide when a prompt is answered, the player does (see
+   markPromptResolved). A Diary memory is the one soft block — the
+   rulebook says a Memory in the Diary gains no further Experiences, but
+   43c ("Write this forgotten Experience into your Memory or directly
+   into a Diary") shows the deck itself overriding that, so the UI warns
+   and lets the player through rather than refusing. */
 export const EXPERIENCE_BLOCKED = {
   LOST: "lost",
   DIARY: "diary",
   FULL: "full",
-  PROMPT_RESOLVED: "prompt-resolved",
 };
 
 export const getExperienceAvailability = (
   memory,
-  { promptResolved = false, maxExperiences = Infinity, allowExtra = false } = {},
+  { maxExperiences = Infinity, allowDiary = false } = {},
 ) => {
   if (!memory) return { allowed: false, reason: null };
-  /* The memory's own state comes first: a lost or shelved memory can't
-     take an Experience whatever the prompt is doing. */
   if (memory.lost) return { allowed: false, reason: EXPERIENCE_BLOCKED.LOST };
-  if (memory.storedInDiary) return { allowed: false, reason: EXPERIENCE_BLOCKED.DIARY };
   if (memory.experiences.length >= maxExperiences) return { allowed: false, reason: EXPERIENCE_BLOCKED.FULL };
-  if (promptResolved && !allowExtra) return { allowed: false, reason: EXPERIENCE_BLOCKED.PROMPT_RESOLVED };
+  if (memory.storedInDiary && !allowDiary) return { allowed: false, reason: EXPERIENCE_BLOCKED.DIARY };
   return { allowed: true, reason: null };
+};
+
+/* Resolution is declared, not inferred. Custom and Appendix prompts can
+   ask for anything — no Experience (24b, 37a, 43b, 54b), several, or
+   only a trait change — so the app records what the player says happened
+   and warns when it looks unusual, rather than deciding for them. */
+export const isStampResolved = (promptState, stamp) => Boolean(promptState?.resolved?.has(stamp));
+
+export const markPromptResolved = (promptState, stamp) => {
+  if (!promptState.resolved) promptState.resolved = new Set();
+  promptState.resolved.add(stamp);
+};
+
+/* A cheap fingerprint of everything a prompt might have changed, taken
+   when the prompt is entered and compared when it is marked resolved. */
+export const getPlaySignature = (character) => {
+  if (!character) return { traits: 0, used: 0, lost: 0, experiences: 0 };
+  const traits = [
+    ...(character.characters ?? []),
+    ...(character.skills ?? []),
+    ...(character.resources ?? []),
+    ...(character.marks ?? []),
+  ];
+  const memories = character.memories ?? [];
+  return {
+    traits: traits.length,
+    used: traits.filter((trait) => trait.used).length,
+    lost: traits.filter((trait) => trait.lost).length + memories.filter((memory) => memory.lost).length,
+    experiences: memories.reduce((total, memory) => total + memory.experiences.length, 0),
+  };
+};
+
+/* What looks unusual about this prompt's resolution. Warnings only —
+   every one of them is a legitimate outcome for some prompt. */
+export const getResolutionWarnings = (character, { stamp, signature } = {}) => {
+  const warnings = [];
+  const memories = character?.memories ?? [];
+  const stamped = memories.reduce(
+    (total, memory) => total + memory.experiences.filter((experience) => experience.prompt === stamp).length,
+    0,
+  );
+
+  if (stamped === 0) warnings.push("No Experience has been recorded for this prompt.");
+  if (stamped > 1) warnings.push(`${stamped} Experiences have been recorded for this prompt.`);
+
+  if (signature) {
+    const now = getPlaySignature(character);
+    const traitsUntouched =
+      now.traits === signature.traits && now.used === signature.used && now.lost === signature.lost;
+    if (traitsUntouched) warnings.push("No Traits have been created, checked or struck out.");
+  }
+
+  return warnings;
 };
 
 export const formatPromptStamp = (promptIndex, visitCount) => {
   const letter = ["a", "b", "c"][visitCount - 1] ?? "";
   return `${promptIndex}${letter}`;
-};
-
-export const isPromptResolved = (promptState, character) => {
-  if (!character) return false;
-  const stamp = formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
-  return character.memories.some((memory) => memory.experiences.some((experience) => experience.prompt === stamp));
 };
 
 export const getPromptPanelViewModel = (promptState, { resolved = false } = {}) => {

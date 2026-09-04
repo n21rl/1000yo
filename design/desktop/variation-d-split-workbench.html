@@ -425,6 +425,7 @@
                   <span class="play-prompt-status">Prompt unresolved</span>
                 </div>
                 <div class="play-prompt-actions">
+                  <button type="button" class="play-prompt-resolve play-prompt-roll">Mark as resolved</button>
                   <button type="button" class="play-prompt-roll" aria-label="Roll">Roll</button>
                   <button type="button" class="card-chevron-button play-prompt-chevron" aria-label="Toggle prompt card">
                     <span class="card-toggle-indicator" data-mk-icon="keyboard_arrow_down"></span>
@@ -543,7 +544,8 @@
       const stamp = document.querySelector(".play-prompt-stamp");
       const status = document.querySelector(".play-prompt-status");
       const promptText = document.querySelector("[data-mk-prompt-text]");
-      const rollButton = document.querySelector(".play-prompt-roll");
+      const resolveButton = document.querySelector(".play-prompt-resolve");
+      const rollButton = document.querySelectorAll(".play-prompt-roll")[1];
       const promptActions = document.querySelector(".play-prompt-actions");
 
       /* Two real entries from refs/prompts.csv, so Roll actually moves. */
@@ -561,6 +563,9 @@
         status.textContent = statusText;
         promptText.textContent = text;
         rollButton.disabled = rollDisabled;
+        /* The player says when the prompt is answered — see AGENTS.md.
+           Unresolved: declare it. Resolved: Roll is what's left. */
+        resolveButton.hidden = disabled || !rollDisabled;
         /* PROPOSED, not current behaviour: getPromptPanelViewModel blanks
            the stamp and the status label in its disabled states, which on
            mobile is a flash before the deck loads. Here the prompt holds a
@@ -639,19 +644,12 @@
 
       const resolved = (memory = MK.data.memories[1]) => {
         syncChip("resolved");
-        /* The Experience for this prompt exists, so the composer has no
-           job until the next one. "Prompt resolved" is the app's own label
-           for exactly that condition, reused as the reason. The memory
-           stays open rather than clearing, so what was just written is
-           still on screen while Roll is taken.
-
-           Caveat worth deciding: the rulebook's "unless instructed
-           otherwise" means some prompts legitimately call for no
-           Experience or more than one, so this should be the default
-           state, not a lock. canAddExperience in src/main.js deliberately
-           doesn't check resolution today. */
+        /* Declared, not inferred: the player presses "Mark as resolved"
+           and the app warns about anything unusual rather than deciding.
+           The composer stays open — a prompt may call for no Experience,
+           or more than one, and a custom prompt can ask for anything. */
         setPrompt({ ...DECK[deckIndex], statusText: "Prompt resolved", rollDisabled: false });
-        showMemory(memory, "Prompt resolved");
+        showMemory(memory, null);
         /* The left column's row subtitle counts experiences, so it has to
            be re-rendered for the one just written to show up there. */
         MKScreens.refreshMemories();
@@ -679,6 +677,7 @@
         });
       });
 
+      resolveButton.addEventListener("click", () => resolved(openMemory ?? MK.data.memories[1]));
       composer.addEventListener("submit", (event) => {
         event.preventDefault();
         const field = composer.querySelector("textarea");
@@ -690,7 +689,7 @@
           });
         }
         field.value = "";
-        resolved(memory);
+        writing(memory);
       });
       rollButton.addEventListener("click", () => {
         if (!rollButton.disabled) roll();

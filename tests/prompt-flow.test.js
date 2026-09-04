@@ -7,8 +7,11 @@ import {
   ensurePromptVisit,
   formatPromptStamp,
   getExperienceAvailability,
+  getPlaySignature,
   getPromptPanelViewModel,
-  isPromptResolved,
+  getResolutionWarnings,
+  isStampResolved,
+  markPromptResolved,
   normalizeLoadedPromptState,
 } from "../src/features/prompt-flow.js";
 
@@ -81,23 +84,6 @@ test("formatPromptStamp maps visit counts to a/b/c letters", () => {
   assert.equal(formatPromptStamp(7, 4), "7");
 });
 
-test("isPromptResolved checks for a stamped experience matching the current prompt+visit", () => {
-  const state = createPromptState();
-  state.currentPrompt = 14;
-  state.visits.set(14, 2);
-
-  const noExperiences = { memories: [] };
-  assert.equal(isPromptResolved(state, noExperiences), false);
-
-  const wrongStamp = { memories: [{ experiences: [{ prompt: "14a" }] }] };
-  assert.equal(isPromptResolved(state, wrongStamp), false);
-
-  const matchingStamp = { memories: [{ experiences: [{ prompt: "7a" }, { prompt: "14b" }] }] };
-  assert.equal(isPromptResolved(state, matchingStamp), true);
-
-  assert.equal(isPromptResolved(state, null), false);
-});
-
 test("normalizeLoadedPromptState and ensurePromptVisit seed current visit", () => {
   const state = createPromptState();
   state.deck = [{ a: "A", b: "", c: "" }];
@@ -118,46 +104,77 @@ const memory = (overrides = {}) => ({
   ...overrides,
 });
 
-test("getExperienceAvailability allows an experience while the prompt is unresolved", () => {
-  const result = getExperienceAvailability(memory(), { promptResolved: false, maxExperiences: 3 });
+test("getExperienceAvailability allows an experience regardless of the prompt cycle", () => {
+  const result = getExperienceAvailability(memory(), { maxExperiences: 3 });
   assert.equal(result.allowed, true);
   assert.equal(result.reason, null);
 });
 
-test("getExperienceAvailability blocks a second experience once the prompt is resolved", () => {
-  const result = getExperienceAvailability(memory(), { promptResolved: true, maxExperiences: 3 });
-  assert.equal(result.allowed, false);
-  assert.equal(result.reason, EXPERIENCE_BLOCKED.PROMPT_RESOLVED);
+test("getExperienceAvailability blocks a lost or full memory outright", () => {
+  assert.equal(getExperienceAvailability(memory({ lost: true }), { maxExperiences: 3 }).reason, EXPERIENCE_BLOCKED.LOST);
+  assert.equal(
+    getExperienceAvailability(memory({ experiences: [{}, {}, {}] }), { maxExperiences: 3 }).reason,
+    EXPERIENCE_BLOCKED.FULL,
+  );
 });
 
-test("getExperienceAvailability lets an explicit opt-in past a resolved prompt", () => {
-  const result = getExperienceAvailability(memory(), { promptResolved: true, maxExperiences: 3, allowExtra: true });
-  assert.equal(result.allowed, true);
+test("getExperienceAvailability treats the Diary as a block a prompt can override", () => {
+  const shelved = memory({ storedInDiary: true });
+  assert.equal(getExperienceAvailability(shelved, { maxExperiences: 3 }).reason, EXPERIENCE_BLOCKED.DIARY);
+  assert.equal(getExperienceAvailability(shelved, { maxExperiences: 3, allowDiary: true }).allowed, true);
 });
 
-test("getExperienceAvailability reports the memory's own state before the prompt's", () => {
-  const lost = getExperienceAvailability(memory({ lost: true }), { promptResolved: true, maxExperiences: 3 });
-  assert.equal(lost.reason, EXPERIENCE_BLOCKED.LOST);
-
-  const shelved = getExperienceAvailability(memory({ storedInDiary: true }), { promptResolved: true, maxExperiences: 3 });
-  assert.equal(shelved.reason, EXPERIENCE_BLOCKED.DIARY);
-
-  const full = getExperienceAvailability(memory({ experiences: [{}, {}, {}] }), { promptResolved: true, maxExperiences: 3 });
-  assert.equal(full.reason, EXPERIENCE_BLOCKED.FULL);
-});
-
-test("getExperienceAvailability keeps a full memory blocked even with an opt-in", () => {
-  const result = getExperienceAvailability(memory({ experiences: [{}, {}, {}] }), {
-    promptResolved: true,
-    maxExperiences: 3,
-    allowExtra: true,
-  });
-  assert.equal(result.allowed, false);
-  assert.equal(result.reason, EXPERIENCE_BLOCKED.FULL);
+test("getExperienceAvailability keeps a full memory blocked even with the Diary override", () => {
+  const full = memory({ storedInDiary: true, experiences: [{}, {}, {}] });
+  assert.equal(getExperienceAvailability(full, { maxExperiences: 3, allowDiary: true }).reason, EXPERIENCE_BLOCKED.FULL);
 });
 
 test("getExperienceAvailability handles a missing memory", () => {
-  const result = getExperienceAvailability(null, { promptResolved: false, maxExperiences: 3 });
+  const result = getExperienceAvailability(null, { maxExperiences: 3 });
   assert.equal(result.allowed, false);
   assert.equal(result.reason, null);
+});
+
+test("resolution is declared, not derived", () => {
+  const state = createPromptState();
+  assert.equal(isStampResolved(state, "2a"), false);
+  markPromptResolved(state, "2a");
+  assert.equal(isStampResolved(state, "2a"), true);
+  assert.equal(isStampResolved(state, "2b"), false);
+});
+
+const characterWith = (experiences = [], traits = {}) => ({
+  memories: [{ lost: false, experiences }],
+  characters: traits.characters ?? [],
+  skills: traits.skills ?? [],
+  resources: traits.resources ?? [],
+  marks: traits.marks ?? [],
+});
+
+test("getResolutionWarnings warns when no Experience carries this prompt's stamp", () => {
+  const warnings = getResolutionWarnings(characterWith([]), { stamp: "2a" });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /No Experience/);
+});
+
+test("getResolutionWarnings warns when several Experiences carry it", () => {
+  const character = characterWith([{ prompt: "2a" }, { prompt: "2a" }]);
+  const warnings = getResolutionWarnings(character, { stamp: "2a" });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /2 Experiences/);
+});
+
+test("getResolutionWarnings stays silent for exactly one Experience and a trait change", () => {
+  const before = { traits: 1, used: 0, lost: 0, experiences: 0 };
+  const character = characterWith([{ prompt: "2a" }], { skills: [{ used: true }] });
+  const warnings = getResolutionWarnings(character, { stamp: "2a", signature: before });
+  assert.deepEqual(warnings, []);
+});
+
+test("getResolutionWarnings warns when no Trait was touched since the prompt began", () => {
+  const character = characterWith([{ prompt: "2a" }], { skills: [{ used: false }] });
+  const before = getPlaySignature(character);
+  const warnings = getResolutionWarnings(character, { stamp: "2a", signature: before });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /No Traits/);
 });

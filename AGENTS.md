@@ -143,34 +143,32 @@ this section records the load-bearing facts the implementation settled on.
   new. A prompt counts as "resolved" (gates the Roll button) once a
   stamped experience exists for the current prompt+visit —
   `isPromptResolved`/`formatPromptStamp` in `src/features/prompt-flow.js`.
-- **One Experience per prompt is the default.** The rulebook's baseline
-  is "Every time you answer a Prompt you must create an Experience and
-  add it to a Memory unless instructed otherwise" (`refs/rules.txt`), so
-  once the current prompt is resolved the composer closes until the next
-  one. `getExperienceAvailability` (`src/features/prompt-flow.js`) is the
-  single place that decides, and returns *why* when it says no: the
-  memory's own state first (lost / stored in the Diary / 3 experiences
-  full), then the prompt cycle. The reason is shown where the composer
-  was — a form that simply vanishes reads as a fault — using strings the
-  app already has (`Lost from Mind`, `Lost with Diary`, `N / N
-  experiences`, the diary form's warning, and the prompt panel's "Prompt
-  resolved").
-  It is a default, not a lock: the "unless instructed otherwise" cases
-  are real, so the memory's More menu offers "New Experience" when — and
-  only when — the prompt cycle is what's blocking. That opt-in is scoped
-  to the current prompt stamp and spent as soon as an Experience is
-  written, so each extra one is a deliberate choice.
-  A survey of all 221 entries in `refs/prompts.csv` found **no entry that
-  calls for more than one Experience**, and four that call for none:
-  `24b`, `37a`, `43b`, `54b` ("Do not create an Experience about this" /
-  "Do not create a new Experience for this Prompt"). Those four are a
-  live dead end — `isPromptResolved` needs a stamped Experience and Roll
-  is gated on resolution, so a player who obeys them cannot advance.
-  Decide how a prompt signals "no Experience required" before treating
-  the Roll gate as finished. Two further entries describe things the
-  engine can't currently represent: `43c` writes an Experience "directly
-  into a Diary", which `storedInDiary` forbids, and `51a` loses a single
-  Experience from a Memory, which only whole-memory forgetting supports.
+- **The player declares when a prompt is resolved; the app never
+  infers it.** Custom and Appendix prompts can ask for anything, so the
+  UI is permissive and warns rather than enforcing. "Mark as resolved"
+  in the prompt card records the declaration (`markPromptResolved` /
+  `isStampResolved` in `src/features/prompt-flow.js`, persisted per
+  prompt stamp in `campaign-state.js`), and Roll unlocks only once it is
+  given. Pressing it lists whatever looks unusual — no Experience
+  recorded for this stamp, several, or no Trait created/checked/struck
+  since the prompt was entered — and then lets the player through
+  regardless (`getResolutionWarnings`). The trait half of that compares
+  against `getPlaySignature`, a fingerprint taken when play starts and
+  again on each Roll, so it must be captured from the loaded character,
+  not from whatever was on screen before it.
+  `getExperienceAvailability` no longer has any say over the prompt
+  cycle: it reports only the engine's own limits (memory lost, 3
+  experiences full, stored in the Diary) and the composer stays open the
+  rest of the time. Its reason is shown where the composer would be,
+  since a form that silently vanishes reads as a fault.
+
+- **Permissive-and-warn is the pattern for anything the rules normally
+  forbid.** Both cases reached the same way — the relevant More menu,
+  then `openConfirmDialog` — rather than by inventing a control:
+  writing an Experience into a Memory already in the Diary (the memory's
+  ⋮, allowed for that memory only) and deleting a single Experience
+  (the experience row's ⋮, `Character#removeMemoryExperience`). Neither
+  is normal play; both are things the deck itself asks for.
 
 - **Play screen module split**: `src/main.js` still owns state and
   wiring (same pattern as menu/creation), but the play-screen render

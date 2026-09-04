@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1000yo — striking words inside an Experience</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../src/styles.css" />
+    <style>
+      /* A working sketch of the one thing prose can't explain: what
+         "tap to strike" actually does. Not a layout proposal — the
+         Experience rows below are the app's own, in the app's own
+         styling; only the striking is new.
+
+         Prompt 39a: "Strikeout three nouns from the Memories in your
+         Diary, starting from the oldest entry." */
+
+      body {
+        overflow: auto;
+      }
+
+      .demo {
+        max-width: 44rem;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 4rem;
+        font-family: var(--font-sans);
+        color: var(--color-text-primary);
+      }
+
+      .demo h1 {
+        font-family: var(--font-serif);
+        font-size: 1.6rem;
+        font-weight: 400;
+        margin: 0 0 0.35rem;
+      }
+
+      .demo-lede {
+        color: var(--color-text-muted);
+        font-size: 0.9rem;
+        margin: 0 0 2rem;
+        line-height: 1.5;
+      }
+
+      .demo-step {
+        font-family: var(--font-mono);
+        font-size: var(--font-size-label);
+        color: var(--color-accent);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        display: block;
+        margin-bottom: 0.5rem;
+      }
+
+      .demo-section {
+        padding: 1.25rem 0 1.5rem;
+        border-top: 1px solid var(--color-border);
+      }
+
+      .demo-note {
+        font-size: 0.85rem;
+        color: var(--color-text-muted);
+        line-height: 1.55;
+        margin: 0.75rem 0 0;
+      }
+
+      /* --- the striking itself --- */
+
+      /* In reading mode a struck word stays visible and negated, exactly
+         as a pen leaves it — and exactly how the app already shows a
+         struck-out Trait or a lost Memory. */
+      .struck {
+        text-decoration: line-through;
+        opacity: 0.4;
+      }
+
+      /* In striking mode every word becomes its own target. Nothing else
+         about the row changes, so you are still reading the sentence
+         while you choose. */
+      .striking .word {
+        cursor: pointer;
+        border-radius: 2px;
+        padding: 0 0.05em;
+      }
+
+      .striking .word:hover {
+        background: rgba(220, 38, 38, 0.18);
+      }
+
+      .striking .word.struck:hover {
+        background: rgba(120, 113, 108, 0.25);
+      }
+
+      .demo-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+
+      .demo-button {
+        width: auto;
+        padding: 0.45rem 0.85rem;
+        background: none;
+        border: 1px solid var(--color-border);
+        border-radius: 0;
+        color: var(--color-text-tertiary);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        cursor: pointer;
+      }
+
+      .demo-button[aria-pressed="true"] {
+        border-color: var(--color-accent);
+        color: var(--color-accent);
+      }
+
+      .demo-button:hover {
+        color: var(--color-text-primary);
+        filter: none;
+      }
+
+      .demo-count {
+        font-family: var(--font-mono);
+        font-size: var(--font-size-label);
+        color: var(--color-text-dim);
+      }
+
+      /* --- what actually gets stored --- */
+      .demo-stored {
+        margin-top: 1rem;
+        padding: 0.85rem 1rem;
+        background: var(--color-surface);
+        border: 1px solid var(--color-border);
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        line-height: 1.6;
+        color: var(--color-text-tertiary);
+        word-break: break-word;
+      }
+
+      .demo-stored-label {
+        display: block;
+        font-size: var(--font-size-label);
+        color: var(--color-text-dim);
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        margin-bottom: 0.5rem;
+      }
+
+      .demo-stored mark {
+        background: none;
+        color: var(--color-accent);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="demo">
+      <h1>Striking words inside an Experience</h1>
+      <p class="demo-lede">
+        Prompt 39a: “Strikeout three nouns from the Memories in your Diary, starting from the oldest
+        entry.” The words have to stay visible and negated — that is what striking means on paper — so
+        this is not the same operation as editing them away.
+      </p>
+
+      <section class="demo-section">
+        <span class="demo-step">1 — Reading</span>
+        <ol class="play-experience-list" id="reading-list"></ol>
+        <p class="demo-note">
+          The Experience rows are the app's own. Struck words carry the same line-through and dimming
+          the app already uses for a struck-out Trait or a lost Memory — no new visual language.
+        </p>
+      </section>
+
+      <section class="demo-section">
+        <span class="demo-step">2 — Striking</span>
+        <div class="demo-toolbar">
+          <button type="button" class="demo-button" id="strike-toggle" aria-pressed="false">Strike words</button>
+          <span class="demo-count" id="strike-count"></span>
+        </div>
+        <ol class="play-experience-list" id="striking-list"></ol>
+        <p class="demo-note">
+          Turn the mode on and every word becomes its own tap target — tap to strike it, tap again to
+          restore it. No text cursor, no selection handles, no keyboard: on a phone, selecting three
+          exact words with a caret is miserable, and this is three taps. The sentence stays readable
+          the whole time, so you are choosing words in context rather than in an edit field.
+        </p>
+      </section>
+
+      <section class="demo-section">
+        <span class="demo-step">3 — What gets stored</span>
+        <div class="demo-stored">
+          <span class="demo-stored-label">experience.text</span>
+          <span id="stored-text"></span>
+        </div>
+        <p class="demo-note">
+          Still one plain string. The markers are what the tapping writes, and the player never types
+          them — so <code>updateMemoryExperience</code>, saving, and export all keep working unchanged,
+          and an Experience pasted into any other app still reads correctly. The cost is that
+          everything which displays an Experience has to render the markers rather than print them
+          raw.
+        </p>
+      </section>
+    </main>
+
+    <script>
+      /* One source of truth, exactly as it would be stored. */
+      const experiences = [
+        { text: "I carried the ~~psalter~~ out through the smoke and left the novices behind the burning door.", prompt: "1a" },
+        { text: "The abbey bell went on ringing long after there was anyone left to ring it.", prompt: "3b" },
+      ];
+
+      const MARK = /~~(.+?)~~/g;
+
+      /* Render the stored string: struck spans keep their words visible. */
+      const renderText = (text) => {
+        const fragment = document.createDocumentFragment();
+        text.split(/(\s+)/).forEach((chunk) => {
+          if (/^\s+$/.test(chunk)) return fragment.append(chunk);
+          const struck = /^~~.+~~$/.test(chunk);
+          const span = document.createElement("span");
+          span.className = struck ? "word struck" : "word";
+          span.textContent = chunk.replace(/~~/g, "");
+          fragment.append(span);
+        });
+        return fragment;
+      };
+
+      const buildRow = (experience, index, { striking = false } = {}) => {
+        const item = document.createElement("li");
+        item.className = "play-experience-item";
+
+        const number = document.createElement("span");
+        number.className = "play-experience-index";
+        number.textContent = String(index + 1).padStart(2, "0");
+
+        const body = document.createElement("div");
+        body.className = "play-experience-body";
+        const text = document.createElement("p");
+        text.className = "play-experience-text";
+        text.append(renderText(experience.text));
+        body.append(text);
+
+        const stamp = document.createElement("span");
+        stamp.className = "play-experience-stamp";
+        stamp.textContent = `Prompt ${experience.prompt}`;
+        body.append(stamp);
+
+        if (striking) {
+          text.addEventListener("click", (event) => {
+            const word = event.target.closest(".word");
+            if (!word) return;
+            toggleWord(index, [...text.querySelectorAll(".word")].indexOf(word));
+          });
+        }
+
+        item.append(number, body);
+        return item;
+      };
+
+      /* Toggling rewrites the stored string — there are no offsets to keep
+         in sync, so editing the sentence later can't corrupt the marks. */
+      const toggleWord = (experienceIndex, wordIndex) => {
+        const experience = experiences[experienceIndex];
+        let seen = -1;
+        experience.text = experience.text
+          .split(/(\s+)/)
+          .map((chunk) => {
+            if (/^\s+$/.test(chunk)) return chunk;
+            seen += 1;
+            if (seen !== wordIndex) return chunk;
+            return /^~~.+~~$/.test(chunk) ? chunk.replace(/~~/g, "") : `~~${chunk}~~`;
+          })
+          .join("");
+        render();
+      };
+
+      const render = () => {
+        const reading = document.getElementById("reading-list");
+        const striking = document.getElementById("striking-list");
+        const strikingOn = document.getElementById("strike-toggle").getAttribute("aria-pressed") === "true";
+
+        reading.replaceChildren(...experiences.map((experience, index) => buildRow(experience, index)));
+        striking.classList.toggle("striking", strikingOn);
+        striking.replaceChildren(
+          ...experiences.map((experience, index) => buildRow(experience, index, { striking: strikingOn })),
+        );
+
+        const struck = experiences.reduce(
+          (total, experience) => total + [...experience.text.matchAll(MARK)].length,
+          0,
+        );
+        document.getElementById("strike-count").textContent = strikingOn
+          ? `${struck} struck — tap a word to strike or restore it`
+          : `${struck} struck`;
+
+        const stored = document.getElementById("stored-text");
+        stored.replaceChildren();
+        experiences.forEach((experience, index) => {
+          if (index) stored.append(document.createElement("br"));
+          experience.text.split(/(~~.+?~~)/).forEach((part) => {
+            if (/^~~.+~~$/.test(part)) {
+              const mark = document.createElement("mark");
+              mark.textContent = part;
+              stored.append(mark);
+            } else stored.append(part);
+          });
+        });
+      };
+
+      document.getElementById("strike-toggle").addEventListener("click", (event) => {
+        const on = event.currentTarget.getAttribute("aria-pressed") === "true";
+        event.currentTarget.setAttribute("aria-pressed", String(!on));
+        render();
+      });
+
+      render();
+    </script>
+  </body>
+</html>

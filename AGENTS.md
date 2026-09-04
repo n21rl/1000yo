@@ -165,12 +165,27 @@ this section records the load-bearing facts the implementation settled on.
   rest of the time. Its reason is shown where the composer would be,
   since a form that silently vanishes reads as a fault.
 
-- **Two deck instructions are deliberately not implemented.** `39c`
-  swaps a Memory with another character sheet — cross-save, too
-  convoluted to be worth it for one entry. `33b` makes a Memory
-  permanent and slot-free — the player can get the same end state by
-  adding a Memory slot and leaving that Memory alone. Neither is a bug
-  to fix; don't re-raise them without a new reason.
+- **Don't mechanise individual prompts.** The app models the *state* a
+  prompt can leave behind — memories, experiences, slots, traits, the
+  Diary — and never the instruction itself. Two reasons, and both
+  outrank the convenience of automating a particular entry:
+  **player authorship**, since deciding how a prompt applies is the
+  game, and an app that interprets it for you takes that over; and
+  **prompt sets are swappable** — the deck in `refs/prompts.csv` is one
+  of several (Appendix I, and whatever a player writes), so anything
+  keyed to specific entry numbers rots the moment the deck changes.
+  So: no per-entry special cases, no lookup tables of prompt ids, no
+  rules engine. Where an instruction needs an operation the app lacks,
+  add the *general* operation and let the player apply it.
+  Worked examples: `51a` ("lose a random Experience") got a general
+  delete-an-Experience action, not a 51a handler; `43c` (write an
+  Experience into a Diary) got a general override with a warning. By the
+  same principle `39c` (swap a Memory with another character sheet) and
+  `33b` (a permanent, slot-free Memory) are deliberately not
+  implemented — 39c is cross-save and too convoluted to be worth it,
+  and 33b's end state is reachable by adding a Memory slot and leaving
+  that Memory alone. Neither is a bug; don't re-raise them without a
+  new reason.
 
 - **Permissive-and-warn is the pattern for anything the rules normally
   forbid.** Both cases reached the same way — the relevant More menu,

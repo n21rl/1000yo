@@ -12,6 +12,8 @@ export const ELEMENT_SELECTORS = {
   nameInput: "#name",
   identityMemoryInput: "#memory-identity",
   wizardHeaderName: "#wizard-header-name",
+  creationBackButton: "#creation-back-button",
+  wizardAvatarButton: "#wizard-avatar-button",
   stepProgress: "#step-progress",
   wizardStepLabel: "#wizard-step-label",
   stepProgressFill: "#step-progress-fill",
@@ -50,9 +52,9 @@ export const ELEMENT_SELECTORS = {
 
   // Play screen shell
   playHeaderBack: "#play-header-back",
-  playHeaderIdentity: "#play-header-identity",
+  playHamburgerButton: "#play-hamburger-button",
   playHeaderName: "#play-header-name",
-  playMoreButton: "#play-more-button",
+  playAvatarButton: "#play-avatar-button",
   playMemoryDetailMoreButton: "#play-memory-detail-more",
   promptStampLabel: "#prompt-stamp-label",
   promptStatusLabel: "#prompt-status-label",
@@ -62,6 +64,7 @@ export const ELEMENT_SELECTORS = {
   // Memories tab
   playTabMemories: "#play-tab-memories",
   memorySlotsMeta: "#memory-slots-meta",
+  memorySlotsMoreButton: "#memory-slots-more-button",
   playMemoryListView: "#play-memory-list-view",
   playMemoryList: "#play-memory-list",
   playLostMemoryList: "#play-lost-memory-list",

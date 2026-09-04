@@ -19,7 +19,18 @@ export const bindCreationEvents = ({
   setHasSavedSetup,
   persistCurrentCharacter,
   startPlay,
+  setScreen,
+  openIdentityMenu,
 }) => {
+  elements.creationBackButton.addEventListener("click", () => {
+    setScreen("menu", { updateRoute: true });
+    render();
+  });
+
+  elements.wizardAvatarButton.addEventListener("click", () => {
+    void openIdentityMenu();
+  });
+
   elements.nameInput.addEventListener("input", () => {
     markDirty();
     getCharacter().rename(elements.nameInput.value);

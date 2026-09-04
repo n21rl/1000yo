@@ -33,6 +33,7 @@ export const bindPlayEvents = ({
   setSelectedVampireId,
   testVampireId,
   openMemoryMoreMenu,
+  openIdentityMenu,
 }) => {
   const currentPromptStamp = () =>
     formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
@@ -85,29 +86,24 @@ export const bindPlayEvents = ({
     render();
   });
 
-  elements.playMoreButton.addEventListener("click", async () => {
+  elements.playHamburgerButton.addEventListener("click", async () => {
     const character = getCharacter();
     const choice = await openActionSheet({
-      title: character.name || "Vampire",
+      title: "Menu",
       actions: [
-        { id: "rename", label: "Rename vampire" },
         { id: "home", label: "Home" },
+        { id: "saves", label: "Saves" },
         { id: "delete", label: "Delete save", danger: true },
-        { id: "add-slot", label: "Add memory slot" },
-        { id: "remove-slot", label: "Remove memory slot" },
       ],
     });
 
-    if (choice === "rename") {
-      const nextName = await openPromptDialog({ title: "Rename vampire", label: "Name", initialValue: character.name });
-      if (nextName === null) return;
-      if (!character.rename(nextName)) return;
-      markDirty();
+    if (choice === "home") {
+      setScreen("menu", { updateRoute: true });
       render();
       return;
     }
-    if (choice === "home") {
-      setScreen("menu", { updateRoute: true });
+    if (choice === "saves") {
+      setScreen("saves", { updateRoute: true });
       render();
       return;
     }
@@ -125,17 +121,30 @@ export const bindPlayEvents = ({
       setSelectedVampireId("");
       setScreen("menu", { updateRoute: true });
       render();
-      return;
     }
+  });
+
+  elements.playAvatarButton.addEventListener("click", () => {
+    void openIdentityMenu();
+  });
+
+  elements.memorySlotsMoreButton.addEventListener("click", async () => {
+    const character = getCharacter();
+    const choice = await openActionSheet({
+      title: "Memory slots",
+      actions: [
+        { id: "add-slot", label: "Add memory slot" },
+        { id: "remove-slot", label: "Remove memory slot" },
+      ],
+    });
+
     if (choice === "add-slot") {
-      if (character.memorySlots >= 5) {
-        const confirmed = await openConfirmDialog({
-          title: "Add memory slot?",
-          body: "5 memory slots is the standard limit. This isn't standard play, but some prompts can require it.",
-          confirmLabel: "Add slot",
-        });
-        if (!confirmed) return;
-      }
+      const confirmed = await openConfirmDialog({
+        title: "Add memory slot?",
+        body: "5 memory slots is the standard limit. This isn't standard play, but some prompts can require it.",
+        confirmLabel: "Add slot",
+      });
+      if (!confirmed) return;
       if (!character.setMemorySlots(character.memorySlots + 1)) return;
       markDirty();
       render();

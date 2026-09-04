@@ -92,6 +92,25 @@ this section records the load-bearing facts the implementation settled on.
   and let it decide; nothing upstream may skip that check to force entry
   into Play. A save's completeness never affects whether it's kept in
   storage — only whether it's playable.
+- **Header split: identity vs. game management.** The Play/Creation
+  header's left slot and right slot each carry one category of action,
+  never mixed: left is navigation/session management (hamburger on
+  Play — Home / Saves / Delete save; a direct "← Home" on Creation,
+  since there's nothing else to navigate to mid-wizard), right is
+  character identity (a circular avatar placeholder + name, tap →
+  Rename vampire / Change picture — the same `openIdentityMenu` in
+  `src/main.js`, wired to both screens' avatar buttons so the two
+  headers can't drift apart). Both triggers open the same
+  `openActionSheet` used everywhere else in the app — a second icon
+  (☰ vs ⋮) into one existing mechanism, not a new UI paradigm. A
+  hamburger opens a menu with real choices in it; a chevron/arrow means
+  "go back" and should never be used to trigger one. Memory slot
+  add/remove — not standard play, per `refs/rules.txt` — lives behind
+  its own ⋮ next to the Memories tab's "N/M" heading instead of the
+  header, since it has nothing to do with identity or navigation; it
+  confirms every time (`openConfirmDialog`, both directions, not just
+  overflow past 5) rather than carrying a persistent warning label, to
+  keep the sheet clean.
 - **Design tokens**: `--color-*`/`--font-*`/`--radius`/`--safe-*` custom
   properties in `styles.css`'s `:root`. New UI should read these, not
   hardcode hex/font values — the pre-redesign palette (`#f6eddc`,

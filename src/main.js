@@ -497,6 +497,27 @@ const updatePlayExperienceActionState = () => {
   elements.playExperienceCancel.disabled = !hasDraft;
 };
 
+const openIdentityMenu = async () => {
+  const choice = await openActionSheet({
+    title: character.name || "Vampire",
+    actions: [
+      { id: "rename", label: "Rename vampire" },
+      { id: "picture", label: "Change picture" },
+    ],
+  });
+  if (choice === "rename") {
+    const nextName = await openPromptDialog({ title: "Rename vampire", label: "Name", initialValue: character.name });
+    if (nextName === null) return;
+    if (!character.rename(nextName)) return;
+    markDirty();
+    render();
+    return;
+  }
+  if (choice === "picture") {
+    await openAlertDialog({ title: "Change picture", body: "Choosing a picture is coming in a later update." });
+  }
+};
+
 const getMemoryLabel = (memory) => memory.title || `Memory ${memory.createdOrder}`;
 
 const openMemoryMoreMenu = async (memory) => {
@@ -699,8 +720,9 @@ const renderMemoriesTab = () => {
   elements.playMemoryListView.hidden = showDetail;
   elements.playMemoryDetailView.hidden = !showDetail;
   elements.playHeaderBack.hidden = !showDetail;
-  elements.playHeaderIdentity.hidden = showDetail;
+  elements.playHamburgerButton.hidden = showDetail;
   elements.playMemoryDetailMoreButton.hidden = !showDetail;
+  elements.playAvatarButton.hidden = showDetail;
 
   if (showDetail) {
     renderMemoryDetail();
@@ -1281,6 +1303,8 @@ bindCreationEvents({
   },
   persistCurrentCharacter,
   startPlay,
+  setScreen,
+  openIdentityMenu,
 });
 
 bindMenuEvents({
@@ -1342,6 +1366,7 @@ bindPlayEvents({
   },
   testVampireId: TEST_VAMPIRE_ID,
   openMemoryMoreMenu,
+  openIdentityMenu,
 });
 
 const closeModalAndResetPlayForms = () => {
@@ -1380,7 +1405,9 @@ const initialize = () => {
       document.createTextNode("Saves"),
     );
   }
-  document.querySelectorAll(".play-more-icon, .play-memory-more-icon").forEach((el) => el.replaceChildren(createMaterialFallbackIcon("more_vert")));
+  document.querySelectorAll(".play-memory-more-icon, .play-tab-heading-more-icon").forEach((el) => el.replaceChildren(createMaterialFallbackIcon("more_vert")));
+  document.querySelectorAll(".play-hamburger-icon").forEach((el) => el.replaceChildren(createMaterialFallbackIcon("menu")));
+  document.querySelectorAll(".play-header-avatar-icon").forEach((el) => el.replaceChildren(createMaterialFallbackIcon("person")));
   document.querySelectorAll(".play-trait-sort-icon").forEach((el) => el.replaceChildren(createMaterialFallbackIcon("sort")));
   document.querySelector("#trait-view-list-button .play-trait-view-icon")?.replaceChildren(createMaterialFallbackIcon("menu"));
   document.querySelector("#trait-view-grid-button .play-trait-view-icon")?.replaceChildren(createMaterialFallbackIcon("grid_view"));

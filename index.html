@@ -38,10 +38,11 @@
 
       <section id="creation-screen" class="wizard" hidden>
         <div class="play-header">
-          <div class="play-header-identity">
-            <span class="play-header-dot"></span>
+          <button type="button" id="creation-back-button" class="play-header-back">← Home</button>
+          <button type="button" id="wizard-avatar-button" class="play-header-avatar-button" aria-label="Character options">
+            <span class="play-header-avatar"><span class="play-header-avatar-icon" aria-hidden="true"></span></span>
             <span id="wizard-header-name" class="play-header-name">New Vampire</span>
-          </div>
+          </button>
         </div>
         <div class="wizard-header">
           <span id="wizard-step-label" class="wizard-step-label">Identity</span>
@@ -216,16 +217,16 @@
       <section id="play-screen" class="play-shell" hidden>
         <div class="play-header">
           <button type="button" id="play-header-back" class="play-header-back" hidden>← Back</button>
-          <div id="play-header-identity" class="play-header-identity">
-            <span class="play-header-dot"></span>
-            <span id="play-header-name" class="play-header-name">Vampire</span>
-          </div>
+          <button type="button" id="play-hamburger-button" class="play-header-more" aria-label="Menu">
+            <span class="play-hamburger-icon" aria-hidden="true"></span>
+          </button>
           <div class="play-header-menus">
             <button type="button" id="play-memory-detail-more" class="play-header-more" aria-label="Memory options" hidden>
               <span class="play-memory-more-icon" aria-hidden="true"></span>
             </button>
-            <button type="button" id="play-more-button" class="play-header-more" aria-label="More options">
-              <span class="play-more-icon" aria-hidden="true"></span>
+            <button type="button" id="play-avatar-button" class="play-header-avatar-button" aria-label="Character options">
+              <span class="play-header-avatar"><span class="play-header-avatar-icon" aria-hidden="true"></span></span>
+              <span id="play-header-name" class="play-header-name">Vampire</span>
             </button>
           </div>
         </div>
@@ -253,7 +254,12 @@
             <div id="play-memory-list-view">
               <div class="play-tab-heading">
                 <span>Memories</span>
-                <span id="memory-slots-meta" class="play-tab-heading-meta">0/0</span>
+                <div class="play-tab-heading-actions">
+                  <span id="memory-slots-meta" class="play-tab-heading-meta">0/0</span>
+                  <button type="button" id="memory-slots-more-button" class="play-tab-heading-more" aria-label="Memory slot options">
+                    <span class="play-tab-heading-more-icon" aria-hidden="true"></span>
+                  </button>
+                </div>
               </div>
               <ul id="play-memory-list" class="play-memory-list"></ul>
               <ul id="play-lost-memory-list" class="play-memory-list play-memory-list-lost"></ul>

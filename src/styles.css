@@ -1595,6 +1595,25 @@ button:disabled {
   color: var(--color-text-tertiary);
 }
 
+/* A dialog body given as several distinct points (e.g. what is missing
+   before a prompt is marked resolved). */
+.app-dialog-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.app-dialog-list li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.app-dialog-list li:last-child {
+  border-bottom: none;
+}
+
 /* Shown in the composer's place when the memory can't take an
    Experience — see getExperienceAvailability. Carries the reason, since
    a form that simply vanishes reads as a fault. */

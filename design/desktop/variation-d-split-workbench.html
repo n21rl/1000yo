@@ -562,9 +562,10 @@
         stamp.textContent = stampText;
         status.textContent = statusText;
         promptText.textContent = text;
+        /* One action at a time — see AGENTS.md. Unresolved: declare the
+           prompt answered. Resolved: Roll, which isn't shown until then. */
         rollButton.disabled = rollDisabled;
-        /* The player says when the prompt is answered — see AGENTS.md.
-           Unresolved: declare it. Resolved: Roll is what's left. */
+        rollButton.hidden = disabled || rollDisabled;
         resolveButton.hidden = disabled || !rollDisabled;
         /* PROPOSED, not current behaviour: getPromptPanelViewModel blanks
            the stamp and the status label in its disabled states, which on

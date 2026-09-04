@@ -156,11 +156,21 @@ this section records the load-bearing facts the implementation settled on.
   against `getPlaySignature`, a fingerprint taken when play starts and
   again on each Roll, so it must be captured from the loaded character,
   not from whatever was on screen before it.
+  The two controls never show together: unresolved shows only "Mark as
+  resolved", resolved shows only Roll, so the loop reads as one action
+  then the next.
   `getExperienceAvailability` no longer has any say over the prompt
   cycle: it reports only the engine's own limits (memory lost, 3
   experiences full, stored in the Diary) and the composer stays open the
   rest of the time. Its reason is shown where the composer would be,
   since a form that silently vanishes reads as a fault.
+
+- **Two deck instructions are deliberately not implemented.** `39c`
+  swaps a Memory with another character sheet — cross-save, too
+  convoluted to be worth it for one entry. `33b` makes a Memory
+  permanent and slot-free — the player can get the same end state by
+  adding a Memory slot and leaving that Memory alone. Neither is a bug
+  to fix; don't re-raise them without a new reason.
 
 - **Permissive-and-warn is the pattern for anything the rules normally
   forbid.** Both cases reached the same way — the relevant More menu,

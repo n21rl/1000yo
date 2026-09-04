@@ -635,7 +635,7 @@ const resolveCurrentPrompt = async () => {
   if (warnings.length) {
     const confirmed = await openConfirmDialog({
       title: "Mark as resolved?",
-      body: warnings.join(" "),
+      body: warnings,
       confirmLabel: "Mark as resolved",
     });
     if (!confirmed) return;
@@ -1201,9 +1201,10 @@ const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
 const renderPromptPanel = () => {
   const resolved = isStampResolved(promptState, currentPromptStamp());
   const model = getPromptPanelViewModel(promptState, { resolved });
+  /* One action at a time: declare the prompt answered, then roll for the
+     next one. Roll isn't shown at all until it can be used. */
   elements.promptButton.disabled = model.disabled || model.rollDisabled;
-  /* Unresolved: the player says when the prompt is answered. Resolved:
-     Roll is the only thing left to do. */
+  elements.promptButton.hidden = model.disabled || !resolved;
   elements.promptResolveButton.hidden = model.disabled || resolved;
   elements.promptText.textContent = model.text;
   elements.promptStatusLabel.textContent = model.statusLabel;

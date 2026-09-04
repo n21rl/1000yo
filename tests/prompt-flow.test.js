@@ -154,14 +154,14 @@ const characterWith = (experiences = [], traits = {}) => ({
 test("getResolutionWarnings warns when no Experience carries this prompt's stamp", () => {
   const warnings = getResolutionWarnings(characterWith([]), { stamp: "2a" });
   assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /No Experience/);
+  assert.match(warnings[0], /^Experience: none/);
 });
 
 test("getResolutionWarnings warns when several Experiences carry it", () => {
   const character = characterWith([{ prompt: "2a" }, { prompt: "2a" }]);
   const warnings = getResolutionWarnings(character, { stamp: "2a" });
   assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /2 Experiences/);
+  assert.match(warnings[0], /^Experience: 2 recorded/);
 });
 
 test("getResolutionWarnings stays silent for exactly one Experience and a trait change", () => {
@@ -176,5 +176,5 @@ test("getResolutionWarnings warns when no Trait was touched since the prompt beg
   const before = getPlaySignature(character);
   const warnings = getResolutionWarnings(character, { stamp: "2a", signature: before });
   assert.equal(warnings.length, 1);
-  assert.match(warnings[0], /No Traits/);
+  assert.match(warnings[0], /^Traits: none/);
 });

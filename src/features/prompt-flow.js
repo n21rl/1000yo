@@ -93,14 +93,19 @@ export const getResolutionWarnings = (character, { stamp, signature } = {}) => {
     0,
   );
 
-  if (stamped === 0) warnings.push("No Experience has been recorded for this prompt.");
-  if (stamped > 1) warnings.push(`${stamped} Experiences have been recorded for this prompt.`);
+  /* Each warning names the element it is about, so several of them read
+     as separate things to check rather than one blur. */
+  if (stamped === 0) warnings.push("Experience: none recorded for this prompt.");
+  if (stamped > 1) warnings.push(`Experience: ${stamped} recorded for this prompt.`);
 
   if (signature) {
     const now = getPlaySignature(character);
-    const traitsUntouched =
-      now.traits === signature.traits && now.used === signature.used && now.lost === signature.lost;
-    if (traitsUntouched) warnings.push("No Traits have been created, checked or struck out.");
+    if (now.traits === signature.traits && now.used === signature.used && now.lost === signature.lost) {
+      warnings.push("Traits: none created, checked or struck out.");
+    }
+    if (now.experiences === signature.experiences && now.lost === signature.lost && stamped === 0) {
+      warnings.push("Memories: unchanged since this prompt was drawn.");
+    }
   }
 
   return warnings;

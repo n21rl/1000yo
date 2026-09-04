@@ -504,6 +504,7 @@
     { file: "variation-a-nav-rail.html", label: "A · Nav rail" },
     { file: "variation-b-master-detail.html", label: "B · Master–detail" },
     { file: "variation-c-workbench.html", label: "C · Workbench" },
+    { file: "variation-d-split-workbench.html", label: "D · Split workbench" },
   ];
 
   const SCREENS = [

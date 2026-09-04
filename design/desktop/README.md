@@ -12,6 +12,8 @@ layouts and between Home / Saves / Creation / Play.
 - `variation-a-nav-rail.html` — the mobile IA, rotated
 - `variation-b-master-detail.html` — browse pane beside a fixed work surface
 - `variation-c-workbench.html` — the whole play loop on screen at once
+- `variation-d-split-workbench.html` — between B and C: browse left, work
+  centre, traits right
 
 ## What is and isn't being tested
 
@@ -31,15 +33,15 @@ Held constant on purpose, so the comparison is about layout only:
   plainest token-based treatment so the composer reads), and a selected-
   row state for the two layouts that show a list and a detail at once,
   which mobile has no equivalent of.
-- **Content.** Identical sample vampire across all three
+- **Content.** Identical sample vampire across all four
   (`mockup-shared.js`).
 
-Home and Saves are deliberately the same in all three: a title screen and
+Home and Saves are deliberately the same in all four: a title screen and
 a flat list gain nothing from a pane structure, and varying them would
 add noise to the comparison. The layout question lives in Play and
 Creation.
 
-## The three layouts
+## The layouts
 
 ### A — Nav rail
 
@@ -108,30 +110,65 @@ character sheet building up beside it.
   needs the most width — below roughly 1100px the three columns stop
   working and it has to fall back to something else.
 
+### D — Split workbench
+
+Between B and C, and the strongest of the four. Three full-height
+columns: the left browses what holds memories (Memories / Diary as one
+segmented control), the middle is the work surface with the prompt card
+on top and the open memory and its composer beneath it, the right keeps
+traits permanently open. Creation uses the same frame — steps, form,
+character sheet — at the same column widths, so nothing jumps when a
+character finishes creation and enters play.
+
+- **For:** it takes C's best idea (traits always in view, no tab bar) without
+  C's worst structural problem. C had to split one column's height between
+  the memory list and the open memory, and five slots plus lost memories
+  plus the Add button do not fit that half; giving the list its own
+  full-height column removes the constraint entirely. It also puts the
+  prompt directly above the composer, which is the right reading order —
+  the prompt is what the experience answers — and recovers the ~21rem C
+  spent on a prompt column that was mostly empty. The prompt card stays
+  exactly as it ships, chevron included, and collapsing it here buys the
+  composer real vertical room, which it could not do in C.
+- **Against:** it is still C's IA change, not B's — the three bottom tabs
+  are gone and Memories/Diary is a new segmented control, so phone and
+  desktop diverge in structure and would need to be reasoned about
+  separately. It needs the same width as C (~1100px floor), and the middle
+  column is empty below the composer whenever the open memory is short.
+- **Note on the trait column:** D's traits column is 25rem — the same
+  width as B's browse pane — and the trait row works there in its shipped
+  shape, actions and all. So B's wrapped action row is a choice I made,
+  not a width constraint, and B's cost below should be read accordingly.
+
 ## Choosing between them
 
 Ranked by what the decision should turn on:
 
-1. **Does it serve the play loop?** C, then B, then A. This is the
-   criterion that matters most, and it is the one A fails: it is the only
-   variation where writing an experience while looking at your traits is
-   still impossible.
-2. **What does it cost to build?** A is a stylesheet change plus a
-   markup reshuffle. B needs a selected-memory state and an empty work
-   surface in the play render path. C needs both of those plus the
-   Memories/Diary merge and a real answer for narrow windows.
-3. **Does the phone and the desktop stay one product?** A trivially. B
-   yes — same tabs, same order, same rows. C keeps the components but
-   changes the IA, so the two versions would need to be reasoned about
-   separately from then on.
+1. **Does it serve the play loop?** D, then C, then B, then A. D and C
+   both put everything the loop touches on screen at once; D does it
+   without cramming the memory list and the open memory into one column's
+   height. A is the only variation where writing an experience while
+   looking at your traits is still impossible.
+2. **What does it cost to build?** A is a stylesheet change plus a markup
+   reshuffle. B needs a selected-memory state and an empty work surface in
+   the play render path. C and D need both of those plus the Memories/Diary
+   merge and a real answer for narrow windows — D is not more expensive
+   than C, it is the same work arranged better.
+3. **Do the phone and the desktop stay one product?** A trivially. B yes —
+   same tabs, same order, same rows. C and D keep the components but change
+   the IA, so the two versions would need to be reasoned about separately
+   from then on.
 
-My read: **B is the right default and C is the more interesting bet.** B
-gets most of the loop benefit for a contained amount of work and keeps
-one IA across both form factors. C is worth building only if the desktop
-version is meant to be the serious-play surface and the phone the
-on-the-go one — in which case its IA divergence is the point, not a cost.
-A is worth keeping as the fallback if the desktop layout has to ship
-before anyone wants to touch the play render path.
+My read: **D is the one to build.** It was worth arriving at through C:
+C proved the loop wants everything visible, and then failed on
+proportions, which is exactly what D fixes — its middle column stops
+being a compromise between a list and a document and becomes just the
+document. The remaining objection to D is the same as C's and is a
+product decision rather than a layout one: it is a different IA from the
+phone. If keeping one IA across both form factors matters more than the
+loop, **B** is the answer instead, and it is a good one. A stays the
+fallback if the desktop layout has to ship before anyone wants to touch
+the play render path.
 
 ## Implementation notes
 
@@ -139,11 +176,11 @@ before anyone wants to touch the play render path.
   `src/styles.css`: `@media (min-width: 640px)` centring every screen in a
   26rem column. Each mockup neutralises it at the top of its `<style>`
   block; a real implementation would replace it.
-- None of the three handles narrow windows — they assume desktop. A real
+- None of the four handles narrow windows — they assume desktop. A real
   implementation keeps the current mobile layout below a breakpoint
-  (~900px for A and B, ~1100px for C) and switches to the desktop frame
-  above it.
+  (~900px for A and B, ~1100px for C and D) and switches to the desktop
+  frame above it.
 - `mockup-shared.js` (sample content, row builders) and
-  `mockup-screens.js` (wiring) are shared by all three so the only
+  `mockup-screens.js` (wiring) are shared by all four so the only
   difference between the files is layout. They are mockup scaffolding,
   not a proposal about how the app should be structured.

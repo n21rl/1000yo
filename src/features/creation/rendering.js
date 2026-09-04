@@ -33,6 +33,7 @@ export const renderCreation = ({
   renderTraitSelector,
   hasSavedSetup,
   renderStep,
+  maxMemories,
 }) => {
   syncSelectedTraits(selectedLaterTraitIds);
   syncSelectedTraits(selectedCurseTraitIds);
@@ -42,10 +43,10 @@ export const renderCreation = ({
   renderCharacterList(elements.mortalList, "mortal");
   renderDetailList(elements.skillList, character.skills, (index) => character.removeSkill(index));
   renderDetailList(elements.resourceList, character.resources, (index) => character.removeResource(index));
-  renderMemoryList(elements.laterMemoryList, 1, 4);
+  renderMemoryList(elements.laterMemoryList, 1, maxMemories - 1);
   renderCharacterList(elements.immortalList, "immortal");
   renderDetailList(elements.markList, character.marks, (index) => character.removeMark(index));
-  renderMemoryList(elements.curseMemoryList, 4, 5);
+  renderMemoryList(elements.curseMemoryList, maxMemories - 1, maxMemories);
   renderTraitSelector(elements.memoryTraitsLater, selectedLaterTraitIds);
   renderTraitSelector(elements.memoryTraitsCurse, selectedCurseTraitIds);
   elements.saveConfirmation.hidden = !hasSavedSetup;

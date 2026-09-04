@@ -1,5 +1,15 @@
 import { restoreCampaignState } from "./campaign-state.js";
-import { Character, MAX_DIARY_MEMORIES, MAX_EXPERIENCES_PER_MEMORY } from "./game.js";
+import {
+  Character,
+  MAX_DIARY_MEMORIES,
+  MAX_EXPERIENCES_PER_MEMORY,
+  MAX_MEMORIES,
+  MIN_IMMORTALS,
+  MIN_MARKS,
+  MIN_MORTALS,
+  MIN_RESOURCES,
+  MIN_SKILLS,
+} from "./game.js";
 import {
   parsePromptDeck,
 } from "./prompt-deck.js";
@@ -1152,13 +1162,13 @@ const startPlay = async () => {
 
 const stepRequirements = [
   () => character.memories.length >= 1,
-  () => character.mortalCount >= 3,
-  () => character.skills.length >= 3,
-  () => character.resources.length >= 3,
-  () => character.memories.length >= 4,
-  () => character.immortalCount >= 1,
-  () => character.marks.length >= 1,
-  () => character.memories.length >= 5,
+  () => character.mortalCount >= MIN_MORTALS,
+  () => character.skills.length >= MIN_SKILLS,
+  () => character.resources.length >= MIN_RESOURCES,
+  () => character.memories.length >= MAX_MEMORIES - 1,
+  () => character.immortalCount >= MIN_IMMORTALS,
+  () => character.marks.length >= MIN_MARKS,
+  () => character.memories.length >= MAX_MEMORIES,
 ];
 
 const stepCanAdvance = [
@@ -1169,7 +1179,7 @@ const stepCanAdvance = [
   () => stepRequirements[4](),
   () => true,
   () => true,
-  () => character.memories.length >= 5 || (character.memories.length === 4 && Boolean(cleanText(elements.memoryCurse.value)) && selectedCurseTraitIds.size >= MIN_MEMORY_TRAITS),
+  () => character.memories.length >= MAX_MEMORIES || (character.memories.length === MAX_MEMORIES - 1 && Boolean(cleanText(elements.memoryCurse.value)) && selectedCurseTraitIds.size >= MIN_MEMORY_TRAITS),
 ];
 
 const isStepComplete = (stepIndex) => stepRequirements[stepIndex]();
@@ -1194,6 +1204,7 @@ const renderCreation = () => renderCreationView({
   renderTraitSelector,
   hasSavedSetup,
   renderStep,
+  maxMemories: MAX_MEMORIES,
 });
 
 const renderCollapsibleCards = () => {
@@ -1242,7 +1253,7 @@ const saveIdentityStep = () => {
 };
 
 const saveImmortalStep = () => {
-  if (character.immortalCount > 0) return true;
+  if (character.immortalCount >= MIN_IMMORTALS) return true;
   markDirty();
   const didSave = character.addCharacter(elements.immortalName.value, elements.immortalDescription.value, "immortal");
   if (didSave) persistCurrentCharacter();
@@ -1250,7 +1261,7 @@ const saveImmortalStep = () => {
 };
 
 const saveMarkStep = () => {
-  if (character.marks.length > 0) return true;
+  if (character.marks.length >= MIN_MARKS) return true;
   markDirty();
   const didSave = character.addMark(elements.markInput.value, elements.markDescription.value);
   if (didSave) persistCurrentCharacter();
@@ -1258,8 +1269,8 @@ const saveMarkStep = () => {
 };
 
 const saveCurseMemoryStep = () => {
-  if (character.memories.length >= 5) return true;
-  if (character.memories.length !== 4) return false;
+  if (character.memories.length >= MAX_MEMORIES) return true;
+  if (character.memories.length !== MAX_MEMORIES - 1) return false;
   if (selectedCurseTraitIds.size < MIN_MEMORY_TRAITS) return false;
   markDirty();
   const didSave = character.addMemory(elements.memoryCurse.value, getSelectedTraitLabels(selectedCurseTraitIds));

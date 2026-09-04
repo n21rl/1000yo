@@ -1,6 +1,11 @@
 const DEFAULT_MEMORY_SLOTS = 5;
 const MAX_EXPERIENCES_PER_MEMORY = 3;
 const MAX_DIARY_MEMORIES = 4;
+const MIN_SKILLS = 3;
+const MIN_RESOURCES = 3;
+const MIN_MORTALS = 3;
+const MIN_IMMORTALS = 1;
+const MIN_MARKS = 1;
 const CHARACTER_TYPES = new Set(["mortal", "immortal"]);
 
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
@@ -435,11 +440,11 @@ export class Character {
   getSetupRequirements() {
     return [
       buildRequirement("Memories", this.memories.length, DEFAULT_MEMORY_SLOTS),
-      buildRequirement("Skills", this.skills.length, 3),
-      buildRequirement("Resources", this.resources.length, 3),
-      buildRequirement("Mortals", this.mortalCount, 3),
-      buildRequirement("Immortals", this.immortalCount, 1),
-      buildRequirement("Marks", this.marks.length, 1),
+      buildRequirement("Skills", this.skills.length, MIN_SKILLS),
+      buildRequirement("Resources", this.resources.length, MIN_RESOURCES),
+      buildRequirement("Mortals", this.mortalCount, MIN_MORTALS),
+      buildRequirement("Immortals", this.immortalCount, MIN_IMMORTALS),
+      buildRequirement("Marks", this.marks.length, MIN_MARKS),
     ];
   }
 
@@ -590,4 +595,13 @@ export class Character {
   }
 }
 
-export { DEFAULT_MEMORY_SLOTS as MAX_MEMORIES, MAX_EXPERIENCES_PER_MEMORY, MAX_DIARY_MEMORIES };
+export {
+  DEFAULT_MEMORY_SLOTS as MAX_MEMORIES,
+  MAX_EXPERIENCES_PER_MEMORY,
+  MAX_DIARY_MEMORIES,
+  MIN_SKILLS,
+  MIN_RESOURCES,
+  MIN_MORTALS,
+  MIN_IMMORTALS,
+  MIN_MARKS,
+};

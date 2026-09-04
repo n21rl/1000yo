@@ -59,6 +59,10 @@
         border-top: 1px solid var(--color-border);
       }
 
+      .demo-entry {
+        margin: 0 0 1rem;
+      }
+
       .demo-note {
         font-size: 0.85rem;
         color: var(--color-text-muted);
@@ -178,16 +182,22 @@
 
       <section class="demo-section">
         <span class="demo-step">2 — Striking</span>
+        <p class="demo-note demo-entry">
+          Reached from the experience row's ⋮, alongside Edit and Delete — the same place every other
+          thing the rules don't do by default lives. The button below stands in for that menu item.
+        </p>
         <div class="demo-toolbar">
           <button type="button" class="demo-button" id="strike-toggle" aria-pressed="false">Strike words</button>
           <span class="demo-count" id="strike-count"></span>
         </div>
         <ol class="play-experience-list" id="striking-list"></ol>
         <p class="demo-note">
-          Turn the mode on and every word becomes its own tap target — tap to strike it, tap again to
-          restore it. No text cursor, no selection handles, no keyboard: on a phone, selecting three
-          exact words with a caret is miserable, and this is three taps. The sentence stays readable
-          the whole time, so you are choosing words in context rather than in an edit field.
+          Every word becomes its own tap target — tap to strike it, tap again to restore it, with no
+          deadline: a struck word stays restorable for the life of the Memory, so a mistake is one tap
+          to undo and a later prompt can give a word back. No text cursor, no selection handles, no
+          keyboard: on a phone, selecting three exact words with a caret is miserable, and this is
+          three taps. The sentence stays readable the whole time, so you are choosing words in context
+          rather than in an edit field.
         </p>
       </section>
 

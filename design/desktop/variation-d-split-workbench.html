@@ -108,6 +108,42 @@
         max-width: 44rem;
       }
 
+      /* Composer unavailable (memory full, lost, or in the Diary). The
+         mobile app just hides the form — on a pushed detail screen the
+         absence is unremarkable. Here the composer is a permanent region
+         of the column, so its absence has to say why, in the app's own
+         words. */
+      .d-state-line {
+        margin: 0;
+        padding: 0.9rem 0;
+        border-top: 1px solid var(--color-border);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-label);
+        letter-spacing: 0.04em;
+        color: var(--color-text-dim);
+      }
+
+      /* A lost memory opened here sits permanently beside live content,
+         so the detail carries the same lost treatment the row already
+         uses in the list — strikethrough title, dimmed body. On mobile
+         the detail is a screen of its own and doesn't need it. */
+      .d-work-col.is-lost .play-memory-detail-title {
+        text-decoration: line-through;
+      }
+
+      .d-work-col.is-lost .play-experience-list {
+        opacity: 0.45;
+      }
+
+      /* Nothing open: the column is the prompt alone, at rest. */
+      .d-work-col.is-empty .d-work-scroll {
+        display: none;
+      }
+
+      .d-work-col.is-empty .play-prompt-card {
+        border-bottom: none;
+      }
+
       /* --- Right: traits, always open --- */
       .d-trait-col {
         width: 25rem;
@@ -390,6 +426,7 @@
                       <button type="button" id="play-experience-cancel">Clear</button>
                     </div>
                   </form>
+                  <p class="d-state-line" data-mk-state-line hidden></p>
                 </div>
                 <div data-mk-memory-detail-empty hidden></div>
               </div>
@@ -444,7 +481,137 @@
     <script src="mockup-shared.js"></script>
     <script src="mockup-screens.js"></script>
     <script>
-      MKScreens.init({ variation: "variation-d-split-workbench.html", detailMode: "pane" });
+      /* The middle column is the only region of D that can be empty or
+         inactive, so the states it can land in are switchable from the
+         mockup bar rather than described. Every string used here is the
+         app's own: the prompt panel's disabled/error text comes from
+         getPromptPanelViewModel (src/features/prompt-flow.js), and the
+         composer's reason lines are the memory row subtitles the app
+         already renders, plus the diary form's existing warning. */
+      const workCol = document.querySelector(".d-work-col");
+      const detailBody = document.querySelector("[data-mk-memory-detail-body]");
+      const composer = document.querySelector(".play-experience-form");
+      const stateLine = document.querySelector("[data-mk-state-line]");
+      const detailTitle = document.querySelector("[data-mk-detail-title]");
+      const experienceList = document.querySelector("[data-mk-experiences]");
+      const stamp = document.querySelector(".play-prompt-stamp");
+      const status = document.querySelector(".play-prompt-status");
+      const promptText = document.querySelector("[data-mk-prompt-text]");
+      const rollButton = document.querySelector(".play-prompt-roll");
+
+      /* Keep the left column's selected row in step with whatever the
+         middle column is showing — including a lost or diary memory,
+         which mobile has no selected state for. */
+      const highlight = (memory) => {
+        document.querySelectorAll(".play-memory-row").forEach((row) => {
+          const name = row.querySelector(".play-memory-name")?.textContent;
+          row.classList.toggle("mk-row-selected", Boolean(memory) && name === memory.title);
+        });
+      };
+
+      const showMemory = (memory, reason, { lost = false } = {}) => {
+        workCol.classList.remove("is-empty");
+        workCol.classList.toggle("is-lost", lost);
+        highlight(memory);
+        detailBody.hidden = false;
+        detailTitle.textContent = memory.title;
+        experienceList.replaceChildren();
+        memory.experiences.forEach((experience, index) => {
+          experienceList.append(MK.experienceItem(experience, index));
+        });
+        composer.hidden = Boolean(reason);
+        stateLine.hidden = !reason;
+        stateLine.textContent = reason ?? "";
+      };
+
+      const promptActions = document.querySelector(".play-prompt-actions");
+
+      const setPrompt = ({ stampText, statusText, text, rollDisabled, disabled = false }) => {
+        stamp.textContent = stampText;
+        status.textContent = statusText;
+        promptText.textContent = text;
+        rollButton.disabled = rollDisabled;
+        /* PROPOSED, not current behaviour: getPromptPanelViewModel blanks
+           the stamp and the status label in its disabled states, which on
+           mobile is a flash before the deck loads. Here the prompt holds a
+           permanent region, so the blank meta row would leave Roll and the
+           chevron floating over nothing. Hide the actions with them. */
+        promptActions.hidden = disabled;
+      };
+
+      const LIVE_PROMPT = {
+        stampText: "PROMPT 2A",
+        statusText: "Prompt unresolved",
+        text: MK.data.prompt.text,
+        rollDisabled: true,
+      };
+
+      const STATES = {
+        default: () => {
+          setPrompt(LIVE_PROMPT);
+          showMemory(MK.data.memories[1], null);
+        },
+        resolved: () => {
+          setPrompt({ ...LIVE_PROMPT, statusText: "Prompt resolved", rollDisabled: false });
+          showMemory(MK.data.memories[1], null);
+        },
+        loading: () => {
+          /* getPromptPanelViewModel blanks both the stamp and the status
+             label whenever the panel is disabled. */
+          setPrompt({ stampText: "", statusText: "", text: "Loading prompts...", rollDisabled: true, disabled: true });
+          showMemory(MK.data.memories[1], null);
+        },
+        exhausted: () => {
+          setPrompt({
+            stampText: "PROMPT 80C",
+            statusText: "Prompt unresolved",
+            text: "No remaining prompt entry at this position.",
+            rollDisabled: true,
+          });
+          showMemory(MK.data.memories[1], null);
+        },
+        none: () => {
+          workCol.classList.add("is-empty");
+          highlight(null);
+          setPrompt(LIVE_PROMPT);
+        },
+        full: () => {
+          setPrompt(LIVE_PROMPT);
+          showMemory(MK.data.memories[0], "3 / 3 experiences");
+        },
+        lost: () => {
+          setPrompt(LIVE_PROMPT);
+          showMemory(MK.data.lostMemories[0], "Lost from Mind", { lost: true });
+        },
+        diary: () => {
+          setPrompt(LIVE_PROMPT);
+          showMemory(
+            MK.data.diary.memories[0],
+            "Once moved, the Memory can no longer gain new Experiences.",
+          );
+        },
+      };
+
+      MKScreens.init({
+        variation: "variation-d-split-workbench.html",
+        detailMode: "pane",
+        extraGroups: [
+          {
+            label: "Middle column",
+            options: [
+              { id: "default", label: "Live" },
+              { id: "resolved", label: "Resolved" },
+              { id: "loading", label: "Prompt loading" },
+              { id: "exhausted", label: "Prompt end" },
+              { id: "none", label: "No memory" },
+              { id: "full", label: "Memory full" },
+              { id: "lost", label: "Memory lost" },
+              { id: "diary", label: "In Diary" },
+            ],
+            onSelect: (id) => STATES[id](),
+          },
+        ],
+      });
     </script>
   </body>
 </html>

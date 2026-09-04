@@ -140,6 +140,74 @@ character finishes creation and enters play.
   shape, actions and all. So B's wrapped action row is a choice I made,
   not a width constraint, and B's cost below should be read accordingly.
 
+## D's empty and inactive states
+
+The middle column is the only region of D that can be empty or inactive,
+because it is the only one that is neither a list nor permanently
+populated. The mockup makes its states switchable from the bar
+(`Middle column`) rather than describing them. Every string in them is
+the app's own — the prompt panel's disabled and error text comes from
+`getPromptPanelViewModel` (`src/features/prompt-flow.js`), and the
+composer's reason lines are the memory-row subtitles the app already
+renders plus the diary form's existing warning, reused verbatim.
+
+**No memory open — design it away, don't decorate it.** Creation
+guarantees five memories, so play never starts with nothing to open. The
+state is only reachable by hard-deleting the memory you have open (the
+non-standard delete), because forgetting or moving to the Diary leaves
+the memory in existence and still viewable. So the answer is not a
+richer empty state, it is: open the first memory that can still take an
+experience on entry, and after a hard delete fall back to another rather
+than clearing. The usual objection to auto-selecting — that the app
+shouldn't decide what you're looking at — doesn't apply here, because
+the overview is the left column and it never goes away. The mockup keeps
+the state (`No memory`) to show what is being avoided: the prompt alone
+above a void, which reads as broken rather than restful.
+
+**Composer unavailable — this is the state that actually matters.** It
+is reachable in ordinary play and in three ways: the memory is full
+(3/3), lost, or stored in the Diary. `canAddExperience` in `src/main.js`
+hides the form in all three; on mobile that's unremarkable, since the
+detail is a pushed screen and the form's absence isn't visible against
+anything. In D the composer is a permanent region, so its absence has to
+say why or it reads as a bug. The mockup puts a dim mono line where the
+form was, carrying the reason in the app's existing words: `3 / 3
+experiences`, `Lost from Mind`, `Lost with Diary`, and for a Diary
+memory the diary form's own sentence, "Once moved, the Memory can no
+longer gain new Experiences." No new copy — though a line written for
+this spot would read better than a reused warning, and that is the one
+place in D where new copy would earn itself.
+
+**A lost memory open beside live content** gets the same treatment the
+row already uses in the list — strikethrough title, dimmed experiences.
+Mobile doesn't need it because the detail is a screen of its own; here
+it sits permanently beside a live prompt and a live trait list, and
+without it the only sign that the memory is gone is the missing
+composer.
+
+**Prompt inactive.** `getPromptPanelViewModel` has four non-normal
+states: loading, load error, empty deck, and no entry at this position.
+The first three set `disabled`, and `renderPromptPanel` blanks both the
+stamp and the status label when disabled — which on mobile is a flash
+before the deck loads, and in D leaves Roll and the chevron floating
+over an empty meta row. The mockup's `Prompt loading` state shows the
+proposed fix: hide the actions along with the meta text, so the card is
+just its own sentence. The fourth state ("No remaining prompt entry at
+this position") is not disabled, so it keeps its stamp, status and
+controls — see the note below.
+
+Two things this surfaced that are the app's, not the layout's:
+
+- The loading string exists twice and differently: `index.html` ships
+  "Loading prompt data..." as static placeholder text, while
+  `getPromptPanelViewModel` renders "Loading prompts...". One of them
+  should go.
+- "No remaining prompt entry at this position" is a dead end as the flow
+  currently stands: Roll unlocks only once the prompt is resolved, and
+  resolving means stamping an experience against a prompt entry that
+  isn't there. Worth deciding what Roll should do in that state before a
+  desktop layout puts it permanently on screen.
+
 ## Choosing between them
 
 Ranked by what the decision should turn on:

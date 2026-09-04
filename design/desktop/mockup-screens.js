@@ -258,9 +258,15 @@ const MKScreens = (() => {
     });
   };
 
-  const init = ({ variation, detailMode = "replace", initialScreen = "play" } = {}) => {
+  const init = ({ variation, detailMode = "replace", initialScreen = "play", extraGroups = [] } = {}) => {
     state.detailMode = detailMode;
-    if (detailMode === "pane") state.activeMemoryId = data.memories[0].id;
+    /* Open the first memory that can still take an experience: at 3/3 the
+       app hides the composer (canAddExperience in src/main.js), so opening
+       a full memory by default would show a composer that can't exist. */
+    if (detailMode === "pane") {
+      const open = data.memories.find((memory) => memory.experiences.length < MK.MAX_EXPERIENCES);
+      state.activeMemoryId = (open ?? data.memories[0]).id;
+    }
 
     all("[data-mk-prompt-text]").forEach((node) => {
       node.textContent = data.prompt.text;
@@ -310,7 +316,7 @@ const MKScreens = (() => {
     setTab(state.activeTab);
     setSubtab(state.activeSubtab);
     setPromptOpen(true);
-    MK.mountChrome({ current: variation, initialScreen });
+    MK.mountChrome({ current: variation, initialScreen, extraGroups });
   };
 
   return { init, state };

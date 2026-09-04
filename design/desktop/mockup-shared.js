@@ -149,12 +149,37 @@
         ],
       },
     ],
-    lostMemories: [{ id: "m5", title: "Her Mother's Name", reason: "Lost from Mind" }],
+    lostMemories: [
+      {
+        id: "m5",
+        title: "Her Mother's Name",
+        reason: "Lost from Mind",
+        experiences: [
+          { text: "She said it once at the gate and I have never been able to hold it since.", prompt: "6a" },
+          { text: "I wrote it on the flyleaf and the ink outlasted the knowing.", prompt: "8b" },
+        ],
+      },
+    ],
     diary: {
       description: "A ledger of abbey accounts, rewritten between the columns in a hand no one living can read.",
       memories: [
-        { id: "d1", title: "The Novice's Question", experiences: [{}, {}, {}] },
-        { id: "d2", title: "Salt and Latin", experiences: [{}, {}] },
+        {
+          id: "d1",
+          title: "The Novice's Question",
+          experiences: [
+            { text: "He asked what I was, and I answered him honestly, and he stayed.", prompt: "10a" },
+            { text: "I kept the answer and lost the boy.", prompt: "13a" },
+            { text: "The ledger has the date; I no longer do.", prompt: "15b" },
+          ],
+        },
+        {
+          id: "d2",
+          title: "Salt and Latin",
+          experiences: [
+            { text: "Salt at the threshold, Latin at the door, neither of them any use.", prompt: "11c" },
+            { text: "I taught the words to someone who used them against me.", prompt: "16a" },
+          ],
+        },
       ],
     },
     traits: {
@@ -514,7 +539,7 @@
     { id: "play", label: "Play" },
   ];
 
-  const mountChrome = ({ current, initialScreen = "play" }) => {
+  const mountChrome = ({ current, initialScreen = "play", extraGroups = [] }) => {
     const bar = el("div", "mk-bar");
 
     const group = el("div", "mk-group");
@@ -555,6 +580,23 @@
       screens.append(chip);
     });
     bar.append(screens);
+
+    extraGroups.forEach((group) => {
+      const wrap = el("div", "mk-group");
+      wrap.append(el("span", "mk-group-label", group.label));
+      group.options.forEach((option, index) => {
+        const chip = el("button", "mk-chip", option.label);
+        chip.type = "button";
+        if (index === 0) chip.classList.add("mk-chip-current");
+        chip.addEventListener("click", () => {
+          [...wrap.querySelectorAll(".mk-chip")].forEach((other) => other.classList.remove("mk-chip-current"));
+          chip.classList.add("mk-chip-current");
+          group.onSelect(option.id);
+        });
+        wrap.append(chip);
+      });
+      bar.append(wrap);
+    });
 
     document.body.append(bar);
     const fromHash = window.location.hash.replace("#", "");

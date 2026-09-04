@@ -52,17 +52,20 @@ Mockup source: `/home/claude/repo/project/` (`Play Screen.dc.html`,
   screens list, which is the load-bearing source now that this has
   shipped.
 - **Home screen actions.** Continue (jumps to the most recently updated
-  save), Saves (a dedicated list screen for loading/renaming/deleting any
-  save), New Vampire. Play → Home via the header's More menu; Home → New
-  vampire → wizard; Home → Play or Saves.
+  save that has finished character creation; a save still mid-creation
+  is never a candidate), Saves (a dedicated list screen for loading/
+  renaming/deleting any save, complete or not), New Vampire. Play →
+  Home via the header's More menu; Home → New vampire → wizard; Home →
+  Play or Saves.
 - **Header "More" menu** (on the Play screen): Rename vampire / Home /
   Delete save / Add Memory slot.
 - **Incomplete characters cannot enter Play.** A save that hasn't cleared
   `Character#isReadyForPromptOne()` is never routable to `#/play/<id>` —
-  every entry point (Continue, a Saves row, a direct play URL) that loads
-  such a save is redirected into the creation wizard instead, resuming at
-  the first incomplete step. The save itself is untouched in storage
-  either way ("held in memory"): it just isn't playable until finished.
+  every entry point that can still land on one (a Saves row, a direct
+  play URL — Continue structurally excludes them) is redirected into the
+  creation wizard instead, resuming at the first incomplete step. The
+  save itself is untouched in storage either way ("held in memory"): it
+  just isn't playable until finished.
 
 ## Memories
 

@@ -1,10 +1,10 @@
 export const renderMenu = ({
   elements,
   loadStoredVampires,
-  getLatestVampire,
+  getLatestCompleteVampire,
   testVampireId,
 }) => {
-  const latest = getLatestVampire(loadStoredVampires(), testVampireId);
+  const latest = getLatestCompleteVampire(loadStoredVampires(), testVampireId);
   elements.menuContinueButton.hidden = !latest;
   elements.menuContinueName.textContent = latest?.data?.name || "Unnamed Vampire";
 };

@@ -5,8 +5,8 @@ import {
 } from "./prompt-deck.js";
 import {
   createStoredRecord,
+  getLatestCompleteVampire,
   getLatestIncompleteVampire,
-  getLatestVampire,
   getStoredVampires,
   saveStoredVampires,
   upsertVampireRecord,
@@ -437,7 +437,7 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
 const renderMenu = () => renderMenuView({
   elements,
   loadStoredVampires,
-  getLatestVampire,
+  getLatestCompleteVampire,
   testVampireId: TEST_VAMPIRE_ID,
 });
 
@@ -1288,7 +1288,7 @@ bindMenuEvents({
   startNewVampireFlow,
   openVampireEntry,
   loadStoredVampires,
-  getLatestVampire,
+  getLatestCompleteVampire,
   testVampireId: TEST_VAMPIRE_ID,
   setScreen,
   render,

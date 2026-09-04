@@ -3,7 +3,7 @@ export const bindMenuEvents = ({
   startNewVampireFlow,
   openVampireEntry,
   loadStoredVampires,
-  getLatestVampire,
+  getLatestCompleteVampire,
   testVampireId,
   setScreen,
   render,
@@ -13,7 +13,7 @@ export const bindMenuEvents = ({
   });
 
   elements.menuContinueButton.addEventListener("click", () => {
-    const latest = getLatestVampire(loadStoredVampires(), testVampireId);
+    const latest = getLatestCompleteVampire(loadStoredVampires(), testVampireId);
     if (!latest) return;
     openVampireEntry(latest);
   });

@@ -3,8 +3,8 @@ import assert from "node:assert/strict";
 import {
   createStoredRecord,
   ensurePresetRecord,
+  getLatestCompleteVampire,
   getLatestIncompleteVampire,
-  getLatestVampire,
   getStoredVampires,
   saveStoredVampires,
   sortVampiresByUpdatedAt,
@@ -94,16 +94,18 @@ test("sortVampiresByUpdatedAt orders newest first without mutating input", () =>
   assert.deepEqual(vampires.map((entry) => entry.id), ["v-1", "v-2", "v-3"]);
 });
 
-test("getLatestVampire returns the most recently updated vampire, excluding a given id", () => {
+test("getLatestCompleteVampire returns the most recently updated finished save, excluding a given id and unfinished saves", () => {
   const vampires = [
-    { id: "preset", updatedAt: "2024-06-01T00:00:00.000Z" },
-    { id: "v-1", updatedAt: "2024-01-01T00:00:00.000Z" },
-    { id: "v-2", updatedAt: "2024-03-01T00:00:00.000Z" },
+    { id: "preset", updatedAt: "2024-06-01T00:00:00.000Z", isComplete: true },
+    { id: "v-1", updatedAt: "2024-05-01T00:00:00.000Z", isComplete: false },
+    { id: "v-2", updatedAt: "2024-03-01T00:00:00.000Z", isComplete: true },
+    { id: "v-3", updatedAt: "2024-01-01T00:00:00.000Z", isComplete: false },
   ];
 
-  assert.equal(getLatestVampire(vampires, "preset")?.id, "v-2");
-  assert.equal(getLatestVampire(vampires)?.id, "preset");
-  assert.equal(getLatestVampire([], "preset"), null);
+  assert.equal(getLatestCompleteVampire(vampires, "preset")?.id, "v-2");
+  assert.equal(getLatestCompleteVampire(vampires)?.id, "preset");
+  assert.equal(getLatestCompleteVampire([{ id: "v-1", isComplete: false }]), null);
+  assert.equal(getLatestCompleteVampire([], "preset"), null);
 });
 
 test("getLatestIncompleteVampire ignores complete saves and a given id", () => {

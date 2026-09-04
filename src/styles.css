@@ -301,8 +301,9 @@ button:disabled {
 
 .menu-title {
   font-family: var(--font-serif);
-  font-size: clamp(2.4rem, 10vw, 3.4rem);
-  letter-spacing: 0.02em;
+  font-size: clamp(1.9rem, 8vw, 2.6rem);
+  line-height: 1.15;
+  letter-spacing: 0.01em;
   color: var(--color-text-primary);
 }
 
@@ -312,6 +313,10 @@ button:disabled {
   gap: 0.75rem;
 }
 
+/* Fully self-contained: must never fall back to the legacy `button`
+   rule's brown/cream gradient (kept only for a few shared-modal
+   fallbacks — see AGENTS.md). Mirrors .wizard-next-button's solid
+   accent CTA styling rather than inventing a new look. */
 .menu-continue-button {
   display: flex;
   flex-direction: column;
@@ -319,6 +324,16 @@ button:disabled {
   gap: 0.2rem;
   width: 100%;
   padding: 1rem;
+  border: none;
+  border-radius: var(--radius);
+  background: var(--color-accent);
+  color: #fff;
+  font-family: var(--font-sans);
+  cursor: pointer;
+}
+
+.menu-continue-button:hover {
+  background: var(--color-accent-hover);
 }
 
 .menu-continue-label {
@@ -326,11 +341,13 @@ button:disabled {
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  color: inherit;
 }
 
 .menu-continue-name {
   font-family: var(--font-serif);
   font-size: 1.1rem;
+  color: inherit;
 }
 
 .saves-screen {

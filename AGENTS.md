@@ -71,9 +71,12 @@ this section records the load-bearing facts the implementation settled on.
   treatment, not a dedicated desktop redesign. Routes: `#/menu`,
   `#/saves`, `#/create`, `#/play/<id>` (`src/router.js`,
   `src/navigation.js`).
-- **Home screen**: Continue jumps to the vampire with the newest
-  `updatedAt` (`getLatestVampire` in `vampire-storage.js`), completed or
-  not. Saves lists every stored vampire (including the always-present
+- **Home screen**: Continue only targets a vampire that has finished
+  character creation (`isComplete`, via `getLatestCompleteVampire` in
+  `vampire-storage.js`) — it jumps to the newest `updatedAt` among those.
+  A save still mid-creation is never a Continue target — resume it via
+  Saves or the New Vampire continue-vs-fresh prompt instead. Saves lists
+  every stored vampire (including the always-present
   preset Test Vampire, non-renameable/non-deletable) with a per-row More
   menu for rename/delete, reusing the existing action-sheet + prompt/
   confirm-dialog pattern from the Play screen's More menu — not a new

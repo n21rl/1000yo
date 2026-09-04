@@ -34,6 +34,7 @@ export const bindPlayEvents = ({
   testVampireId,
   openMemoryMoreMenu,
   openIdentityMenu,
+  onExperienceSaved,
 }) => {
   const currentPromptStamp = () =>
     formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
@@ -188,6 +189,7 @@ export const bindPlayEvents = ({
     const didSave = getCharacter().addMemory(elements.playExperienceText.value, [...pendingExperienceTraitIds], memoryId, currentPromptStamp());
     if (!didSave) return;
     markDirty();
+    onExperienceSaved?.();
     closeExperienceComposer();
     render();
   });

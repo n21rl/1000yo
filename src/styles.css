@@ -1595,6 +1595,19 @@ button:disabled {
   color: var(--color-text-tertiary);
 }
 
+/* Shown in the composer's place when the memory can't take an
+   Experience — see getExperienceAvailability. Carries the reason, since
+   a form that simply vanishes reads as a fault. */
+.play-experience-blocked {
+  margin: 0;
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-label);
+  letter-spacing: 0.04em;
+  color: var(--color-text-dim);
+}
+
 .play-trait-subtabs {
   display: flex;
   border-bottom: 1px solid var(--color-border);

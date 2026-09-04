@@ -143,6 +143,35 @@ this section records the load-bearing facts the implementation settled on.
   new. A prompt counts as "resolved" (gates the Roll button) once a
   stamped experience exists for the current prompt+visit —
   `isPromptResolved`/`formatPromptStamp` in `src/features/prompt-flow.js`.
+- **One Experience per prompt is the default.** The rulebook's baseline
+  is "Every time you answer a Prompt you must create an Experience and
+  add it to a Memory unless instructed otherwise" (`refs/rules.txt`), so
+  once the current prompt is resolved the composer closes until the next
+  one. `getExperienceAvailability` (`src/features/prompt-flow.js`) is the
+  single place that decides, and returns *why* when it says no: the
+  memory's own state first (lost / stored in the Diary / 3 experiences
+  full), then the prompt cycle. The reason is shown where the composer
+  was — a form that simply vanishes reads as a fault — using strings the
+  app already has (`Lost from Mind`, `Lost with Diary`, `N / N
+  experiences`, the diary form's warning, and the prompt panel's "Prompt
+  resolved").
+  It is a default, not a lock: the "unless instructed otherwise" cases
+  are real, so the memory's More menu offers "New Experience" when — and
+  only when — the prompt cycle is what's blocking. That opt-in is scoped
+  to the current prompt stamp and spent as soon as an Experience is
+  written, so each extra one is a deliberate choice.
+  A survey of all 221 entries in `refs/prompts.csv` found **no entry that
+  calls for more than one Experience**, and four that call for none:
+  `24b`, `37a`, `43b`, `54b` ("Do not create an Experience about this" /
+  "Do not create a new Experience for this Prompt"). Those four are a
+  live dead end — `isPromptResolved` needs a stamped Experience and Roll
+  is gated on resolution, so a player who obeys them cannot advance.
+  Decide how a prompt signals "no Experience required" before treating
+  the Roll gate as finished. Two further entries describe things the
+  engine can't currently represent: `43c` writes an Experience "directly
+  into a Diary", which `storedInDiary` forbids, and `51a` loses a single
+  Experience from a Memory, which only whole-memory forgetting supports.
+
 - **Play screen module split**: `src/main.js` still owns state and
   wiring (same pattern as menu/creation), but the play-screen render
   functions are organized by tab (memories/traits/diary rendering

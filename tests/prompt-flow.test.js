@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  EXPERIENCE_BLOCKED,
   advanceToNextPromptEntry,
   createPromptState,
   ensurePromptVisit,
   formatPromptStamp,
+  getExperienceAvailability,
   getPromptPanelViewModel,
   isPromptResolved,
   normalizeLoadedPromptState,
@@ -107,4 +109,55 @@ test("normalizeLoadedPromptState and ensurePromptVisit seed current visit", () =
 
   const changed = ensurePromptVisit(state);
   assert.equal(changed, false);
+});
+
+const memory = (overrides = {}) => ({
+  lost: false,
+  storedInDiary: false,
+  experiences: [],
+  ...overrides,
+});
+
+test("getExperienceAvailability allows an experience while the prompt is unresolved", () => {
+  const result = getExperienceAvailability(memory(), { promptResolved: false, maxExperiences: 3 });
+  assert.equal(result.allowed, true);
+  assert.equal(result.reason, null);
+});
+
+test("getExperienceAvailability blocks a second experience once the prompt is resolved", () => {
+  const result = getExperienceAvailability(memory(), { promptResolved: true, maxExperiences: 3 });
+  assert.equal(result.allowed, false);
+  assert.equal(result.reason, EXPERIENCE_BLOCKED.PROMPT_RESOLVED);
+});
+
+test("getExperienceAvailability lets an explicit opt-in past a resolved prompt", () => {
+  const result = getExperienceAvailability(memory(), { promptResolved: true, maxExperiences: 3, allowExtra: true });
+  assert.equal(result.allowed, true);
+});
+
+test("getExperienceAvailability reports the memory's own state before the prompt's", () => {
+  const lost = getExperienceAvailability(memory({ lost: true }), { promptResolved: true, maxExperiences: 3 });
+  assert.equal(lost.reason, EXPERIENCE_BLOCKED.LOST);
+
+  const shelved = getExperienceAvailability(memory({ storedInDiary: true }), { promptResolved: true, maxExperiences: 3 });
+  assert.equal(shelved.reason, EXPERIENCE_BLOCKED.DIARY);
+
+  const full = getExperienceAvailability(memory({ experiences: [{}, {}, {}] }), { promptResolved: true, maxExperiences: 3 });
+  assert.equal(full.reason, EXPERIENCE_BLOCKED.FULL);
+});
+
+test("getExperienceAvailability keeps a full memory blocked even with an opt-in", () => {
+  const result = getExperienceAvailability(memory({ experiences: [{}, {}, {}] }), {
+    promptResolved: true,
+    maxExperiences: 3,
+    allowExtra: true,
+  });
+  assert.equal(result.allowed, false);
+  assert.equal(result.reason, EXPERIENCE_BLOCKED.FULL);
+});
+
+test("getExperienceAvailability handles a missing memory", () => {
+  const result = getExperienceAvailability(null, { promptResolved: false, maxExperiences: 3 });
+  assert.equal(result.allowed, false);
+  assert.equal(result.reason, null);
 });

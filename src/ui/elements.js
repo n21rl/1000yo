@@ -56,6 +56,7 @@ export const ELEMENT_SELECTORS = {
   playHeaderName: "#play-header-name",
   playAvatarButton: "#play-avatar-button",
   playMemoryDetailMoreButton: "#play-memory-detail-more",
+  playExperienceBlocked: "#play-experience-blocked",
   promptStampLabel: "#prompt-stamp-label",
   promptStatusLabel: "#prompt-status-label",
   promptButton: "#next-prompt-button",

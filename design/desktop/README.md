@@ -223,10 +223,12 @@ the card is just its own sentence.
 
 Three things this surfaced that are the app's, not the layout's:
 
-- `canAddExperience` doesn't check whether the current prompt is already
-  resolved, so a second Experience can be written into another Memory
-  for the same prompt. `isPromptResolved` already exists and gates Roll,
-  so the check is available if that should be the default.
+- ~~`canAddExperience` doesn't check whether the current prompt is
+  already resolved~~ — fixed. `getExperienceAvailability` in
+  `src/features/prompt-flow.js` now decides, in the app as well as here,
+  and the memory's More menu carries the opt-in for the exceptions. See
+  AGENTS.md, including the four deck entries that call for no Experience
+  at all and currently strand the Roll gate.
 - The loading string exists twice and differently: `index.html` ships
   "Loading prompt data..." as static placeholder text, while
   `getPromptPanelViewModel` renders "Loading prompts...". One should go.

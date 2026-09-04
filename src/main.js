@@ -36,6 +36,8 @@ import {
   ensurePromptVisit,
   formatPromptStamp,
   getPromptPanelViewModel,
+  EXPERIENCE_BLOCKED,
+  getExperienceAvailability,
   isPromptResolved,
   normalizeLoadedPromptState,
 } from "./features/prompt-flow.js";
@@ -531,13 +533,25 @@ const openIdentityMenu = async () => {
 const getMemoryLabel = (memory) => memory.title || `Memory ${memory.createdOrder}`;
 
 const openMemoryMoreMenu = async (memory) => {
-  const actions = [{ id: "forget", label: memory.lost ? "Restore" : "Forget" }];
+  const actions = [];
+  /* Only offered when the prompt cycle is what's holding the composer
+     back — a full, lost or shelved memory can't take one regardless. */
+  if (getMemoryExperienceAvailability(memory).reason === EXPERIENCE_BLOCKED.PROMPT_RESOLVED) {
+    actions.push({ id: "extra-experience", label: "New Experience" });
+  }
+  actions.push({ id: "forget", label: memory.lost ? "Restore" : "Forget" });
   if (!memory.lost && !memory.storedInDiary && character.diaryMemories.length < MAX_DIARY_MEMORIES) {
     actions.push({ id: "move-diary", label: "Move to Diary" });
   }
   actions.push({ id: "delete", label: "Delete", danger: true });
   const choice = await openActionSheet({ title: getMemoryLabel(memory), actions });
 
+  if (choice === "extra-experience") {
+    extraExperienceStamp = currentPromptStamp();
+    activeMemoryDetailId = memory.id;
+    render();
+    return;
+  }
   if (choice === "forget") {
     character.setMemoryLost(character.memories.indexOf(memory), !memory.lost);
     if (activeMemoryDetailId === memory.id) activeMemoryDetailId = null;
@@ -572,6 +586,32 @@ const openMemoryMoreMenu = async (memory) => {
     markDirty();
     render();
   }
+};
+
+/* One prompt's Experience is the default (see getExperienceAvailability).
+   A prompt that calls for another one is the exception, so it is opted
+   into explicitly, for that prompt stamp only, from the memory's More
+   menu — and spent as soon as it is used. */
+let extraExperienceStamp = null;
+
+const currentPromptStamp = () =>
+  formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
+
+const getMemoryExperienceAvailability = (memory) =>
+  getExperienceAvailability(memory, {
+    promptResolved: isPromptResolved(promptState, character),
+    maxExperiences: MAX_EXPERIENCES_PER_MEMORY,
+    allowExtra: extraExperienceStamp !== null && extraExperienceStamp === currentPromptStamp(),
+  });
+
+/* The composer's absence has to say why. Every string here is one the
+   app already uses elsewhere: the memory row's own subtitles, the diary
+   form's warning, and the prompt panel's status label. */
+const EXPERIENCE_BLOCKED_TEXT = {
+  [EXPERIENCE_BLOCKED.LOST]: (memory) => (memory.lostReason === "diary" ? "Lost with Diary" : "Lost from Mind"),
+  [EXPERIENCE_BLOCKED.DIARY]: () => "Once moved, the Memory can no longer gain new Experiences.",
+  [EXPERIENCE_BLOCKED.FULL]: () => `${MAX_EXPERIENCES_PER_MEMORY} / ${MAX_EXPERIENCES_PER_MEMORY} experiences`,
+  [EXPERIENCE_BLOCKED.PROMPT_RESOLVED]: () => "Prompt resolved",
 };
 
 const renderMemoryRow = (memory, { lost = false } = {}) => {
@@ -720,9 +760,11 @@ const renderMemoryDetail = () => {
     elements.playMemoryExperienceList.append(item);
   });
 
-  const canAddExperience = !memory.lost && !memory.storedInDiary && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY;
-  elements.playExperienceForm.hidden = !canAddExperience;
-  if (canAddExperience) renderPlayComposer();
+  const availability = getMemoryExperienceAvailability(memory);
+  elements.playExperienceForm.hidden = !availability.allowed;
+  elements.playExperienceBlocked.hidden = availability.allowed;
+  if (availability.allowed) renderPlayComposer();
+  else elements.playExperienceBlocked.textContent = EXPERIENCE_BLOCKED_TEXT[availability.reason]?.(memory) ?? "";
 };
 
 const renderMemoriesTab = () => {
@@ -1379,6 +1421,11 @@ bindPlayEvents({
   testVampireId: TEST_VAMPIRE_ID,
   openMemoryMoreMenu,
   openIdentityMenu,
+  /* An opt-in for an extra Experience covers exactly one, so writing it
+     spends it; the next one is another deliberate choice. */
+  onExperienceSaved: () => {
+    extraExperienceStamp = null;
+  },
 });
 
 const closeModalAndResetPlayForms = () => {

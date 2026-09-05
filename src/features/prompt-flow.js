@@ -151,7 +151,9 @@ export const getPromptPanelViewModel = (promptState, { resolved = false } = {}) 
     disabled: false,
     rollDisabled: !resolved,
     resolved,
-    statusLabel: resolved ? "Prompt resolved" : "Prompt unresolved",
+    /* Unresolved needs no label: "Mark as resolved" is sitting right
+       there saying so. Only the resolved state is worth stating. */
+    statusLabel: resolved ? "Prompt resolved" : "",
     text: getPromptEntry(currentPrompt, visitCount) || "No remaining prompt entry at this position.",
   };
 };

@@ -65,7 +65,7 @@ test("getPromptPanelViewModel reports loading, errors, and prompt text", () => {
     disabled: false,
     rollDisabled: true,
     resolved: false,
-    statusLabel: "Prompt unresolved",
+    statusLabel: "",
     text: "A",
   });
   assert.deepEqual(getPromptPanelViewModel(state, { resolved: true }), {

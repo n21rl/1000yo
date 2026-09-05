@@ -9,6 +9,9 @@ import {
   MIN_MORTALS,
   MIN_RESOURCES,
   MIN_SKILLS,
+  splitExperienceText,
+  toRoman,
+  toggleExperienceWord,
 } from "./game.js";
 import {
   parsePromptDeck,
@@ -75,7 +78,10 @@ let editingTrait = null;
 let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
-const INITIAL_COLLAPSED_CARD_KEYS = ["prompt"];
+/* The prompt card is "collapsible, open by default"
+   (design/MOBILE_REDESIGN_SPEC.md) — it was shipping collapsed, which
+   hides the thing every action responds to. */
+const INITIAL_COLLAPSED_CARD_KEYS = [];
 let activePlayTab = "memories";
 let activeTraitSubtab = "characters";
 let activeMemoryDetailId = null;
@@ -535,7 +541,59 @@ const openIdentityMenu = async () => {
   }
 };
 
-const getMemoryLabel = (memory) => memory.title || `Memory ${memory.createdOrder}`;
+/* Which experience, if any, is in striking mode: "<memoryId>:<index>". */
+let strikingExperience = null;
+
+/* A struck word stays visible and negated — the same line-through and
+   dimming the app already uses for a struck-out Trait or a lost Memory.
+   In striking mode each word becomes its own tap target, and tapping a
+   struck one restores it; there is no deadline on that. */
+const renderExperienceText = (node, value, memory, experienceIndex) => {
+  const striking = strikingExperience === `${memory.id}:${experienceIndex}`;
+  node.replaceChildren();
+  node.classList.toggle("play-experience-striking", striking);
+
+  let wordIndex = -1;
+  splitExperienceText(value).forEach((part) => {
+    if (part.space) return node.append(part.text);
+    wordIndex += 1;
+    const index = wordIndex;
+    const word = document.createElement("span");
+    word.className = part.struck ? "play-word play-word-struck" : "play-word";
+    word.textContent = part.text;
+    if (striking) {
+      word.addEventListener("click", () => {
+        const memoryIndex = character.memories.indexOf(memory);
+        const next = toggleExperienceWord(memory.experiences[experienceIndex].text, index);
+        if (!character.setMemoryExperienceText(memoryIndex, experienceIndex, next)) return;
+        markDirty();
+        render();
+      });
+    }
+    node.append(word);
+  });
+};
+
+const getMemoryOrdinal = (memory) => toRoman(memory?.createdOrder);
+
+/* Plain-text label for menus, dialogs and anywhere a string is needed. */
+const getMemoryLabel = (memory) =>
+  memory.title ? `${memory.title} (${getMemoryOrdinal(memory)})` : `Memory ${getMemoryOrdinal(memory)}`;
+
+/* Row label as elements, so the ordinal can be dimmed against the title.
+   Several prompts pick a memory by age — "your oldest", "most recent",
+   "of middling age" — so the numeral has to be readable at a glance
+   without being read as part of the name. */
+const appendMemoryLabel = (node, memory) => {
+  if (!memory.title) {
+    node.append(`Memory ${getMemoryOrdinal(memory)}`);
+    return;
+  }
+  const ordinal = document.createElement("span");
+  ordinal.className = "play-memory-ordinal";
+  ordinal.textContent = ` (${getMemoryOrdinal(memory)})`;
+  node.append(memory.title, ordinal);
+};
 
 const openMemoryMoreMenu = async (memory) => {
   const actions = [];
@@ -566,6 +624,7 @@ const openMemoryMoreMenu = async (memory) => {
   }
   if (choice === "forget") {
     character.setMemoryLost(character.memories.indexOf(memory), !memory.lost);
+    character.discardEmptyDiary();
     if (activeMemoryDetailId === memory.id) activeMemoryDetailId = null;
     markDirty();
     render();
@@ -594,6 +653,7 @@ const openMemoryMoreMenu = async (memory) => {
     if (!confirmed) return;
     const index = character.memories.indexOf(memory);
     if (!character.removeMemory(index)) return;
+    character.discardEmptyDiary();
     if (activeMemoryDetailId === memory.id) activeMemoryDetailId = null;
     markDirty();
     render();
@@ -664,7 +724,7 @@ const renderMemoryRow = (memory, { lost = false } = {}) => {
   info.className = "play-memory-info";
   const name = document.createElement("span");
   name.className = "play-memory-name";
-  name.textContent = getMemoryLabel(memory);
+  appendMemoryLabel(name, memory);
   const subtitle = document.createElement("span");
   subtitle.className = "play-memory-subtitle";
   subtitle.textContent = lost
@@ -751,7 +811,8 @@ const renderMemoryDetail = () => {
     return;
   }
 
-  elements.playMemoryDetailTitle.textContent = getMemoryLabel(memory);
+  elements.playMemoryDetailTitle.replaceChildren();
+  appendMemoryLabel(elements.playMemoryDetailTitle, memory);
   elements.playMemoryExperienceList.innerHTML = "";
 
   memory.experiences.forEach((experience, experienceIndex) => {
@@ -766,7 +827,7 @@ const renderMemoryDetail = () => {
     body.className = "play-experience-body";
     const text = document.createElement("p");
     text.className = "play-experience-text";
-    text.textContent = experience.text;
+    renderExperienceText(text, experience.text, memory, experienceIndex);
     body.append(text);
     if (experience.prompt) {
       const stamp = document.createElement("span");
@@ -781,13 +842,33 @@ const renderMemoryDetail = () => {
     more.setAttribute("aria-label", "Experience options");
     more.append(createMaterialFallbackIcon("more_vert"));
     more.addEventListener("click", async () => {
+      const key = `${memory.id}:${experienceIndex}`;
       const choice = await openActionSheet({
         actions: [
+          { id: "strike", label: strikingExperience === key ? "Done striking" : "Strike words" },
           { id: "edit", label: "Edit" },
           { id: "delete", label: "Delete", danger: true },
         ],
       });
+      if (choice === "strike") {
+        /* 39a and 39b strike words out of an Experience. Nothing is lost
+           by turning this on, so it needs no warning of its own — the
+           individual strikes are all reversible. */
+        strikingExperience = strikingExperience === key ? null : key;
+        render();
+        return;
+      }
       if (choice === "edit") {
+        /* "you may never modify Memories unless instructed to do so by a
+           Prompt" (refs/rules.txt) — so rewriting is allowed, and warned
+           about, exactly like the other things the rules reserve for a
+           prompt's say-so. */
+        const confirmed = await openConfirmDialog({
+          title: "Rewrite this experience?",
+          body: "A Memory is normally only changed when a prompt says to. What is written stands as what happened.",
+          confirmLabel: "Rewrite",
+        });
+        if (!confirmed) return;
         editingTrait = { kind: "memory", index: character.memories.indexOf(memory) };
         activeModal = "memory";
         render();
@@ -821,20 +902,26 @@ const renderMemoryDetail = () => {
   else elements.playExperienceBlocked.textContent = EXPERIENCE_BLOCKED_TEXT[availability.reason]?.(memory) ?? "";
 };
 
+/* The desktop layout (styles.css, min-width 1100px) gives the memory
+   list and the open memory columns of their own, so opening one stops
+   being navigation: both stay on screen and nothing has to be backed out
+   of. Below that width the phone's push-navigation is unchanged. */
+const DESKTOP_LAYOUT = "(min-width: 1100px)";
+const isDesktopLayout = () => window.matchMedia?.(DESKTOP_LAYOUT).matches ?? false;
+
 const renderMemoriesTab = () => {
   const showDetail = activeMemoryDetailId !== null;
-  elements.playMemoryListView.hidden = showDetail;
-  elements.playMemoryDetailView.hidden = !showDetail;
-  elements.playHeaderBack.hidden = !showDetail;
-  elements.playHamburgerButton.hidden = showDetail;
-  elements.playMemoryDetailMoreButton.hidden = !showDetail;
-  elements.playAvatarButton.hidden = showDetail;
+  const desktop = isDesktopLayout();
 
-  if (showDetail) {
-    renderMemoryDetail();
-    return;
-  }
-  renderMemoriesList();
+  elements.playMemoryListView.hidden = !desktop && showDetail;
+  elements.playMemoryDetailView.hidden = !showDetail;
+  elements.playHeaderBack.hidden = desktop || !showDetail;
+  elements.playHamburgerButton.hidden = !desktop && showDetail;
+  elements.playMemoryDetailMoreButton.hidden = !showDetail;
+  elements.playAvatarButton.hidden = !desktop && showDetail;
+
+  if (showDetail) renderMemoryDetail();
+  if (desktop || !showDetail) renderMemoriesList();
 };
 
 const renderDiaryTab = () => {
@@ -848,11 +935,9 @@ const renderDiaryTab = () => {
       ? `${diaryResource.description} (${character.diaryMemories.length}/${MAX_DIARY_MEMORIES})`
       : `Diary (${character.diaryMemories.length}/${MAX_DIARY_MEMORIES})`;
     elements.diaryMemoryList.innerHTML = "";
-    if (!character.diaryMemories.length) {
-      elements.diaryMemoryList.append(createEmptyRecord("No memories are stored in the Diary."));
-    } else {
-      character.diaryMemories.forEach((memory) => elements.diaryMemoryList.append(renderMemoryRow(memory)));
-    }
+    /* A Diary always holds at least one Memory — discardEmptyDiary keeps
+       that true — so there is no empty state to render here. */
+    character.diaryMemories.forEach((memory) => elements.diaryMemoryList.append(renderMemoryRow(memory)));
   }
 
   elements.lostDiaryCard.hidden = !lostDiaryMemories.length;
@@ -1170,12 +1255,18 @@ const renderPlayHeader = () => {
 };
 
 const renderBottomTabs = () => {
+  /* Traits have their own column on desktop, so the tab that switches to
+     them is hidden there; if it was the active tab on a narrower window,
+     the left column falls back to Memories rather than emptying. */
+  const desktop = isDesktopLayout();
+  const effectiveTab = desktop && activePlayTab === "traits" ? "memories" : activePlayTab;
+
   elements.playBottomTabs.forEach((tab) => {
-    tab.classList.toggle("active", tab.dataset.playTab === activePlayTab);
+    tab.classList.toggle("active", tab.dataset.playTab === effectiveTab);
   });
-  elements.playTabMemories.hidden = activePlayTab !== "memories";
-  elements.playTabTraits.hidden = activePlayTab !== "traits";
-  elements.playTabDiary.hidden = activePlayTab !== "diary";
+  elements.playTabMemories.hidden = effectiveTab !== "memories";
+  elements.playTabTraits.hidden = effectiveTab !== "traits";
+  elements.playTabDiary.hidden = effectiveTab !== "diary";
 };
 
 const renderPlayLists = () => {
@@ -1436,6 +1527,10 @@ bindMenuEvents({
   render,
 });
 
+window.matchMedia?.(DESKTOP_LAYOUT).addEventListener?.("change", () => {
+  if (currentScreen === "play") render();
+});
+
 bindPlayEvents({
   elements,
   promptState,
@@ -1507,7 +1602,6 @@ const initialize = () => {
     elements.addResourceButton,
     elements.addCharacterButton,
     elements.addMarkButton,
-    elements.createDiaryButton,
   ].forEach((button) => {
     if (!button) return;
     button.prepend(createMaterialFallbackIcon("add"));

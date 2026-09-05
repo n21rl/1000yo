@@ -95,7 +95,6 @@ export const ELEMENT_SELECTORS = {
   // Diary tab
   playTabDiary: "#play-tab-diary",
   diaryEmptyState: "#diary-empty-state",
-  createDiaryButton: "#create-diary-button",
   diaryCard: "#diary-card",
   diaryDescription: "#diary-description",
   diaryMemoryList: "#diary-memory-list",

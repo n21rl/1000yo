@@ -89,10 +89,6 @@ export const bindPlayEvents = ({
     render();
   });
 
-  elements.createDiaryButton.addEventListener("click", () => {
-    setActiveModal("diary");
-    render();
-  });
 
   elements.playHamburgerButton.addEventListener("click", async () => {
     const character = getCharacter();

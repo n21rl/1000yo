@@ -559,19 +559,12 @@ button:disabled {
 .wizard-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-shrink: 0;
   margin-bottom: 0.5rem;
   padding: 0.75rem 0.9rem 0;
 }
 
-.wizard-step-label {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
 
 .wizard-step-count {
   font-family: var(--font-mono);
@@ -2188,15 +2181,8 @@ button:disabled {
   .wizard-header {
     grid-column: 2;
     grid-row: 2;
-    justify-content: flex-end;
     padding-left: 2rem;
     padding-right: 2rem;
-  }
-
-  /* The step panel's own title already names the step; the label above
-     it only repeated that. The count is what the header adds. */
-  .wizard-step-label {
-    display: none;
   }
 
   .wizard-progress-track {

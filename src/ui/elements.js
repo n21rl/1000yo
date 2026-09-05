@@ -15,7 +15,6 @@ export const ELEMENT_SELECTORS = {
   creationBackButton: "#creation-back-button",
   wizardAvatarButton: "#wizard-avatar-button",
   stepProgress: "#step-progress",
-  wizardStepLabel: "#wizard-step-label",
   stepProgressFill: "#step-progress-fill",
   backButton: "#back-button",
   nextButton: "#next-button",

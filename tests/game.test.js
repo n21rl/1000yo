@@ -218,6 +218,12 @@ test("Character can update mark text and resource stationary state", () => {
   assert.equal(character.resources[0].stationary, true);
 });
 
+test("Character can add a stationary resource directly", () => {
+  const character = new Character("Aster");
+  assert.equal(character.addResource("Castle", "A crumbling seat.", true), true);
+  assert.equal(character.resources[0].stationary, true);
+});
+
 test("Character migrates legacy experience trait labels to stable trait IDs", () => {
   const character = Character.from({
     skills: [{ name: "Swordplay" }],

@@ -355,8 +355,8 @@ export class Character {
     return this.#setBoolean(this.skills, index, "lost", lost);
   }
 
-  addResource(name, description = "") {
-    return this.#addDetailItem(this.resources, name, description, "resource", { stationary: false });
+  addResource(name, description = "", stationary = false) {
+    return this.#addDetailItem(this.resources, name, description, "resource", { stationary });
   }
 
   updateResource(index, name, description = "", stationary = false) {

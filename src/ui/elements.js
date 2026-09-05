@@ -30,6 +30,7 @@ export const ELEMENT_SELECTORS = {
   resourceForm: "#resource-form",
   resourceName: "#resource-name",
   resourceDescription: "#resource-description",
+  resourceStationary: "#resource-stationary",
   resourceList: "#resource-list",
   memoryFormLater: "#memory-form-later",
   memoryLater: "#memory-later",

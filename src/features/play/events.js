@@ -248,7 +248,11 @@ export const bindPlayEvents = ({
         elements.playResourceDescription.value,
         elements.playResourceStationary.checked,
       )
-      : getCharacter().addResource(elements.playResourceName.value, elements.playResourceDescription.value);
+      : getCharacter().addResource(
+        elements.playResourceName.value,
+        elements.playResourceDescription.value,
+        elements.playResourceStationary.checked,
+      );
     if (!didSave) return;
     if (!isEditing) {
       const createdId = getCharacter().resources.at(-1)?.id;

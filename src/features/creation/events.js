@@ -65,7 +65,7 @@ export const bindCreationEvents = ({
 
   elements.resourceForm.addEventListener("submit", (event) => {
     event.preventDefault();
-    if (getCharacter().addResource(elements.resourceName.value, elements.resourceDescription.value)) {
+    if (getCharacter().addResource(elements.resourceName.value, elements.resourceDescription.value, elements.resourceStationary.checked)) {
       markDirty();
       elements.resourceForm.reset();
       render();

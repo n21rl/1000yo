@@ -195,6 +195,21 @@ this section records the load-bearing facts the implementation settled on.
   (the experience row's ⋮, `Character#removeMemoryExperience`). Neither
   is normal play; both are things the deck itself asks for.
 
+- **Desktop layout** (`styles.css`, `min-width: 1100px`): variation D
+  from `design/desktop/` — what holds memories on the left, the prompt
+  above the open memory in the middle, traits open on the right. It needs
+  no markup of its own: `display: contents` drops the existing panels out
+  of their wrappers so they place themselves on one grid, and the bottom
+  tab bar becomes the left column's Memories/Diary control. Opening a
+  memory there is not navigation — list and detail share the screen, so
+  the back control is hidden and `renderMemoriesTab` keeps both rendered
+  (`isDesktopLayout`). Creation uses the same three columns with the same
+  widths, so nothing moves when creation ends and play begins: the step
+  form in the middle, and the character built so far in the side columns
+  (`renderWizardSheet`), which replaces the per-step added lists there.
+  The stepper stays across the top on both, never down the side. Below
+  1100px the phone layout is untouched.
+
 - **Play screen module split**: `src/main.js` still owns state and
   wiring (same pattern as menu/creation), but the play-screen render
   functions are organized by tab (memories/traits/diary rendering

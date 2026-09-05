@@ -718,7 +718,7 @@ button:disabled {
 
 .wizard-added-item {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 0.6rem;
   padding: 0.6rem 0;
   border-bottom: 1px solid var(--color-border);
@@ -738,10 +738,11 @@ button:disabled {
 }
 
 .wizard-added-index {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-label);
-  color: var(--color-accent);
   flex-shrink: 0;
+  width: 0.35rem;
+  height: 0.35rem;
+  margin-top: 0.35rem;
+  background: var(--color-accent);
 }
 
 .wizard-added-body {
@@ -1493,13 +1494,15 @@ button:disabled {
   border-bottom: 1px solid var(--color-border);
 }
 
+/* A square bullet, drawn rather than typed, so it matches the squared-off
+   geometry everything else in the redesign uses. */
 .play-experience-index {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-label);
-  color: var(--color-accent);
-  padding-top: 0.15rem;
-  width: 0.9rem;
   flex-shrink: 0;
+  width: 0.35rem;
+  height: 0.35rem;
+  margin-top: 0.45rem;
+  margin-right: 0.15rem;
+  background: var(--color-accent);
 }
 
 .play-experience-body {
@@ -1956,6 +1959,13 @@ button:disabled {
   letter-spacing: 0.06em;
 }
 
+/* The character sheet beside the creation wizard. Only the desktop
+   layout has columns for it; on a phone the per-step lists in the form
+   already show what has been added. */
+.wizard-sheet {
+  display: none;
+}
+
 /* Separator lines must never curve. The legacy base rule gives every
    button a 0.75rem radius, which bows the bottom border wherever a row
    or tab uses one as a divider (memory rows, trait sub-tabs, saves
@@ -2157,21 +2167,61 @@ button:disabled {
     margin: 0 auto;
   }
 
-  /* Creation stays a single centred column on desktop. Variation D's
-     creation screen puts a step rail on the left and the character
-     taking shape on the right (design/desktop/README.md), but the wizard
-     has neither in its markup — building them is a separate piece of
-     work, and a three-column grid with two empty columns is worse than
-     a well-set column. */
-  .wizard-header,
-  .wizard-progress-track,
-  .wizard-steps-scroll,
-  .wizard-nav,
-  .wizard-save-confirmation {
-    width: 100%;
-    max-width: 44rem;
-    margin-left: auto;
-    margin-right: auto;
+  /* Creation takes the same three columns as play — memories left, the
+     work in the middle, traits right — so the character is visible as it
+     is built and nothing moves when creation ends and play begins. The
+     stepper stays where it is on the phone: across the top, not down the
+     side. */
+  .wizard {
+    display: grid;
+    grid-template-columns: 22rem minmax(0, 1fr) 25rem;
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  }
+
+  .wizard .play-header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .wizard-header {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .wizard-progress-track {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    margin: 0 0 1rem;
+  }
+
+  .wizard-sheet {
+    display: block;
+    grid-row: 4 / -1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 1.25rem 1.5rem;
+  }
+
+  .wizard-sheet-memories {
+    grid-column: 1;
+    border-right: 1px solid var(--color-border);
+  }
+
+  .wizard-sheet-traits {
+    grid-column: 3;
+    border-left: 1px solid var(--color-border);
+  }
+
+  .wizard-steps-scroll {
+    grid-column: 2;
+    grid-row: 4;
+    padding: 0 2rem;
+  }
+
+  /* The running sheet shows everything added so far, so the per-step
+     list under the form would only repeat it. */
+  .wizard-steps-scroll .wizard-added-list {
+    display: none;
   }
 
   .wizard-steps-scroll .step-panel {
@@ -2179,8 +2229,15 @@ button:disabled {
   }
 
   .wizard-nav {
+    grid-column: 2;
+    grid-row: 5;
     justify-content: flex-end;
     border-top: 1px solid var(--color-border);
+  }
+
+  .wizard-save-confirmation {
+    grid-column: 2;
+    grid-row: 5;
   }
 
   .wizard-back-button,

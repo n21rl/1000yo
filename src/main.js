@@ -405,9 +405,11 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
     const item = document.createElement("li");
     item.className = "wizard-added-item";
 
+    /* Same square bullet the play screen uses for experiences: what has
+       been added is a set, not a numbered sequence. */
     const index = document.createElement("span");
     index.className = "wizard-added-index";
-    index.textContent = String(position + 1).padStart(2, "0");
+    index.setAttribute("aria-hidden", "true");
 
     const body = document.createElement("div");
     body.className = "wizard-added-body";
@@ -819,9 +821,12 @@ const renderMemoryDetail = () => {
     const item = document.createElement("li");
     item.className = "play-experience-item";
 
+    /* Experiences aren't ordered by anything the player chose, and a
+       Memory holds three at most — a number implies a sequence that
+       isn't there, so they take a plain square bullet. */
     const index = document.createElement("span");
     index.className = "play-experience-index";
-    index.textContent = String(experienceIndex + 1).padStart(2, "0");
+    index.setAttribute("aria-hidden", "true");
 
     const body = document.createElement("div");
     body.className = "play-experience-body";
@@ -1383,6 +1388,88 @@ const stepCanAdvance = [
 const isStepComplete = (stepIndex) => stepRequirements[stepIndex]();
 const canAdvanceFromStep = (stepIndex) => stepCanAdvance[stepIndex]();
 
+/* The character taking shape beside the wizard, in the same columns the
+   play screen uses: memories on the left, traits on the right. Read-only
+   — the step form is where things get added — so these reuse the play
+   rows without their handlers. Hidden below the desktop breakpoint,
+   where the per-step lists inside the form do this job instead. */
+const renderWizardSheet = () => {
+  elements.wizardMemoryList.replaceChildren();
+  const memories = character.memories.filter((memory) => !memory.lost);
+  elements.wizardMemoryCount.textContent = `${memories.length}/${character.memorySlots}`;
+
+  memories.forEach((memory) => {
+    const row = document.createElement("li");
+    const inner = document.createElement("div");
+    inner.className = "play-memory-row";
+
+    const icon = document.createElement("span");
+    icon.className = "play-memory-icon";
+    icon.append(createMaterialFallbackIcon("menu_book"));
+
+    const info = document.createElement("span");
+    info.className = "play-memory-info";
+    const name = document.createElement("span");
+    name.className = "play-memory-name";
+    appendMemoryLabel(name, memory);
+    const subtitle = document.createElement("span");
+    subtitle.className = "play-memory-subtitle";
+    subtitle.textContent = `${memory.experiences.length} / ${MAX_EXPERIENCES_PER_MEMORY} experiences`;
+    info.append(name, subtitle);
+
+    inner.append(icon, info);
+    row.append(inner);
+    elements.wizardMemoryList.append(row);
+  });
+
+  elements.wizardTraits.replaceChildren();
+  [
+    ["Characters", "character", character.characters],
+    ["Skills", "skill", character.skills],
+    ["Resources", "resource", character.resources],
+    ["Marks", "mark", character.marks],
+  ].forEach(([label, kind, allItems]) => {
+    const items = allItems.filter((item) => !item.lost);
+    if (!items.length) return;
+
+    const heading = document.createElement("div");
+    heading.className = "play-trait-panel-label";
+    heading.textContent = label;
+
+    const list = document.createElement("ul");
+    list.className = "play-trait-list";
+    items.forEach((item) => {
+      const row = document.createElement("li");
+      row.className = "play-trait-row";
+
+      const icon = document.createElement("span");
+      icon.className = "play-trait-icon";
+      icon.append(createMaterialFallbackIcon(getTraitIconName(kind, item)));
+
+      const body = document.createElement("div");
+      body.className = "play-trait-body";
+      const titleRow = document.createElement("div");
+      titleRow.className = "play-trait-title-row";
+      const name = document.createElement("span");
+      name.className = "play-trait-name";
+      name.textContent = item.name;
+      titleRow.append(name);
+      if (kind === "character") {
+        const typeLabel = document.createElement("span");
+        typeLabel.className = "play-trait-type-label";
+        typeLabel.textContent = item.type;
+        titleRow.append(typeLabel);
+      }
+      body.append(titleRow);
+
+      row.append(icon, body);
+      list.append(row);
+    });
+
+    elements.wizardTraits.append(heading, list);
+  });
+};
+
 const renderStep = () => renderStepView({
   elements,
   currentStep,
@@ -1390,20 +1477,23 @@ const renderStep = () => renderStepView({
   canAdvanceFromStep,
 });
 
-const renderCreation = () => renderCreationView({
-  character,
-  elements,
-  selectedLaterTraitIds,
-  selectedCurseTraitIds,
-  syncSelectedTraits,
-  renderMemoryList,
-  renderCharacterList,
-  renderDetailList,
-  renderTraitSelector,
-  hasSavedSetup,
-  renderStep,
-  maxMemories: MAX_MEMORIES,
-});
+const renderCreation = () => {
+  renderCreationView({
+    character,
+    elements,
+    selectedLaterTraitIds,
+    selectedCurseTraitIds,
+    syncSelectedTraits,
+    renderMemoryList,
+    renderCharacterList,
+    renderDetailList,
+    renderTraitSelector,
+    hasSavedSetup,
+    renderStep,
+    maxMemories: MAX_MEMORIES,
+  });
+  renderWizardSheet();
+};
 
 const renderCollapsibleCards = () => {
   document.querySelectorAll("[data-card-key]").forEach((card) => {

@@ -1,0 +1,9 @@
+{
+  "stamp": "1a",
+  "reasoning": "1a: kill a mortal Character (strike out, not check), take the skill Bloodthirsty, record one Experience. Piero Sagredo is the mortal closest to hand at the furnace and the one who trusts me. The Experience goes into Memory IV, which is already the Piero/La Nona memory.",
+  "operations": [
+    { "op": "strike_character", "id": "character-dbd9542f-3557-4dc0-9085-fdfb55ea06fd" },
+    { "op": "create_skill", "name": "Bloodthirsty", "description": "the hunger arrives before the thought does, and my hands are already moving" },
+    { "op": "add_experience", "memoryId": "memory-08b06bdf-4cdf-4e19-8f0f-67ceeb232a87", "text": "The first hunger takes me at the wood-yard gate and I drink Piero Sagredo empty against the stacked billets, his tools still in my pocket; I row what is left out in La Nona and let it down into the channel off San Michele, and the fog takes it as easily as it took the sand." }
+  ]
+}

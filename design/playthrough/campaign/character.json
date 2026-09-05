@@ -1,0 +1,45 @@
+{
+  "name": "Domenego Zulian",
+  "firstMemory": "I am Domenego Zulian, born in the Venetian parish of San Zulian in the year of Our Lord 1268; in my twenty-third year the Grand Council drove all the furnaces out of the city onto Murano for fear of fire, and I went with the fires, a glassblower with soot in his lungs and no name worth carving.",
+  "mortals": [
+    { "name": "Marina Zulian", "description": "my elder sister, who keeps the furnace accounts and forges our dead father's hand better than he ever wrote it" },
+    { "name": "Fra Ludovico", "description": "a priest of Santa Maria e San Donato who buys my reliquary glass and asks nothing about the hours I keep" },
+    { "name": "Piero Sagredo", "description": "my apprentice, gap-toothed and fourteen, who worships me and steals my tools" }
+  ],
+  "skills": [
+    { "name": "Glassblowing", "description": "I gather molten cristallo on the pipe and draw a goblet stem thin as a wasp's waist" },
+    { "name": "Reading the Fire", "description": "I know a furnace's heat by the colour at its throat and never need to test it" },
+    { "name": "Guild Silence", "description": "I keep the furnace secrets; under the Council's law a glassmaker who talks abroad loses his hands" }
+  ],
+  "resources": [
+    { "name": "The Furnace at Calle dei Conterie", "description": "my father's glasshouse on Murano: three crucibles, a wood-yard, and a chimney that never goes cold" },
+    { "name": "The Book of Batches", "description": "a soot-stained quire of recipes, Syrian soda ash and manganese in my father's proportions" },
+    { "name": "La Nona", "description": "a flat-bottomed sandolo, tarred black, that I row across the lagoon by night" }
+  ],
+  "laterMemories": [
+    {
+      "text": "Marina Zulian holds her hand in the glory hole of The Furnace at Calle dei Conterie until the wardens admit no woman could fake such a burn for a lie; I bind her wrist in the water trough and say nothing, because Guild Silence is the only inheritance our father left me.",
+      "traits": ["Marina Zulian", "The Furnace at Calle dei Conterie", "Guild Silence"]
+    },
+    {
+      "text": "Fra Ludovico pays me in candle-ends and absolution for a phial of blood-red cristallo; Reading the Fire, I draw it out the instant the manganese clears, and he weeps at the colour of it.",
+      "traits": ["Fra Ludovico", "Reading the Fire"]
+    },
+    {
+      "text": "I teach Piero Sagredo to row La Nona blind through the lagoon fog to San Michele, and when he asks what is wrapped in the wet sailcloth under the thwart I tell him it is sand.",
+      "traits": ["Piero Sagredo", "La Nona"]
+    }
+  ],
+  "immortal": {
+    "name": "Zoe Kalamare",
+    "description": "a Greek glass-factor out of Constantinople who has bought Murano cristallo for two hundred years without ageing a day; her hands do not burn"
+  },
+  "mark": {
+    "name": "Glazed Hands",
+    "description": "my palms are fused smooth and clear as cristallo where she held them in the fire; I wear a blower's leather mitts by day and by night"
+  },
+  "curseMemory": {
+    "text": "Zoe Kalamare steps into the mouth of the furnace and beckons me after her, and when I take her hands in the fire my Glazed Hands come out cool while everything human in me burns off like dross.",
+    "traits": ["Zoe Kalamare", "Glazed Hands"]
+  }
+}

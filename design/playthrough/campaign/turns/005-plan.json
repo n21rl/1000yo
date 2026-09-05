@@ -1,0 +1,10 @@
+{
+  "stamp": "4a",
+  "reasoning": "4a: lose stationary Resources — The Furnace at Calle dei Conterie is a glasshouse and cannot be hauled anywhere, so it is struck out (burned behind me). Check a Skill: Reading the Fire, which is how I get taken on among strangers. A mortal flees with me and I have no living mortal, so per the rules I create one, Betta Bonaldi. The new name, Dominik Glaser, goes into the Experience — the harness exposes no rename operation. The Experience joins Memory I, the memory of following the fires.",
+  "operations": [
+    { "op": "strike_resource", "id": "resource-b85aec9d-344a-428c-be48-649abba8d3ea" },
+    { "op": "check_skill", "id": "skill-567ae7f5-f079-487f-9900-ecfbf9aff5df" },
+    { "op": "create_character", "type": "mortal", "name": "Betta Bonaldi", "description": "a bead-stringer of Murano who watched me feed through the cane-room window and asked to come with me anyway" },
+    { "op": "add_experience", "memoryId": "memory-fb6cccf5-082b-46c9-9088-cb8bab39ae21", "text": "A warden sees my ungloved hands lit from inside by the glory hole and I fire The Furnace at Calle dei Conterie to its own roof-beams and go north over the mountains with Betta Bonaldi at my elbow; in the forest glasshouses of Bohemia I answer to Dominik Glaser, and they keep me because Reading the Fire I never once reach for the test-rod." }
+  ]
+}

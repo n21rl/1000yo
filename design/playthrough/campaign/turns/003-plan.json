@@ -1,0 +1,9 @@
+{
+  "stamp": "1b",
+  "reasoning": "1b: convert a beloved mortal into an enemy immortal, take the Skill Ashamed, record an Experience. Marina Zulian is my only living mortal and the only person I love, so she is the one. Edit her type to immortal and add the new descriptor. The Experience goes to Memory II, hers.",
+  "operations": [
+    { "op": "edit_character", "id": "character-59ac6c8a-db80-4b05-8f42-9336f0ca633f", "type": "immortal", "description": "my elder sister, who kept the furnace accounts and forged our dead father's hand; I mauled her on the wood-yard stair in a panic and she rose as I am, and she has hated me across every century since" },
+    { "op": "create_skill", "name": "Ashamed", "description": "I cannot hold a mirror, a ledger, or my sister's eye for longer than a breath" },
+    { "op": "add_experience", "memoryId": "memory-974c1593-84f2-49f0-a957-1c6e3d685aa0", "text": "Marina Zulian takes my wrist in the dark of the wood-yard stair to ask what I have become and I panic and tear her open with the mitts still on; three nights later she climbs out of the ash-pit with our father's ledger under her burnt arm, and tells me in his forged hand that she intends to outlast me." }
+  ]
+}

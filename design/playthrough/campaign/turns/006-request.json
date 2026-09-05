@@ -1,0 +1,279 @@
+{
+  "turn": 6,
+  "stamp": "3a",
+  "promptText": "A loved one discovers your condition and works to help you. Create a Resource which represents their assistance. Create a mortal Character if none are available.",
+  "terminalPrompt": false,
+  "sheet": {
+    "name": "Domenego Zulian",
+    "memorySlots": 5,
+    "memories": [
+      {
+        "id": "memory-fb6cccf5-082b-46c9-9088-cb8bab39ae21",
+        "label": "Memory I",
+        "lost": false,
+        "lostReason": "",
+        "storedInDiary": false,
+        "experiences": [
+          {
+            "text": "I am Domenego Zulian, born in the Venetian parish of San Zulian in the year of Our Lord 1268; in my twenty-third year the Grand Council drove all the furnaces out of the city onto Murano for fear of fire, and I went with the fires, a glassblower with soot in his lungs and no name worth carving.",
+            "prompt": ""
+          },
+          {
+            "text": "Hakim Nasir al-Zujaji takes me off the Aleppo road with my crate of cristallo and keeps me a hundred years at his stills, and every night of her life Sabiha bint Yusuf leaves bread at the cellar door without once asking what I eat; I buy my way out by blowing The Pelican of Aleppo with a flaw at the neck no thicker than a hair, and by the time his vapour goes out of it into the souk she and her grandchildren are long under the dust.",
+            "prompt": "1c"
+          },
+          {
+            "text": "A warden sees my ungloved hands lit from inside by the glory hole and I fire The Furnace at Calle dei Conterie to its own roof-beams and go north over the mountains with Betta Bonaldi at my elbow; in the forest glasshouses of Bohemia I answer to Dominik Glaser, and they keep me because Reading the Fire I never once reach for the test-rod.",
+            "prompt": "4a"
+          }
+        ]
+      },
+      {
+        "id": "memory-974c1593-84f2-49f0-a957-1c6e3d685aa0",
+        "label": "Memory II",
+        "lost": false,
+        "lostReason": "",
+        "storedInDiary": false,
+        "experiences": [
+          {
+            "text": "Marina Zulian holds her hand in the glory hole of The Furnace at Calle dei Conterie until the wardens admit no woman could fake such a burn for a lie; I bind her wrist in the water trough and say nothing, because Guild Silence is the only inheritance our father left me.",
+            "prompt": ""
+          },
+          {
+            "text": "Marina Zulian takes my wrist in the dark of the wood-yard stair to ask what I have become and I panic and tear her open with the mitts still on; three nights later she climbs out of the ash-pit with our father's ledger under her burnt arm, and tells me in his forged hand that she intends to outlast me.",
+            "prompt": "1b"
+          }
+        ]
+      },
+      {
+        "id": "memory-71d644f5-34c1-42be-b2fc-463bab2933bd",
+        "label": "Memory III",
+        "lost": false,
+        "lostReason": "",
+        "storedInDiary": false,
+        "experiences": [
+          {
+            "text": "Fra Ludovico pays me in candle-ends and absolution for a phial of blood-red cristallo; Reading the Fire, I draw it out the instant the manganese clears, and he weeps at the colour of it.",
+            "prompt": ""
+          },
+          {
+            "text": "Fra Ludovico turns Piero Sagredo's stolen scissors over in his hand in the sacristy of Santa Maria e San Donato and says the boy's name once, as a question; I keep Guild Silence the only way that is left to me, and lay the priest under the mosaic pavement he loved, with his censer beneath his cheek.",
+            "prompt": "5a"
+          }
+        ]
+      },
+      {
+        "id": "memory-08b06bdf-4cdf-4e19-8f0f-67ceeb232a87",
+        "label": "Memory IV",
+        "lost": false,
+        "lostReason": "",
+        "storedInDiary": false,
+        "experiences": [
+          {
+            "text": "I teach Piero Sagredo to row La Nona blind through the lagoon fog to San Michele, and when he asks what is wrapped in the wet sailcloth under the thwart I tell him it is sand.",
+            "prompt": ""
+          },
+          {
+            "text": "The first hunger takes me at the wood-yard gate and I drink Piero Sagredo empty against the stacked billets, his tools still in my pocket; I row what is left out in La Nona and let it down into the channel off San Michele, and the fog takes it as easily as it took the sand.",
+            "prompt": "1a"
+          }
+        ]
+      },
+      {
+        "id": "memory-8f776214-c538-441c-8c42-ffb304449128",
+        "label": "Memory V",
+        "lost": false,
+        "lostReason": "",
+        "storedInDiary": false,
+        "experiences": [
+          {
+            "text": "Zoe Kalamare steps into the mouth of the furnace and beckons me after her, and when I take her hands in the fire my Glazed Hands come out cool while everything human in me burns off like dross.",
+            "prompt": ""
+          }
+        ]
+      }
+    ],
+    "characters": [
+      {
+        "id": "character-59ac6c8a-db80-4b05-8f42-9336f0ca633f",
+        "name": "Marina Zulian",
+        "description": "my elder sister, who kept the furnace accounts and forged our dead father's hand; I mauled her on the wood-yard stair in a panic and she rose as I am, and she has hated me across every century since",
+        "used": false,
+        "lost": false,
+        "type": "immortal"
+      },
+      {
+        "id": "character-e8cf1f76-f75a-45f5-9dc4-a8bdb74495ee",
+        "name": "Fra Ludovico",
+        "description": "a priest of Santa Maria e San Donato who buys my reliquary glass and asks nothing about the hours I keep",
+        "used": false,
+        "lost": true,
+        "type": "mortal"
+      },
+      {
+        "id": "character-dbd9542f-3557-4dc0-9085-fdfb55ea06fd",
+        "name": "Piero Sagredo",
+        "description": "my apprentice, gap-toothed and fourteen, who worships me and steals my tools",
+        "used": false,
+        "lost": true,
+        "type": "mortal"
+      },
+      {
+        "id": "character-00028cac-1839-4455-a806-89efadee43d0",
+        "name": "Zoe Kalamare",
+        "description": "a Greek glass-factor out of Constantinople who has bought Murano cristallo for two hundred years without ageing a day; her hands do not burn",
+        "used": false,
+        "lost": false,
+        "type": "immortal"
+      },
+      {
+        "id": "character-98702e53-650f-4c5f-95be-0af43f8e1178",
+        "name": "Sabiha bint Yusuf",
+        "description": "the alchemist's mortal housekeeper in Aleppo, who fed me and never once asked what I ate",
+        "used": false,
+        "lost": true,
+        "type": "mortal"
+      },
+      {
+        "id": "character-c70e614d-e65d-42bd-b4c9-821e8052be41",
+        "name": "Hakim Nasir al-Zujaji",
+        "description": "a bodiless alchemist of Aleppo who lives in the vapour of his own stills and keeps glassblowers the way other men keep bees; he owned me for a hundred years",
+        "used": false,
+        "lost": false,
+        "type": "immortal"
+      },
+      {
+        "id": "character-3aafa8cb-745b-4f6b-9408-6bbc9154d4b6",
+        "name": "Betta Bonaldi",
+        "description": "a bead-stringer of Murano who watched me feed through the cane-room window and asked to come with me anyway",
+        "used": false,
+        "lost": false,
+        "type": "mortal"
+      }
+    ],
+    "skills": [
+      {
+        "id": "skill-bdcaf9cd-ed73-42bc-a991-0e59f7c189be",
+        "name": "Glassblowing",
+        "description": "I gather molten cristallo on the pipe and draw a goblet stem thin as a wasp's waist",
+        "used": true,
+        "lost": false
+      },
+      {
+        "id": "skill-567ae7f5-f079-487f-9900-ecfbf9aff5df",
+        "name": "Reading the Fire",
+        "description": "I know a furnace's heat by the colour at its throat and never need to test it",
+        "used": true,
+        "lost": false
+      },
+      {
+        "id": "skill-69b71b19-170f-4402-b0c8-ed7e8c115fdf",
+        "name": "Guild Silence",
+        "description": "I keep the furnace secrets; under the Council's law a glassmaker who talks abroad loses his hands",
+        "used": true,
+        "lost": false
+      },
+      {
+        "id": "skill-919f0c31-bf8a-4fe4-9997-98760e6ca748",
+        "name": "Bloodthirsty",
+        "description": "the hunger arrives before the thought does, and my hands are already moving",
+        "used": false,
+        "lost": false
+      },
+      {
+        "id": "skill-5c10f370-e26d-43f8-8904-5288c3e08107",
+        "name": "Ashamed",
+        "description": "I cannot hold a mirror, a ledger, or my sister's eye for longer than a breath",
+        "used": false,
+        "lost": false
+      },
+      {
+        "id": "skill-5deae56b-2585-44fb-bc49-9d9c30d6064c",
+        "name": "Humans are Cattle",
+        "description": "I count a crowd the way my father counted cords of beechwood for the furnace",
+        "used": false,
+        "lost": false
+      }
+    ],
+    "resources": [
+      {
+        "id": "resource-b85aec9d-344a-428c-be48-649abba8d3ea",
+        "name": "The Furnace at Calle dei Conterie",
+        "description": "my father's glasshouse on Murano: three crucibles, a wood-yard, and a chimney that never goes cold",
+        "used": false,
+        "lost": true
+      },
+      {
+        "id": "resource-435c9564-d0ac-49f7-828e-df3e492c8afc",
+        "name": "The Book of Batches",
+        "description": "a soot-stained quire of recipes, Syrian soda ash and manganese in my father's proportions",
+        "used": false,
+        "lost": false
+      },
+      {
+        "id": "resource-bbbc33a6-74cf-4d4d-9b23-19d38095a584",
+        "name": "La Nona",
+        "description": "a flat-bottomed sandolo, tarred black, that I row across the lagoon by night",
+        "used": false,
+        "lost": false
+      },
+      {
+        "id": "resource-6fcb4bd9-4d16-4366-ba04-966b3a1b2798",
+        "name": "The Pelican of Aleppo",
+        "description": "a double-necked alembic of my own blowing, in which I distilled a hundred and nine men down to a spoonful of black salt for my master",
+        "used": false,
+        "lost": false
+      }
+    ],
+    "marks": [
+      {
+        "id": "mark-8be160db-350a-473d-9b90-cf93e37d2a7c",
+        "name": "Glazed Hands",
+        "description": "my palms are fused smooth and clear as cristallo where she held them in the fire; I wear a blower's leather mitts by day and by night",
+        "used": false,
+        "lost": false
+      }
+    ],
+    "diary": {
+      "exists": false,
+      "resourceId": null,
+      "memoryIds": []
+    },
+    "remaining": {
+      "uncheckedSkills": 3,
+      "unlostSkills": 6,
+      "uncheckedResources": 3,
+      "unlostResources": 3,
+      "freeMemorySlots": 0
+    }
+  },
+  "availableOperations": [
+    "create_character",
+    "create_skill",
+    "create_resource",
+    "create_mark",
+    "add_memory",
+    "add_experience",
+    "forget_memory",
+    "move_memory_to_diary",
+    "delete_experience",
+    "edit_experience",
+    "add_memory_slot",
+    "remove_memory_slot",
+    "no_mechanical_change",
+    "check_skill",
+    "check_resource",
+    "check_character",
+    "strike_skill",
+    "strike_resource",
+    "strike_character",
+    "edit_skill",
+    "edit_resource",
+    "edit_character",
+    "edit_mark",
+    "delete_skill",
+    "delete_resource",
+    "delete_character",
+    "delete_mark"
+  ]
+}

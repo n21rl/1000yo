@@ -775,7 +775,14 @@ const renderMemoriesList = () => {
   lostFromMind.forEach((memory) => elements.playLostMemoryList.append(renderMemoryRow(memory, { lost: true })));
 
   elements.memorySlotsMeta.textContent = `${activeMemories.length}/${character.memorySlots}`;
-  elements.addMemoryButton.disabled = activeMemories.length >= character.memorySlots;
+  /* `aria-disabled`, not `disabled`: a full slate is the one thing the
+     player most needs explaining, and a `disabled` button swallows the
+     click that would explain it. The button reads as unavailable and says
+     why when pressed (src/features/play/events.js). */
+  elements.addMemoryButton.setAttribute(
+    "aria-disabled",
+    String(activeMemories.length >= character.memorySlots),
+  );
 };
 
 const renderPlayComposer = () => {

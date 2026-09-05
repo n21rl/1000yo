@@ -78,7 +78,7 @@ test("createStoredRecord assembles serializable campaign save data", () => {
   assert.equal(record.id, "v-1");
   assert.equal(record.isComplete, true);
   assert.deepEqual(record.data, { name: "Aster" });
-  assert.deepEqual(record.campaign, { currentPrompt: 3, visits: [[3, 1]] });
+  assert.deepEqual(record.campaign, { currentPrompt: 3, visits: [[3, 1]], resolved: [], signature: null });
 });
 
 test("sortVampiresByUpdatedAt orders newest first without mutating input", () => {

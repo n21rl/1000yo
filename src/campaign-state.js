@@ -5,6 +5,12 @@ const normalizePositiveInteger = (value, fallback = 1) => {
 
 export const serializeCampaignState = (promptState = {}) => ({
   currentPrompt: normalizePositiveInteger(promptState.currentPrompt, 1),
+  /* Which prompts the player has declared answered, and the fingerprint
+     taken when the current one was entered (see getPlaySignature). */
+  resolved: [...(promptState.resolved instanceof Set ? promptState.resolved : [])].filter(
+    (stamp) => typeof stamp === "string" && stamp,
+  ),
+  signature: promptState.signature ?? null,
   visits: [...(promptState.visits instanceof Map ? promptState.visits.entries() : [])]
     .map(([prompt, visitCount]) => [
       normalizePositiveInteger(prompt, 0),
@@ -34,5 +40,11 @@ export const restoreCampaignState = (savedState = {}) => {
   return {
     currentPrompt,
     visits,
+    resolved: new Set(
+      Array.isArray(savedState?.resolved)
+        ? savedState.resolved.filter((stamp) => typeof stamp === "string" && stamp)
+        : [],
+    ),
+    signature: savedState?.signature ?? null,
   };
 };

@@ -45,12 +45,16 @@
           </button>
         </div>
         <div class="wizard-header">
-          <span id="wizard-step-label" class="wizard-step-label">Identity</span>
           <span id="step-progress" class="wizard-step-count">1 / 8</span>
         </div>
         <div class="wizard-progress-track">
           <div id="step-progress-fill" class="wizard-progress-fill"></div>
         </div>
+
+        <aside id="wizard-memories" class="wizard-sheet wizard-sheet-memories">
+          <div class="play-tab-heading"><span>Memories</span><span id="wizard-memory-count" class="play-tab-heading-meta"></span></div>
+          <ul id="wizard-memory-list" class="play-memory-list"></ul>
+        </aside>
 
         <div class="wizard-steps-scroll">
         <section class="step-panel" data-step-panel="0">
@@ -205,6 +209,8 @@
         </section>
         </div>
 
+        <aside id="wizard-traits" class="wizard-sheet wizard-sheet-traits"></aside>
+
         <div class="wizard-nav">
           <button type="button" class="wizard-back-button" id="back-button">Back</button>
           <button type="button" class="wizard-next-button" id="next-button">Next</button>
@@ -238,7 +244,8 @@
               <span id="prompt-status-label" class="play-prompt-status">Prompt unresolved</span>
             </div>
             <div class="play-prompt-actions">
-              <button type="button" id="next-prompt-button" class="play-prompt-roll" aria-label="Roll">Roll</button>
+              <button type="button" id="prompt-resolve-button" class="play-prompt-roll">Mark as resolved</button>
+              <button type="button" id="next-prompt-button" class="play-prompt-roll">Roll next prompt</button>
               <button type="button" class="card-chevron-button play-prompt-chevron" data-card-chevron aria-label="Toggle prompt card">
                 <span class="card-toggle-indicator" data-material-icon="keyboard_arrow_down" aria-hidden="true"></span>
               </button>
@@ -284,6 +291,7 @@
                   <button type="button" id="play-experience-cancel">Clear</button>
                 </div>
               </form>
+              <p id="play-experience-blocked" class="play-experience-blocked" hidden></p>
             </div>
           </div>
 
@@ -331,7 +339,6 @@
             <div id="diary-empty-state" class="play-diary-empty" hidden>
               <span class="play-diary-empty-label">Diary</span>
               <p class="play-diary-empty-text">No diary yet. Move a memory here to preserve it.</p>
-              <button type="button" id="create-diary-button" class="play-tab-add">Create Diary</button>
             </div>
             <article id="diary-card" class="play-diary-populated" hidden>
               <p id="diary-description" class="play-diary-description"></p>

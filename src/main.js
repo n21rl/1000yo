@@ -9,6 +9,9 @@ import {
   MIN_MORTALS,
   MIN_RESOURCES,
   MIN_SKILLS,
+  splitExperienceText,
+  toRoman,
+  toggleExperienceWord,
 } from "./game.js";
 import {
   parsePromptDeck,
@@ -36,7 +39,12 @@ import {
   ensurePromptVisit,
   formatPromptStamp,
   getPromptPanelViewModel,
-  isPromptResolved,
+  EXPERIENCE_BLOCKED,
+  getExperienceAvailability,
+  getPlaySignature,
+  getResolutionWarnings,
+  isStampResolved,
+  markPromptResolved,
   normalizeLoadedPromptState,
 } from "./features/prompt-flow.js";
 import {
@@ -70,7 +78,10 @@ let editingTrait = null;
 let pendingDiaryMemoryId = "";
 let activeModal = null;
 const collapsedCards = new Set();
-const INITIAL_COLLAPSED_CARD_KEYS = ["prompt"];
+/* The prompt card is "collapsible, open by default"
+   (design/MOBILE_REDESIGN_SPEC.md) — it was shipping collapsed, which
+   hides the thing every action responds to. */
+const INITIAL_COLLAPSED_CARD_KEYS = [];
 let activePlayTab = "memories";
 let activeTraitSubtab = "characters";
 let activeMemoryDetailId = null;
@@ -194,6 +205,8 @@ const loadCharacter = (storedCharacter) => {
   const restoredCampaign = restoreCampaignState(storedCharacter?.campaign);
   promptState.currentPrompt = restoredCampaign.currentPrompt;
   promptState.visits = restoredCampaign.visits;
+  promptState.resolved = restoredCampaign.resolved;
+  promptState.signature = restoredCampaign.signature;
   resetPlayState();
 };
 
@@ -392,9 +405,11 @@ const renderRecords = (listElement, records, removeItem = null, emptyMessage = "
     const item = document.createElement("li");
     item.className = "wizard-added-item";
 
+    /* Same square bullet the play screen uses for experiences: what has
+       been added is a set, not a numbered sequence. */
     const index = document.createElement("span");
     index.className = "wizard-added-index";
-    index.textContent = String(position + 1).padStart(2, "0");
+    index.setAttribute("aria-hidden", "true");
 
     const body = document.createElement("div");
     body.className = "wizard-added-body";
@@ -528,18 +543,90 @@ const openIdentityMenu = async () => {
   }
 };
 
-const getMemoryLabel = (memory) => memory.title || `Memory ${memory.createdOrder}`;
+/* Which experience, if any, is in striking mode: "<memoryId>:<index>". */
+let strikingExperience = null;
+
+/* A struck word stays visible and negated — the same line-through and
+   dimming the app already uses for a struck-out Trait or a lost Memory.
+   In striking mode each word becomes its own tap target, and tapping a
+   struck one restores it; there is no deadline on that. */
+const renderExperienceText = (node, value, memory, experienceIndex) => {
+  const striking = strikingExperience === `${memory.id}:${experienceIndex}`;
+  node.replaceChildren();
+  node.classList.toggle("play-experience-striking", striking);
+
+  let wordIndex = -1;
+  splitExperienceText(value).forEach((part) => {
+    if (part.space) return node.append(part.text);
+    wordIndex += 1;
+    const index = wordIndex;
+    const word = document.createElement("span");
+    word.className = part.struck ? "play-word play-word-struck" : "play-word";
+    word.textContent = part.text;
+    if (striking) {
+      word.addEventListener("click", () => {
+        const memoryIndex = character.memories.indexOf(memory);
+        const next = toggleExperienceWord(memory.experiences[experienceIndex].text, index);
+        if (!character.setMemoryExperienceText(memoryIndex, experienceIndex, next)) return;
+        markDirty();
+        render();
+      });
+    }
+    node.append(word);
+  });
+};
+
+const getMemoryOrdinal = (memory) => toRoman(memory?.createdOrder);
+
+/* Plain-text label for menus, dialogs and anywhere a string is needed. */
+const getMemoryLabel = (memory) =>
+  memory.title ? `${memory.title} (${getMemoryOrdinal(memory)})` : `Memory ${getMemoryOrdinal(memory)}`;
+
+/* Row label as elements, so the ordinal can be dimmed against the title.
+   Several prompts pick a memory by age — "your oldest", "most recent",
+   "of middling age" — so the numeral has to be readable at a glance
+   without being read as part of the name. */
+const appendMemoryLabel = (node, memory) => {
+  if (!memory.title) {
+    node.append(`Memory ${getMemoryOrdinal(memory)}`);
+    return;
+  }
+  const ordinal = document.createElement("span");
+  ordinal.className = "play-memory-ordinal";
+  ordinal.textContent = ` (${getMemoryOrdinal(memory)})`;
+  node.append(memory.title, ordinal);
+};
 
 const openMemoryMoreMenu = async (memory) => {
-  const actions = [{ id: "forget", label: memory.lost ? "Restore" : "Forget" }];
+  const actions = [];
+  /* 43c writes an Experience straight into the Diary, so the block is a
+     default the player can step past — with a warning, and for this
+     memory only. */
+  if (getMemoryExperienceAvailability(memory).reason === EXPERIENCE_BLOCKED.DIARY) {
+    actions.push({ id: "diary-experience", label: "New Experience" });
+  }
+  actions.push({ id: "forget", label: memory.lost ? "Restore" : "Forget" });
   if (!memory.lost && !memory.storedInDiary && character.diaryMemories.length < MAX_DIARY_MEMORIES) {
     actions.push({ id: "move-diary", label: "Move to Diary" });
   }
   actions.push({ id: "delete", label: "Delete", danger: true });
   const choice = await openActionSheet({ title: getMemoryLabel(memory), actions });
 
+  if (choice === "diary-experience") {
+    const confirmed = await openConfirmDialog({
+      title: "Write into the Diary?",
+      body: "A Memory in the Diary normally gains no further Experiences. Only a prompt that says so should override this.",
+      confirmLabel: "Write",
+    });
+    if (!confirmed) return;
+    diaryWriteMemoryId = memory.id;
+    activeMemoryDetailId = memory.id;
+    render();
+    return;
+  }
   if (choice === "forget") {
     character.setMemoryLost(character.memories.indexOf(memory), !memory.lost);
+    character.discardEmptyDiary();
     if (activeMemoryDetailId === memory.id) activeMemoryDetailId = null;
     markDirty();
     render();
@@ -568,10 +655,57 @@ const openMemoryMoreMenu = async (memory) => {
     if (!confirmed) return;
     const index = character.memories.indexOf(memory);
     if (!character.removeMemory(index)) return;
+    character.discardEmptyDiary();
     if (activeMemoryDetailId === memory.id) activeMemoryDetailId = null;
     markDirty();
     render();
   }
+};
+
+const currentPromptStamp = () =>
+  formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
+
+/* A Diary memory takes no further Experiences by default, but the deck
+   itself overrides that (43c), so the memory's More menu can let one
+   through for that memory only, after a warning. */
+let diaryWriteMemoryId = null;
+
+const getMemoryExperienceAvailability = (memory) =>
+  getExperienceAvailability(memory, {
+    maxExperiences: MAX_EXPERIENCES_PER_MEMORY,
+    allowDiary: diaryWriteMemoryId !== null && diaryWriteMemoryId === memory?.id,
+  });
+
+/* The composer's absence has to say why. Every string here is one the
+   app already uses elsewhere: the memory row's own subtitles and the
+   diary form's warning. */
+const EXPERIENCE_BLOCKED_TEXT = {
+  [EXPERIENCE_BLOCKED.LOST]: (memory) => (memory.lostReason === "diary" ? "Lost with Diary" : "Lost from Mind"),
+  [EXPERIENCE_BLOCKED.DIARY]: () => "Once moved, the Memory can no longer gain new Experiences.",
+  [EXPERIENCE_BLOCKED.FULL]: () => `${MAX_EXPERIENCES_PER_MEMORY} / ${MAX_EXPERIENCES_PER_MEMORY} experiences`,
+};
+
+/* Resolution is the player's call, not the app's: a prompt may ask for
+   no Experience, several, or only a trait change, and custom prompts can
+   ask for anything at all. So this warns about what looks unusual and
+   lets the player through either way. */
+const resolveCurrentPrompt = async () => {
+  const stamp = currentPromptStamp();
+  if (isStampResolved(promptState, stamp)) return;
+
+  const warnings = getResolutionWarnings(character, { stamp, signature: promptState.signature });
+  if (warnings.length) {
+    const confirmed = await openConfirmDialog({
+      title: "Mark as resolved?",
+      body: warnings,
+      confirmLabel: "Mark as resolved",
+    });
+    if (!confirmed) return;
+  }
+
+  markPromptResolved(promptState, stamp);
+  markDirty();
+  render();
 };
 
 const renderMemoryRow = (memory, { lost = false } = {}) => {
@@ -592,7 +726,7 @@ const renderMemoryRow = (memory, { lost = false } = {}) => {
   info.className = "play-memory-info";
   const name = document.createElement("span");
   name.className = "play-memory-name";
-  name.textContent = getMemoryLabel(memory);
+  appendMemoryLabel(name, memory);
   const subtitle = document.createElement("span");
   subtitle.className = "play-memory-subtitle";
   subtitle.textContent = lost
@@ -679,22 +813,26 @@ const renderMemoryDetail = () => {
     return;
   }
 
-  elements.playMemoryDetailTitle.textContent = getMemoryLabel(memory);
+  elements.playMemoryDetailTitle.replaceChildren();
+  appendMemoryLabel(elements.playMemoryDetailTitle, memory);
   elements.playMemoryExperienceList.innerHTML = "";
 
   memory.experiences.forEach((experience, experienceIndex) => {
     const item = document.createElement("li");
     item.className = "play-experience-item";
 
+    /* Experiences aren't ordered by anything the player chose, and a
+       Memory holds three at most — a number implies a sequence that
+       isn't there, so they take a plain square bullet. */
     const index = document.createElement("span");
     index.className = "play-experience-index";
-    index.textContent = String(experienceIndex + 1).padStart(2, "0");
+    index.setAttribute("aria-hidden", "true");
 
     const body = document.createElement("div");
     body.className = "play-experience-body";
     const text = document.createElement("p");
     text.className = "play-experience-text";
-    text.textContent = experience.text;
+    renderExperienceText(text, experience.text, memory, experienceIndex);
     body.append(text);
     if (experience.prompt) {
       const stamp = document.createElement("span");
@@ -709,36 +847,86 @@ const renderMemoryDetail = () => {
     more.setAttribute("aria-label", "Experience options");
     more.append(createMaterialFallbackIcon("more_vert"));
     more.addEventListener("click", async () => {
-      const choice = await openActionSheet({ actions: [{ id: "edit", label: "Edit" }] });
-      if (choice !== "edit") return;
-      editingTrait = { kind: "memory", index: character.memories.indexOf(memory) };
-      activeModal = "memory";
-      render();
+      const key = `${memory.id}:${experienceIndex}`;
+      const choice = await openActionSheet({
+        actions: [
+          { id: "strike", label: strikingExperience === key ? "Done striking" : "Strike words" },
+          { id: "edit", label: "Edit" },
+          { id: "delete", label: "Delete", danger: true },
+        ],
+      });
+      if (choice === "strike") {
+        /* 39a and 39b strike words out of an Experience. Nothing is lost
+           by turning this on, so it needs no warning of its own — the
+           individual strikes are all reversible. */
+        strikingExperience = strikingExperience === key ? null : key;
+        render();
+        return;
+      }
+      if (choice === "edit") {
+        /* "you may never modify Memories unless instructed to do so by a
+           Prompt" (refs/rules.txt) — so rewriting is allowed, and warned
+           about, exactly like the other things the rules reserve for a
+           prompt's say-so. */
+        const confirmed = await openConfirmDialog({
+          title: "Rewrite this experience?",
+          body: "A Memory is normally only changed when a prompt says to. What is written stands as what happened.",
+          confirmLabel: "Rewrite",
+        });
+        if (!confirmed) return;
+        editingTrait = { kind: "memory", index: character.memories.indexOf(memory) };
+        activeModal = "memory";
+        render();
+        return;
+      }
+      if (choice === "delete") {
+        /* 51a asks for exactly this. Outside a prompt that calls for it,
+           an Experience is only lost with its Memory — hence the warning
+           rather than a plain confirmation. */
+        const confirmed = await openConfirmDialog({
+          title: "Delete this experience?",
+          body: "An Experience is normally only lost with its Memory. Only a prompt that says so should remove one on its own.",
+          confirmLabel: "Delete",
+          danger: true,
+        });
+        if (!confirmed) return;
+        if (!character.removeMemoryExperience(character.memories.indexOf(memory), experienceIndex)) return;
+        markDirty();
+        render();
+      }
     });
 
     item.append(index, body, more);
     elements.playMemoryExperienceList.append(item);
   });
 
-  const canAddExperience = !memory.lost && !memory.storedInDiary && memory.experiences.length < MAX_EXPERIENCES_PER_MEMORY;
-  elements.playExperienceForm.hidden = !canAddExperience;
-  if (canAddExperience) renderPlayComposer();
+  const availability = getMemoryExperienceAvailability(memory);
+  elements.playExperienceForm.hidden = !availability.allowed;
+  elements.playExperienceBlocked.hidden = availability.allowed;
+  if (availability.allowed) renderPlayComposer();
+  else elements.playExperienceBlocked.textContent = EXPERIENCE_BLOCKED_TEXT[availability.reason]?.(memory) ?? "";
 };
+
+/* The desktop layout (styles.css, min-width 1100px) gives the memory
+   list and the open memory columns of their own, so opening one stops
+   being navigation: both stay on screen and nothing has to be backed out
+   of. Below that width the phone's push-navigation is unchanged. */
+const DESKTOP_LAYOUT = "(min-width: 1100px)";
+const isDesktopLayout = () => window.matchMedia?.(DESKTOP_LAYOUT).matches ?? false;
 
 const renderMemoriesTab = () => {
   const showDetail = activeMemoryDetailId !== null;
-  elements.playMemoryListView.hidden = showDetail;
-  elements.playMemoryDetailView.hidden = !showDetail;
-  elements.playHeaderBack.hidden = !showDetail;
-  elements.playHamburgerButton.hidden = showDetail;
-  elements.playMemoryDetailMoreButton.hidden = !showDetail;
-  elements.playAvatarButton.hidden = showDetail;
+  const desktop = isDesktopLayout();
 
-  if (showDetail) {
-    renderMemoryDetail();
-    return;
-  }
-  renderMemoriesList();
+  elements.playMemoryListView.hidden = !desktop && showDetail;
+  elements.playMemoryDetailView.hidden = !showDetail;
+  elements.playHeaderBack.hidden = desktop || !showDetail;
+  elements.playHamburgerButton.hidden = !desktop && showDetail;
+  elements.playMemoryDetailMoreButton.hidden = !showDetail;
+  elements.playAvatarButton.hidden = !desktop && showDetail;
+
+  if (showDetail) renderMemoryDetail();
+  if (desktop || !showDetail) renderMemoriesList();
 };
 
 const renderDiaryTab = () => {
@@ -752,11 +940,9 @@ const renderDiaryTab = () => {
       ? `${diaryResource.description} (${character.diaryMemories.length}/${MAX_DIARY_MEMORIES})`
       : `Diary (${character.diaryMemories.length}/${MAX_DIARY_MEMORIES})`;
     elements.diaryMemoryList.innerHTML = "";
-    if (!character.diaryMemories.length) {
-      elements.diaryMemoryList.append(createEmptyRecord("No memories are stored in the Diary."));
-    } else {
-      character.diaryMemories.forEach((memory) => elements.diaryMemoryList.append(renderMemoryRow(memory)));
-    }
+    /* A Diary always holds at least one Memory — discardEmptyDiary keeps
+       that true — so there is no empty state to render here. */
+    character.diaryMemories.forEach((memory) => elements.diaryMemoryList.append(renderMemoryRow(memory)));
   }
 
   elements.lostDiaryCard.hidden = !lostDiaryMemories.length;
@@ -1074,12 +1260,18 @@ const renderPlayHeader = () => {
 };
 
 const renderBottomTabs = () => {
+  /* Traits have their own column on desktop, so the tab that switches to
+     them is hidden there; if it was the active tab on a narrower window,
+     the left column falls back to Memories rather than emptying. */
+  const desktop = isDesktopLayout();
+  const effectiveTab = desktop && activePlayTab === "traits" ? "memories" : activePlayTab;
+
   elements.playBottomTabs.forEach((tab) => {
-    tab.classList.toggle("active", tab.dataset.playTab === activePlayTab);
+    tab.classList.toggle("active", tab.dataset.playTab === effectiveTab);
   });
-  elements.playTabMemories.hidden = activePlayTab !== "memories";
-  elements.playTabTraits.hidden = activePlayTab !== "traits";
-  elements.playTabDiary.hidden = activePlayTab !== "diary";
+  elements.playTabMemories.hidden = effectiveTab !== "memories";
+  elements.playTabTraits.hidden = effectiveTab !== "traits";
+  elements.playTabDiary.hidden = effectiveTab !== "diary";
 };
 
 const renderPlayLists = () => {
@@ -1103,9 +1295,13 @@ const renderPlayLists = () => {
 const rollDie = (sides) => Math.floor(Math.random() * sides) + 1;
 
 const renderPromptPanel = () => {
-  const resolved = isPromptResolved(promptState, character);
+  const resolved = isStampResolved(promptState, currentPromptStamp());
   const model = getPromptPanelViewModel(promptState, { resolved });
+  /* One action at a time: declare the prompt answered, then roll for the
+     next one. Roll isn't shown at all until it can be used. */
   elements.promptButton.disabled = model.disabled || model.rollDisabled;
+  elements.promptButton.hidden = model.disabled || !resolved;
+  elements.promptResolveButton.hidden = model.disabled || resolved;
   elements.promptText.textContent = model.text;
   elements.promptStatusLabel.textContent = model.statusLabel;
   const stamp = formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
@@ -1154,6 +1350,12 @@ const startPlay = async () => {
   hasSavedSetup = true;
   persistCurrentCharacter();
   setScreen("play", { updateRoute: true });
+  /* The fingerprint has to be taken from the loaded character, not from
+     whatever was on screen before it — see getResolutionWarnings. */
+  if (!promptState.signature) {
+    promptState.signature = getPlaySignature(character);
+    persistCurrentCharacter();
+  }
   if (ensurePromptVisit(promptState)) {
     persistCurrentCharacter();
   }
@@ -1186,6 +1388,88 @@ const stepCanAdvance = [
 const isStepComplete = (stepIndex) => stepRequirements[stepIndex]();
 const canAdvanceFromStep = (stepIndex) => stepCanAdvance[stepIndex]();
 
+/* The character taking shape beside the wizard, in the same columns the
+   play screen uses: memories on the left, traits on the right. Read-only
+   — the step form is where things get added — so these reuse the play
+   rows without their handlers. Hidden below the desktop breakpoint,
+   where the per-step lists inside the form do this job instead. */
+const renderWizardSheet = () => {
+  elements.wizardMemoryList.replaceChildren();
+  const memories = character.memories.filter((memory) => !memory.lost);
+  elements.wizardMemoryCount.textContent = `${memories.length}/${character.memorySlots}`;
+
+  memories.forEach((memory) => {
+    const row = document.createElement("li");
+    const inner = document.createElement("div");
+    inner.className = "play-memory-row";
+
+    const icon = document.createElement("span");
+    icon.className = "play-memory-icon";
+    icon.append(createMaterialFallbackIcon("menu_book"));
+
+    const info = document.createElement("span");
+    info.className = "play-memory-info";
+    const name = document.createElement("span");
+    name.className = "play-memory-name";
+    appendMemoryLabel(name, memory);
+    const subtitle = document.createElement("span");
+    subtitle.className = "play-memory-subtitle";
+    subtitle.textContent = `${memory.experiences.length} / ${MAX_EXPERIENCES_PER_MEMORY} experiences`;
+    info.append(name, subtitle);
+
+    inner.append(icon, info);
+    row.append(inner);
+    elements.wizardMemoryList.append(row);
+  });
+
+  elements.wizardTraits.replaceChildren();
+  [
+    ["Characters", "character", character.characters],
+    ["Skills", "skill", character.skills],
+    ["Resources", "resource", character.resources],
+    ["Marks", "mark", character.marks],
+  ].forEach(([label, kind, allItems]) => {
+    const items = allItems.filter((item) => !item.lost);
+    if (!items.length) return;
+
+    const heading = document.createElement("div");
+    heading.className = "play-trait-panel-label";
+    heading.textContent = label;
+
+    const list = document.createElement("ul");
+    list.className = "play-trait-list";
+    items.forEach((item) => {
+      const row = document.createElement("li");
+      row.className = "play-trait-row";
+
+      const icon = document.createElement("span");
+      icon.className = "play-trait-icon";
+      icon.append(createMaterialFallbackIcon(getTraitIconName(kind, item)));
+
+      const body = document.createElement("div");
+      body.className = "play-trait-body";
+      const titleRow = document.createElement("div");
+      titleRow.className = "play-trait-title-row";
+      const name = document.createElement("span");
+      name.className = "play-trait-name";
+      name.textContent = item.name;
+      titleRow.append(name);
+      if (kind === "character") {
+        const typeLabel = document.createElement("span");
+        typeLabel.className = "play-trait-type-label";
+        typeLabel.textContent = item.type;
+        titleRow.append(typeLabel);
+      }
+      body.append(titleRow);
+
+      row.append(icon, body);
+      list.append(row);
+    });
+
+    elements.wizardTraits.append(heading, list);
+  });
+};
+
 const renderStep = () => renderStepView({
   elements,
   currentStep,
@@ -1193,20 +1477,23 @@ const renderStep = () => renderStepView({
   canAdvanceFromStep,
 });
 
-const renderCreation = () => renderCreationView({
-  character,
-  elements,
-  selectedLaterTraitIds,
-  selectedCurseTraitIds,
-  syncSelectedTraits,
-  renderMemoryList,
-  renderCharacterList,
-  renderDetailList,
-  renderTraitSelector,
-  hasSavedSetup,
-  renderStep,
-  maxMemories: MAX_MEMORIES,
-});
+const renderCreation = () => {
+  renderCreationView({
+    character,
+    elements,
+    selectedLaterTraitIds,
+    selectedCurseTraitIds,
+    syncSelectedTraits,
+    renderMemoryList,
+    renderCharacterList,
+    renderDetailList,
+    renderTraitSelector,
+    hasSavedSetup,
+    renderStep,
+    maxMemories: MAX_MEMORIES,
+  });
+  renderWizardSheet();
+};
 
 const renderCollapsibleCards = () => {
   document.querySelectorAll("[data-card-key]").forEach((card) => {
@@ -1330,6 +1617,10 @@ bindMenuEvents({
   render,
 });
 
+window.matchMedia?.(DESKTOP_LAYOUT).addEventListener?.("change", () => {
+  if (currentScreen === "play") render();
+});
+
 bindPlayEvents({
   elements,
   promptState,
@@ -1379,6 +1670,7 @@ bindPlayEvents({
   testVampireId: TEST_VAMPIRE_ID,
   openMemoryMoreMenu,
   openIdentityMenu,
+  resolveCurrentPrompt,
 });
 
 const closeModalAndResetPlayForms = () => {
@@ -1400,7 +1692,6 @@ const initialize = () => {
     elements.addResourceButton,
     elements.addCharacterButton,
     elements.addMarkButton,
-    elements.createDiaryButton,
   ].forEach((button) => {
     if (!button) return;
     button.prepend(createMaterialFallbackIcon("add"));

@@ -9,6 +9,59 @@ const MIN_MARKS = 1;
 const CHARACTER_TYPES = new Set(["mortal", "immortal"]);
 
 const cleanText = (value = "") => String(value).trim().replace(/\s+/g, " ");
+
+const ROMAN = [
+  [1000, "M"], [900, "CM"], [500, "D"], [400, "CD"],
+  [100, "C"], [90, "XC"], [50, "L"], [40, "XL"],
+  [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"],
+];
+
+/* Memories are numbered by the order they were created, which never
+   changes as others are forgotten — so the numeral is a stable name for
+   a memory's age, not its position in the list. */
+/* Striking words inside an Experience (prompts 39a, 39b). The rulebook
+   is specific that a struck trait "stays readable because you may refer
+   back to it later or even restore it" — so a struck word is marked, not
+   deleted. The mark lives inside the sentence itself, which keeps an
+   Experience a single string: nothing else in the app, in storage, or in
+   an export has to learn a new shape, and there are no character offsets
+   to fall out of sync when the sentence is edited later. */
+export const STRIKE_MARK = "~~";
+
+export const splitExperienceText = (text = "") =>
+  String(text)
+    .split(/(\s+)/)
+    .map((chunk) => {
+      if (/^\s+$/.test(chunk) || !chunk) return { text: chunk, space: true };
+      const struck = /^~~.+~~$/.test(chunk);
+      return { text: struck ? chunk.slice(2, -2) : chunk, struck, space: false };
+    })
+    .filter((part) => part.text !== "");
+
+export const toggleExperienceWord = (text = "", wordIndex) => {
+  let seen = -1;
+  return String(text)
+    .split(/(\s+)/)
+    .map((chunk) => {
+      if (/^\s+$/.test(chunk) || !chunk) return chunk;
+      seen += 1;
+      if (seen !== wordIndex) return chunk;
+      return /^~~.+~~$/.test(chunk) ? chunk.slice(2, -2) : `~~${chunk}~~`;
+    })
+    .join("");
+};
+
+export const toRoman = (value) => {
+  let remaining = Math.trunc(Number(value));
+  if (!Number.isFinite(remaining) || remaining < 1) return "";
+  return ROMAN.reduce((out, [amount, numeral]) => {
+    while (remaining >= amount) {
+      out += numeral;
+      remaining -= amount;
+    }
+    return out;
+  }, "");
+};
 const createId = (prefix) => `${prefix}-${crypto.randomUUID()}`;
 
 const buildRequirement = (label, count, minimum) => ({
@@ -203,7 +256,7 @@ export class Character {
       lost: false,
       storedInDiary: false,
       lostReason: "",
-      createdOrder: this.#nextOrder(),
+      createdOrder: this.#nextMemoryOrder(),
     });
     return true;
   }
@@ -226,6 +279,20 @@ export class Character {
     return true;
   }
 
+  /* Used by striking, which rewrites the sentence with marks in it —
+     separate from updateMemoryExperience so a rewrite and a strike stay
+     distinguishable at the call site. */
+  setMemoryExperienceText(memoryIndex, experienceIndex, text) {
+    const memory = this.memories[memoryIndex];
+    if (!memory) return false;
+    const experience = memory.experiences[experienceIndex];
+    if (!experience) return false;
+    const cleaned = cleanText(text);
+    if (!cleaned) return false;
+    experience.text = cleaned;
+    return true;
+  }
+
   updateMemoryExperiences(memoryIndex, texts = []) {
     const memory = this.memories[memoryIndex];
     if (!memory) return false;
@@ -235,6 +302,16 @@ export class Character {
     cleanedTexts.forEach((text, experienceIndex) => {
       memory.experiences[experienceIndex].text = text;
     });
+    return true;
+  }
+
+  /* 51a ("Lose a random Experience from a Memory") needs this; nothing
+     else in normal play removes a single Experience. */
+  removeMemoryExperience(memoryIndex, experienceIndex) {
+    const memory = this.memories[memoryIndex];
+    if (!memory) return false;
+    if (!memory.experiences[experienceIndex]) return false;
+    memory.experiences.splice(experienceIndex, 1);
     return true;
   }
 
@@ -353,6 +430,19 @@ export class Character {
   get diaryResource() {
     if (!this.diary) return null;
     return this.resources.find((entry) => entry.id === this.diary.resourceId && !entry.lost) ?? null;
+  }
+
+  /* "Your vampire can have one Diary at a time, and it must contain at
+     least one Memory" (refs/rules.txt). A Diary emptied by forgetting or
+     deleting its last Memory is discarded with it — the same end state
+     as losing the Diary, which strikes out what it held. */
+  discardEmptyDiary() {
+    if (!this.diary) return false;
+    if (this.diaryMemories.length) return false;
+    const resource = this.resources.find((entry) => entry.id === this.diary.resourceId);
+    if (resource) resource.lost = true;
+    this.diary = null;
+    return true;
   }
 
   get diaryMemories() {
@@ -552,6 +642,14 @@ export class Character {
     if (nextUsed && !item.used) item.usedOrder = this.#nextOrder();
     item.used = nextUsed;
     return true;
+  }
+
+  /* Memories are numbered among themselves — the shared trait counter
+     would show a player Memory I, XI, XII. Frozen at creation and never
+     renumbered when another memory is forgotten, so the numeral stays a
+     name for one memory's age (design/MOBILE_REDESIGN_SPEC.md). */
+  #nextMemoryOrder() {
+    return this.memories.reduce((highest, memory) => Math.max(highest, memory.createdOrder ?? 0), 0) + 1;
   }
 
   #nextOrder() {

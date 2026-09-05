@@ -19,7 +19,33 @@ test("serializeCampaignState stores current prompt and ordered visit counts", ()
       [4, 2],
       [9, 3],
     ],
+    resolved: [],
+    signature: null,
   });
+});
+
+test("serializeCampaignState round-trips declared resolutions and the signature", () => {
+  const signature = { traits: 8, used: 2, lost: 1, experiences: 6 };
+  const serialized = serializeCampaignState({
+    currentPrompt: 2,
+    visits: new Map([[2, 1]]),
+    resolved: new Set(["1a", "2a"]),
+    signature,
+  });
+
+  assert.deepEqual(serialized.resolved, ["1a", "2a"]);
+  assert.deepEqual(serialized.signature, signature);
+
+  const restored = restoreCampaignState(serialized);
+  assert.equal(restored.resolved.has("2a"), true);
+  assert.equal(restored.resolved.has("9c"), false);
+  assert.deepEqual(restored.signature, signature);
+});
+
+test("restoreCampaignState defaults resolutions and signature for an old save", () => {
+  const restored = restoreCampaignState({ currentPrompt: 3, visits: [[3, 1]] });
+  assert.equal(restored.resolved.size, 0);
+  assert.equal(restored.signature, null);
 });
 
 test("restoreCampaignState ignores invalid entries and rebuilds a Map", () => {

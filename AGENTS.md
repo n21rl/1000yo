@@ -143,6 +143,73 @@ this section records the load-bearing facts the implementation settled on.
   new. A prompt counts as "resolved" (gates the Roll button) once a
   stamped experience exists for the current prompt+visit —
   `isPromptResolved`/`formatPromptStamp` in `src/features/prompt-flow.js`.
+- **The player declares when a prompt is resolved; the app never
+  infers it.** Custom and Appendix prompts can ask for anything, so the
+  UI is permissive and warns rather than enforcing. "Mark as resolved"
+  in the prompt card records the declaration (`markPromptResolved` /
+  `isStampResolved` in `src/features/prompt-flow.js`, persisted per
+  prompt stamp in `campaign-state.js`), and Roll unlocks only once it is
+  given. Pressing it lists whatever looks unusual — no Experience
+  recorded for this stamp, several, or no Trait created/checked/struck
+  since the prompt was entered — and then lets the player through
+  regardless (`getResolutionWarnings`). The trait half of that compares
+  against `getPlaySignature`, a fingerprint taken when play starts and
+  again on each Roll, so it must be captured from the loaded character,
+  not from whatever was on screen before it.
+  The two controls never show together: unresolved shows only "Mark as
+  resolved", resolved shows only Roll, so the loop reads as one action
+  then the next.
+  `getExperienceAvailability` no longer has any say over the prompt
+  cycle: it reports only the engine's own limits (memory lost, 3
+  experiences full, stored in the Diary) and the composer stays open the
+  rest of the time. Its reason is shown where the composer would be,
+  since a form that silently vanishes reads as a fault.
+
+- **Don't mechanise individual prompts.** The app models the *state* a
+  prompt can leave behind — memories, experiences, slots, traits, the
+  Diary — and never the instruction itself. Two reasons, and both
+  outrank the convenience of automating a particular entry:
+  **player authorship**, since deciding how a prompt applies is the
+  game, and an app that interprets it for you takes that over; and
+  **prompt sets are swappable** — the deck in `refs/prompts.csv` is one
+  of several (Appendix I, and whatever a player writes), so anything
+  keyed to specific entry numbers rots the moment the deck changes.
+  So: no per-entry special cases, no lookup tables of prompt ids, no
+  rules engine. Where an instruction needs an operation the app lacks,
+  add the *general* operation and let the player apply it.
+  Worked examples: `51a` ("lose a random Experience") got a general
+  delete-an-Experience action, not a 51a handler; `43c` (write an
+  Experience into a Diary) got a general override with a warning. By the
+  same principle `39c` (swap a Memory with another character sheet) and
+  `33b` (a permanent, slot-free Memory) are deliberately not
+  implemented — 39c is cross-save and too convoluted to be worth it,
+  and 33b's end state is reachable by adding a Memory slot and leaving
+  that Memory alone. Neither is a bug; don't re-raise them without a
+  new reason.
+
+- **Permissive-and-warn is the pattern for anything the rules normally
+  forbid.** Both cases reached the same way — the relevant More menu,
+  then `openConfirmDialog` — rather than by inventing a control:
+  writing an Experience into a Memory already in the Diary (the memory's
+  ⋮, allowed for that memory only) and deleting a single Experience
+  (the experience row's ⋮, `Character#removeMemoryExperience`). Neither
+  is normal play; both are things the deck itself asks for.
+
+- **Desktop layout** (`styles.css`, `min-width: 1100px`): variation D
+  from `design/desktop/` — what holds memories on the left, the prompt
+  above the open memory in the middle, traits open on the right. It needs
+  no markup of its own: `display: contents` drops the existing panels out
+  of their wrappers so they place themselves on one grid, and the bottom
+  tab bar becomes the left column's Memories/Diary control. Opening a
+  memory there is not navigation — list and detail share the screen, so
+  the back control is hidden and `renderMemoriesTab` keeps both rendered
+  (`isDesktopLayout`). Creation uses the same three columns with the same
+  widths, so nothing moves when creation ends and play begins: the step
+  form in the middle, and the character built so far in the side columns
+  (`renderWizardSheet`), which replaces the per-step added lists there.
+  The stepper stays across the top on both, never down the side. Below
+  1100px the phone layout is untouched.
+
 - **Play screen module split**: `src/main.js` still owns state and
   wiring (same pattern as menu/creation), but the play-screen render
   functions are organized by tab (memories/traits/diary rendering

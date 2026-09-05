@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Character } from "../src/game.js";
+import { Character , splitExperienceText, toRoman, toggleExperienceWord } from "../src/game.js";
 
 test("Character tracks memories as collections of experiences with stable trait IDs", () => {
   const character = new Character("Aster");
@@ -24,7 +24,7 @@ test("Character tracks memories as collections of experiences with stable trait 
       lost: false,
       storedInDiary: false,
       lostReason: "",
-      createdOrder: 2,
+      createdOrder: 1,
     },
   ]);
 });
@@ -293,7 +293,7 @@ test("Character can rename and clear a memory's title", () => {
   assert.equal(character.renameMemory(1, "No such memory"), false);
 });
 
-test("Character stamps monotonically increasing createdOrder across all trait kinds and memories, surviving a save/load round trip", () => {
+test("Character stamps monotonically increasing createdOrder across all trait kinds, surviving a save/load round trip", () => {
   const character = new Character("Aster");
   character.addSkill("Swordplay");
   character.addResource("A warhorse");
@@ -307,14 +307,18 @@ test("Character stamps monotonically increasing createdOrder across all trait ki
       character.resources[0].createdOrder,
       character.characters[0].createdOrder,
       character.marks[0].createdOrder,
-      character.memories[0].createdOrder,
     ],
-    [1, 2, 3, 4, 5],
+    [1, 2, 3, 4],
   );
+  /* Memories are numbered among themselves, so a player reads Memory I,
+     II, III rather than the shared counter's I, XI, XII. */
+  assert.equal(character.memories[0].createdOrder, 1);
 
   const restored = Character.from(JSON.parse(JSON.stringify(character)));
   assert.equal(restored.addSkill("Stealth"), true);
-  assert.equal(restored.skills[1].createdOrder, 6);
+  assert.equal(restored.skills[1].createdOrder, 5);
+  assert.equal(restored.addMemory("Second memory"), true);
+  assert.equal(restored.memories[1].createdOrder, 2);
 });
 
 test("Character stamps usedOrder only when transitioning to used, leaving it in place on uncheck", () => {
@@ -332,4 +336,69 @@ test("Character stamps usedOrder only when transitioning to used, leaving it in 
 
   character.setSkillUsed(0, true);
   assert.notEqual(character.skills[0].usedOrder, firstStamp);
+});
+
+test("toRoman numbers memories by their creation order", () => {
+  assert.equal(toRoman(1), "I");
+  assert.equal(toRoman(4), "IV");
+  assert.equal(toRoman(9), "IX");
+  assert.equal(toRoman(14), "XIV");
+  assert.equal(toRoman(0), "");
+  assert.equal(toRoman(undefined), "");
+});
+
+test("toggleExperienceWord strikes a word and restores it", () => {
+  const text = "I carried the psalter out through the smoke.";
+  const struck = toggleExperienceWord(text, 3);
+  assert.equal(struck, "I carried the ~~psalter~~ out through the smoke.");
+  assert.equal(toggleExperienceWord(struck, 3), text);
+});
+
+test("toggleExperienceWord leaves other words and spacing alone", () => {
+  const text = "The abbey bell went on ringing.";
+  assert.equal(toggleExperienceWord(text, 0), "~~The~~ abbey bell went on ringing.");
+  assert.equal(toggleExperienceWord(text, 99), text);
+});
+
+test("splitExperienceText reports which words are struck", () => {
+  const parts = splitExperienceText("I ~~carried~~ the psalter").filter((part) => !part.space);
+  assert.deepEqual(
+    parts.map((part) => [part.text, Boolean(part.struck)]),
+    [["I", false], ["carried", true], ["the", false], ["psalter", false]],
+  );
+});
+
+test("striking survives a round trip through several toggles", () => {
+  let text = "one two three";
+  text = toggleExperienceWord(text, 0);
+  text = toggleExperienceWord(text, 2);
+  assert.equal(text, "~~one~~ two ~~three~~");
+  text = toggleExperienceWord(text, 0);
+  assert.equal(text, "one two ~~three~~");
+});
+
+test("a Diary emptied of its last Memory is discarded with it", () => {
+  const character = new Character("Alazne");
+  character.addMemory("A first experience");
+  const memory = character.memories[0];
+  character.moveMemoryToDiary(memory.id, "A ledger of abbey accounts");
+
+  assert.equal(character.diaryMemories.length, 1);
+  assert.equal(character.discardEmptyDiary(), false, "a Diary holding a Memory is left alone");
+
+  /* Forgetting the last Memory already clears the Diary; hard-deleting it
+     is the path that used to leave one behind holding nothing. */
+  character.removeMemory(0);
+  assert.equal(character.diaryMemories.length, 0);
+  assert.equal(character.discardEmptyDiary(), true);
+  assert.equal(character.diary, null);
+  assert.equal(character.resources.every((resource) => resource.lost), true);
+});
+
+test("forgetting the last Memory in a Diary already clears the Diary", () => {
+  const character = new Character("Alazne");
+  character.addMemory("A first experience");
+  character.moveMemoryToDiary(character.memories[0].id, "A ledger");
+  character.setMemoryLost(0, true);
+  assert.equal(character.diary, null);
 });

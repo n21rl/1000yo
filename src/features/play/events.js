@@ -1,4 +1,4 @@
-import { formatPromptStamp } from "../prompt-flow.js";
+import { formatPromptStamp, getPlaySignature } from "../prompt-flow.js";
 import { openActionSheet, openConfirmDialog, openPromptDialog } from "../../ui/dialog.js";
 
 export const bindPlayEvents = ({
@@ -34,15 +34,23 @@ export const bindPlayEvents = ({
   testVampireId,
   openMemoryMoreMenu,
   openIdentityMenu,
+  resolveCurrentPrompt,
 }) => {
   const currentPromptStamp = () =>
     formatPromptStamp(promptState.currentPrompt, promptState.visits.get(promptState.currentPrompt) ?? 1);
+
+  elements.promptResolveButton.addEventListener("click", () => {
+    resolveCurrentPrompt();
+  });
 
   elements.promptButton.addEventListener("click", () => {
     if (promptState.isLoading || promptState.loadError || !promptState.deck.length) return;
     const delta = rollDie(10) - rollDie(6);
     const target = promptState.currentPrompt + delta;
     advanceToNextPromptEntry(promptState, target);
+    /* The next prompt starts from here, so anything changed from now on
+       counts as its answer (see getResolutionWarnings). */
+    promptState.signature = getPlaySignature(getCharacter());
     persistCurrentCharacter();
     render();
   });
@@ -81,10 +89,6 @@ export const bindPlayEvents = ({
     render();
   });
 
-  elements.createDiaryButton.addEventListener("click", () => {
-    setActiveModal("diary");
-    render();
-  });
 
   elements.playHamburgerButton.addEventListener("click", async () => {
     const character = getCharacter();

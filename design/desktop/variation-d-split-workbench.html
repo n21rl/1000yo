@@ -1,0 +1,760 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>1000yo — Desktop layout D: Split workbench</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="../../src/styles.css" />
+    <link rel="stylesheet" href="mockup-shared.css" />
+    <style>
+      /* VARIATION D — "Split workbench" (between B and C)
+         Three full-height columns. Left browses what holds memories —
+         Memories or Diary, as one segmented control. Middle is the work
+         surface: the prompt card on top, the open memory and its
+         composer beneath it, so the thing being answered sits directly
+         above the answer. Right keeps traits permanently open.
+
+         What it takes from C: no tab bar, traits always in view. What it
+         takes from B: a fixed work surface the left column never
+         replaces, and the prompt card kept exactly as it ships —
+         collapsible chevron and all, since collapsing it here buys the
+         composer real vertical room. What it drops from C: the memory
+         list no longer has to share the middle column's height with the
+         detail, which was C's tightest fit; and the prompt no longer
+         holds a 21rem column mostly full of empty space.
+
+         Layout only; component styling comes from src/styles.css. */
+
+      @media (min-width: 640px) {
+        .menu-screen,
+        .saves-screen,
+        .wizard,
+        .play-shell {
+          max-width: none;
+          margin: 0;
+          border-left: none;
+          border-right: none;
+        }
+      }
+
+      .d-frame {
+        flex: 1;
+        min-height: 0;
+        display: flex;
+      }
+
+      /* --- Left: what holds memories --- */
+      .d-browse-col {
+        width: 22rem;
+        flex-shrink: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--color-border);
+      }
+
+      /* Reuse the trait sub-tab control for the Memories/Diary switch —
+         an existing control in a new place, not a new pattern. */
+      .d-segments {
+        flex-shrink: 0;
+        margin-bottom: 0;
+      }
+
+      .d-segments .play-trait-subtab {
+        padding: 0.7rem 0;
+        text-transform: uppercase;
+      }
+
+      .d-browse-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 0 1.25rem 1.25rem;
+      }
+
+      /* --- Middle: prompt over the open memory --- */
+      .d-work-col {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--color-border);
+      }
+
+      .d-work-col .play-prompt-head,
+      .d-work-col .play-prompt-card [data-card-content] {
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+
+      .d-work-col .play-prompt-text {
+        font-size: 1.15rem;
+        max-width: 44rem;
+      }
+
+      .d-work-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 1.5rem 2rem 2rem;
+      }
+
+      .d-work-inner {
+        max-width: 44rem;
+      }
+
+      /* Composer unavailable (memory full, lost, or in the Diary). The
+         mobile app just hides the form — on a pushed detail screen the
+         absence is unremarkable. Here the composer is a permanent region
+         of the column, so its absence has to say why, in the app's own
+         words. */
+      .d-state-line {
+        margin: 0;
+        padding: 0.9rem 0;
+        border-top: 1px solid var(--color-border);
+        font-family: var(--font-mono);
+        font-size: var(--font-size-label);
+        letter-spacing: 0.04em;
+        color: var(--color-text-dim);
+      }
+
+      /* A lost memory opened here sits permanently beside live content,
+         so the detail carries the same lost treatment the row already
+         uses in the list — strikethrough title, dimmed body. On mobile
+         the detail is a screen of its own and doesn't need it. */
+      .d-work-col.is-lost .play-memory-detail-title {
+        text-decoration: line-through;
+      }
+
+      .d-work-col.is-lost .play-experience-list {
+        opacity: 0.45;
+      }
+
+      /* Between prompts, nothing is open yet: choosing the Memory that
+         will hold this prompt's Experience is the first act of answering
+         it, so until that choice the prompt is the only thing to attend
+         to and it takes the column. Picking a memory shrinks it back to
+         its card. */
+      .d-work-col.is-awaiting .d-work-scroll {
+        display: none;
+      }
+
+      .d-work-col.is-awaiting .play-prompt-card {
+        flex: 1;
+        min-height: 0;
+        border-bottom: none;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d-work-col.is-awaiting .play-prompt-card [data-mk-prompt-body] {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding-top: 1.5rem;
+      }
+
+      .d-work-col.is-awaiting .play-prompt-text {
+        font-size: 1.45rem;
+        line-height: 1.45;
+        max-width: 34rem;
+      }
+
+      /* Nothing below to make room for, so the collapse control has no
+         job in this state. */
+      .d-work-col.is-awaiting .play-prompt-chevron {
+        display: none;
+      }
+
+      /* --- Right: traits, always open --- */
+      .d-trait-col {
+        width: 25rem;
+        flex-shrink: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .d-trait-col .play-trait-subtabs {
+        flex-shrink: 0;
+        margin-bottom: 0;
+      }
+
+      .d-trait-scroll {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 0 1.25rem 1.25rem;
+      }
+
+      /* --- Creation: steps | form | the sheet so far --- */
+      .d-step-rail {
+        width: 22rem;
+        flex-shrink: 0;
+        padding: 1rem 0.75rem;
+        border-right: 1px solid var(--color-border);
+        overflow-y: auto;
+      }
+
+      .d-step {
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        width: 100%;
+        padding: 0.55rem 0.6rem;
+        background: none;
+        border: none;
+        border-left: 2px solid transparent;
+        border-radius: 0;
+        color: var(--color-text-dim);
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .d-step:hover {
+        color: var(--color-text-primary);
+        filter: none;
+      }
+
+      .d-step-number {
+        font-size: 0.65rem;
+        color: var(--color-text-dimmest);
+      }
+
+      .d-step.done {
+        color: var(--color-text-muted);
+      }
+
+      .d-step.done .d-step-number {
+        color: var(--color-positive);
+      }
+
+      .d-step.current {
+        border-left-color: var(--color-accent);
+        background: var(--color-surface);
+        color: var(--color-text-primary);
+      }
+
+      .d-step.current .d-step-number {
+        color: var(--color-accent);
+      }
+
+      .d-form-col {
+        flex: 1;
+        min-width: 0;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+        border-right: 1px solid var(--color-border);
+      }
+
+      .d-form-col .wizard-header,
+      .d-form-col .wizard-steps-scroll,
+      .d-form-col .wizard-nav {
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+
+      .d-form-col .step-panel {
+        max-width: 34rem;
+      }
+
+      .d-form-col .wizard-nav {
+        justify-content: flex-end;
+        border-top: 1px solid var(--color-border);
+      }
+
+      .d-form-col .wizard-back-button,
+      .d-form-col .wizard-next-button {
+        flex: 0 0 auto;
+        width: auto;
+        min-width: 8rem;
+      }
+
+      .d-sheet-col {
+        width: 25rem;
+        flex-shrink: 0;
+        min-height: 0;
+        overflow-y: auto;
+        padding: 1rem 1.25rem 2rem;
+      }
+
+      .d-sheet-col .wizard-added-list {
+        margin-top: 0;
+      }
+
+      /* --- Home / Saves --- */
+      .menu-screen {
+        max-width: 26rem;
+        margin: 0 auto;
+      }
+
+      .saves-screen .menu-vampire-list {
+        max-width: 46rem;
+        width: 100%;
+        margin: 0 auto;
+        padding-left: 2rem;
+        padding-right: 2rem;
+      }
+
+      .saves-screen .play-header {
+        justify-content: flex-start;
+        gap: 1.5rem;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <!-- HOME -->
+      <section class="menu-screen" data-mk-screen="menu" hidden>
+        <div class="menu-brand">
+          <h1 class="menu-title">Thousand Year Old Vampire</h1>
+        </div>
+        <div class="menu-actions">
+          <button type="button" class="menu-continue-button">
+            <span class="menu-continue-label">Continue</span>
+            <span class="menu-continue-name">Sister Alazne</span>
+          </button>
+          <button type="button" class="menu-new-button" data-mk-icon-prefix="add">New Vampire</button>
+          <button type="button" class="menu-new-button" data-mk-icon-prefix="sticky_note_2">Saves</button>
+        </div>
+      </section>
+
+      <!-- SAVES -->
+      <section class="saves-screen" data-mk-screen="saves" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-back">← Home</button>
+          <div class="play-header-identity">
+            <span class="play-header-name">Saves</span>
+          </div>
+        </div>
+        <ul class="menu-vampire-list" data-mk-saves-list></ul>
+      </section>
+
+      <!-- CREATION -->
+      <section class="wizard" data-mk-screen="create" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-back">← Home</button>
+          <button type="button" class="play-header-avatar-button" aria-label="Character options">
+            <span class="play-header-name">Sister Alazne</span>
+            <span class="play-header-avatar"><span data-mk-icon="person"></span></span>
+          </button>
+        </div>
+        <div class="wizard-progress-track"><div class="wizard-progress-fill" data-mk-step-fill></div></div>
+        <div class="d-frame">
+          <nav class="d-step-rail" data-mk-step-rail data-mk-step-class="d-step"></nav>
+          <div class="d-form-col">
+            <div class="wizard-header">
+              <span class="wizard-step-label" data-mk-step-label></span>
+              <span class="wizard-step-count" data-mk-step-count></span>
+            </div>
+            <div class="wizard-steps-scroll">
+              <section class="step-panel" data-mk-step-panel data-mk-step-panel-no-list></section>
+            </div>
+            <div class="wizard-nav">
+              <button type="button" class="wizard-back-button" data-mk-step-back>Back</button>
+              <button type="button" class="wizard-next-button" data-mk-step-next>Next</button>
+            </div>
+          </div>
+          <aside class="d-sheet-col" data-mk-step-added></aside>
+        </div>
+      </section>
+
+      <!-- PLAY -->
+      <section class="play-shell" data-mk-screen="play" hidden>
+        <div class="play-header">
+          <button type="button" class="play-header-more" aria-label="Menu">
+            <span data-mk-icon="menu"></span>
+          </button>
+          <div class="play-header-menus">
+            <button type="button" class="play-header-avatar-button" aria-label="Character options">
+              <span class="play-header-name">Sister Alazne</span>
+              <span class="play-header-avatar"><span data-mk-icon="person"></span></span>
+            </button>
+          </div>
+        </div>
+
+        <div class="d-frame">
+          <!-- Left: Memories / Diary -->
+          <div class="d-browse-col">
+            <div class="play-trait-subtabs d-segments">
+              <button type="button" class="play-trait-subtab active" data-mk-tab="memories">MEMORIES</button>
+              <button type="button" class="play-trait-subtab" data-mk-tab="diary">DIARY</button>
+            </div>
+            <div class="d-browse-scroll">
+              <div class="play-tab-panel" data-mk-panel="memories">
+                <div class="play-tab-heading">
+                  <span>Memories</span>
+                  <div class="play-tab-heading-actions">
+                    <span class="play-tab-heading-meta" data-mk-slots></span>
+                    <button type="button" class="play-tab-heading-more" aria-label="Memory slot options">
+                      <span data-mk-icon="more_vert"></span>
+                    </button>
+                  </div>
+                </div>
+                <ul class="play-memory-list" data-mk-memories></ul>
+                <ul class="play-memory-list play-memory-list-lost" data-mk-lost-memories></ul>
+                <p class="play-memory-hint">When full, you may need to forget one.</p>
+                <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add memory</button>
+              </div>
+
+              <div class="play-tab-panel" data-mk-panel="diary" hidden>
+                <article class="play-diary-populated">
+                  <p class="play-diary-description" data-mk-diary-description></p>
+                  <ul class="play-memory-list" data-mk-diary-memories></ul>
+                </article>
+              </div>
+            </div>
+          </div>
+
+          <!-- Middle: prompt over the open memory -->
+          <div class="d-work-col">
+            <article class="play-prompt-card">
+              <div class="play-prompt-head" data-mk-prompt-toggle aria-expanded="true">
+                <div class="play-prompt-meta">
+                  <span class="play-prompt-stamp">PROMPT 2A</span>
+                  <span class="play-prompt-status">Prompt unresolved</span>
+                </div>
+                <div class="play-prompt-actions">
+                  <button type="button" class="play-prompt-resolve play-prompt-roll">Mark as resolved</button>
+                  <button type="button" class="play-prompt-roll">Roll next prompt</button>
+                  <button type="button" class="card-chevron-button play-prompt-chevron" aria-label="Toggle prompt card">
+                    <span class="card-toggle-indicator" data-mk-icon="keyboard_arrow_down"></span>
+                  </button>
+                </div>
+              </div>
+              <div data-mk-prompt-body>
+                <p class="play-prompt-text" data-mk-prompt-text></p>
+              </div>
+            </article>
+
+            <div class="d-work-scroll">
+              <div class="d-work-inner play-memory-detail" data-mk-memory-detail>
+                <div data-mk-memory-detail-body>
+                  <div class="play-memory-detail-head">
+                    <span class="play-memory-detail-label">MEMORY</span>
+                    <span class="play-memory-detail-title" data-mk-detail-title></span>
+                  </div>
+                  <ol class="play-experience-list" data-mk-experiences></ol>
+                  <form class="play-experience-form" onsubmit="return false">
+                    <label class="play-field-label" for="d-exp">New Experience</label>
+                    <textarea id="d-exp" rows="3" placeholder="Write a single evocative sentence…"></textarea>
+                    <div class="play-composer-columns" data-mk-composer-chips></div>
+                    <div class="play-experience-actions">
+                      <button type="submit" id="play-experience-submit">Save Experience</button>
+                      <button type="button" id="play-experience-cancel">Clear</button>
+                    </div>
+                  </form>
+                  <p class="d-state-line" data-mk-state-line hidden></p>
+                </div>
+                <div data-mk-memory-detail-empty hidden></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: traits -->
+          <div class="d-trait-col">
+            <div class="play-trait-subtabs">
+              <button type="button" class="play-trait-subtab active" data-mk-subtab="characters">Characters</button>
+              <button type="button" class="play-trait-subtab" data-mk-subtab="skills">Skills</button>
+              <button type="button" class="play-trait-subtab" data-mk-subtab="resources">Resources</button>
+              <button type="button" class="play-trait-subtab" data-mk-subtab="marks">Marks</button>
+            </div>
+            <div class="d-trait-scroll">
+              <div class="play-trait-controls">
+                <button type="button" class="play-trait-sort">
+                  <span class="play-trait-sort-icon" data-mk-icon="sort"></span>
+                  Recent
+                </button>
+                <div class="play-trait-view-toggle" role="group" aria-label="List or grid view">
+                  <button type="button" class="play-trait-view-button" aria-pressed="true" aria-label="List view">
+                    <span class="play-trait-view-icon" data-mk-icon="menu"></span>
+                  </button>
+                  <button type="button" class="play-trait-view-button" disabled aria-label="Grid view (coming soon)">
+                    <span class="play-trait-view-icon" data-mk-icon="grid_view"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="play-trait-panel" data-mk-trait-panel="characters">
+                <ul class="play-trait-list" data-mk-traits="characters"></ul>
+                <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Character</button>
+              </div>
+              <div class="play-trait-panel" data-mk-trait-panel="skills" hidden>
+                <ul class="play-trait-list" data-mk-traits="skills"></ul>
+                <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Skill</button>
+              </div>
+              <div class="play-trait-panel" data-mk-trait-panel="resources" hidden>
+                <ul class="play-trait-list" data-mk-traits="resources"></ul>
+                <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Resource</button>
+              </div>
+              <div class="play-trait-panel" data-mk-trait-panel="marks" hidden>
+                <ul class="play-trait-list" data-mk-traits="marks"></ul>
+                <button type="button" class="play-tab-add" data-mk-icon-prefix="add">Add Mark</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script src="mockup-shared.js"></script>
+    <script src="mockup-screens.js"></script>
+    <script>
+      /* D's middle column is the current prompt's workspace, not a memory
+         viewer. The rulebook settles the shape of it: "an Experience is a
+         single sentence that describes the resolution of a Prompt"
+         (refs/rules.txt), "Every time you answer a Prompt you must create
+         an Experience and add it to a Memory unless instructed otherwise",
+         and "An Experience must be placed within a Memory as soon as it is
+         created." So choosing the Memory is part of answering this prompt,
+         and between prompts there is no Experience to write.
+
+         The loop, wired live below — click a memory row, Save Experience,
+         Roll:
+
+           awaiting  no memory chosen; the prompt has the column
+           writing   a memory is chosen; prompt shrinks, composer opens
+           resolved  Experience saved; composer closes, Roll unlocks
+           → Roll returns to awaiting with the next prompt
+
+         The mockup bar also jumps straight to any state, including the
+         three where the memory itself can't take an Experience.
+
+         Every string is the app's own: the prompt panel's disabled and
+         error text from getPromptPanelViewModel (src/features/prompt-flow.js),
+         and the composer's reason lines from the memory-row subtitles the
+         app already renders, the prompt status label, and the diary form's
+         existing warning. */
+
+      const workCol = document.querySelector(".d-work-col");
+      const detailBody = document.querySelector("[data-mk-memory-detail-body]");
+      const composer = document.querySelector(".play-experience-form");
+      const stateLine = document.querySelector("[data-mk-state-line]");
+      const detailTitle = document.querySelector("[data-mk-detail-title]");
+      const experienceList = document.querySelector("[data-mk-experiences]");
+      const stamp = document.querySelector(".play-prompt-stamp");
+      const status = document.querySelector(".play-prompt-status");
+      const promptText = document.querySelector("[data-mk-prompt-text]");
+      const resolveButton = document.querySelector(".play-prompt-resolve");
+      const rollButton = document.querySelectorAll(".play-prompt-roll")[1];
+      const promptActions = document.querySelector(".play-prompt-actions");
+
+      /* Two real entries from refs/prompts.csv, so Roll actually moves. */
+      const DECK = [
+        { stampText: "PROMPT 2A", text: MK.data.prompt.text },
+        {
+          stampText: "PROMPT 5A",
+          text: "You murder someone you love or respect rather than let them expose you. Kill a Character. Check a Skill. If you have no living Characters, kill no one, and create a beloved mortal Character who you have betrayed.",
+        },
+      ];
+      let deckIndex = 0;
+
+      const setPrompt = ({ stampText, statusText, text, rollDisabled, disabled = false }) => {
+        stamp.textContent = stampText;
+        status.textContent = statusText;
+        promptText.textContent = text;
+        /* One action at a time — see AGENTS.md. Unresolved: declare the
+           prompt answered. Resolved: Roll, which isn't shown until then. */
+        rollButton.disabled = rollDisabled;
+        rollButton.hidden = disabled || rollDisabled;
+        resolveButton.hidden = disabled || !rollDisabled;
+        /* PROPOSED, not current behaviour: getPromptPanelViewModel blanks
+           the stamp and the status label in its disabled states, which on
+           mobile is a flash before the deck loads. Here the prompt holds a
+           permanent region, so the blank meta row would leave Roll and the
+           chevron floating over nothing. Hide the actions with them. */
+        promptActions.hidden = disabled;
+      };
+
+      /* Keep the left column's selected row in step with the middle
+         column — including a lost or diary memory, which mobile has no
+         selected state for. */
+      const highlight = (memory) => {
+        document.querySelectorAll(".play-memory-row").forEach((row) => {
+          const name = row.querySelector(".play-memory-name")?.textContent;
+          row.classList.toggle("mk-row-selected", Boolean(memory) && name === memory.title);
+        });
+      };
+
+      /* The bar's chips are a jump-to control, but they should still read
+         correctly when the loop moves on its own. */
+      const syncChip = (id) => {
+        const label = CHIP_LABELS[id];
+        document.querySelectorAll(".mk-bar .mk-group").forEach((group) => {
+          if (group.querySelector(".mk-group-label")?.textContent !== "Middle column") return;
+          group.querySelectorAll(".mk-chip").forEach((chip) => {
+            chip.classList.toggle("mk-chip-current", chip.textContent === label);
+          });
+        });
+      };
+
+      const showMemory = (memory, reason, { lost = false } = {}) => {
+        workCol.classList.remove("is-awaiting");
+        workCol.classList.toggle("is-lost", lost);
+        detailBody.hidden = false;
+        openMemory = memory;
+        highlight(memory);
+        detailTitle.textContent = memory.title;
+        experienceList.replaceChildren();
+        memory.experiences.forEach((experience, index) => {
+          experienceList.append(MK.experienceItem(experience, index));
+        });
+        composer.hidden = Boolean(reason);
+        stateLine.hidden = !reason;
+        stateLine.textContent = reason ?? "";
+      };
+
+      /* --- The loop --- */
+
+      const CHIP_LABELS = {
+        awaiting: "Awaiting",
+        writing: "Writing",
+        resolved: "Resolved",
+        full: "Memory full",
+        lost: "Memory lost",
+        diary: "In Diary",
+        loading: "Prompt loading",
+        exhausted: "Prompt end",
+      };
+
+      const awaiting = () => {
+        syncChip("awaiting");
+        workCol.classList.add("is-awaiting");
+        workCol.classList.remove("is-lost");
+        openMemory = null;
+        highlight(null);
+        setPrompt({ ...DECK[deckIndex], statusText: "Prompt unresolved", rollDisabled: true });
+      };
+
+      const writing = (memory = MK.data.memories[1]) => {
+        syncChip("writing");
+        setPrompt({ ...DECK[deckIndex], statusText: "Prompt unresolved", rollDisabled: true });
+        showMemory(memory, null);
+      };
+
+      let openMemory = null;
+
+      const resolved = (memory = MK.data.memories[1]) => {
+        syncChip("resolved");
+        /* Declared, not inferred: the player presses "Mark as resolved"
+           and the app warns about anything unusual rather than deciding.
+           The composer stays open — a prompt may call for no Experience,
+           or more than one, and a custom prompt can ask for anything. */
+        setPrompt({ ...DECK[deckIndex], statusText: "Prompt resolved", rollDisabled: false });
+        showMemory(memory, null);
+        /* The left column's row subtitle counts experiences, so it has to
+           be re-rendered for the one just written to show up there. */
+        MKScreens.refreshMemories();
+        highlight(memory);
+      };
+
+      const roll = () => {
+        deckIndex = (deckIndex + 1) % DECK.length;
+        awaiting();
+      };
+
+      document.querySelectorAll("[data-mk-memories], [data-mk-lost-memories], [data-mk-diary-memories]").forEach((list) => {
+        list.addEventListener("click", (event) => {
+          const name = event.target.closest(".play-memory-row")?.querySelector(".play-memory-name")?.textContent;
+          if (!name) return;
+          const pool = [...MK.data.memories, ...MK.data.lostMemories, ...MK.data.diary.memories];
+          const memory = pool.find((entry) => entry.title === name);
+          if (!memory) return;
+          if (MK.data.lostMemories.includes(memory)) return showMemory(memory, "Lost from Mind", { lost: true });
+          if (MK.data.diary.memories.includes(memory)) {
+            return showMemory(memory, "Once moved, the Memory can no longer gain new Experiences.");
+          }
+          if (memory.experiences.length >= MK.MAX_EXPERIENCES) return showMemory(memory, "3 / 3 experiences");
+          writing(memory);
+        });
+      });
+
+      resolveButton.addEventListener("click", () => resolved(openMemory ?? MK.data.memories[1]));
+      composer.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const field = composer.querySelector("textarea");
+        const memory = openMemory ?? MK.data.memories[1];
+        if (memory.experiences.length < MK.MAX_EXPERIENCES) {
+          memory.experiences.push({
+            text: field.value.trim() || "I take the cellar beneath the old cloister and tell no one it is mine.",
+            prompt: DECK[deckIndex].stampText.replace("PROMPT ", "").toLowerCase(),
+          });
+        }
+        field.value = "";
+        writing(memory);
+      });
+      rollButton.addEventListener("click", () => {
+        if (!rollButton.disabled) roll();
+      });
+
+      const STATES = {
+        awaiting,
+        writing: () => writing(),
+        resolved,
+        full: () => {
+          setPrompt({ ...DECK[deckIndex], statusText: "Prompt unresolved", rollDisabled: true });
+          showMemory(MK.data.memories[0], "3 / 3 experiences");
+        },
+        lost: () => {
+          setPrompt({ ...DECK[deckIndex], statusText: "Prompt unresolved", rollDisabled: true });
+          showMemory(MK.data.lostMemories[0], "Lost from Mind", { lost: true });
+        },
+        diary: () => {
+          setPrompt({ ...DECK[deckIndex], statusText: "Prompt unresolved", rollDisabled: true });
+          showMemory(
+            MK.data.diary.memories[0],
+            "Once moved, the Memory can no longer gain new Experiences.",
+          );
+        },
+        loading: () => {
+          workCol.classList.add("is-awaiting");
+          highlight(null);
+          setPrompt({ stampText: "", statusText: "", text: "Loading prompts...", rollDisabled: true, disabled: true });
+        },
+        exhausted: () => {
+          workCol.classList.add("is-awaiting");
+          highlight(null);
+          setPrompt({
+            stampText: "PROMPT 80C",
+            statusText: "Prompt unresolved",
+            text: "No remaining prompt entry at this position.",
+            rollDisabled: true,
+          });
+        },
+      };
+
+      MKScreens.init({
+        variation: "variation-d-split-workbench.html",
+        detailMode: "pane",
+        extraGroups: [
+          {
+            label: "Middle column",
+            options: [
+              { id: "awaiting", label: "Awaiting" },
+              { id: "writing", label: "Writing" },
+              { id: "resolved", label: "Resolved" },
+              { id: "full", label: "Memory full" },
+              { id: "lost", label: "Memory lost" },
+              { id: "diary", label: "In Diary" },
+              { id: "loading", label: "Prompt loading" },
+              { id: "exhausted", label: "Prompt end" },
+            ],
+            onSelect: (id) => STATES[id](),
+          },
+        ],
+      });
+
+      /* Play opens between prompts, with nothing chosen yet. */
+      awaiting();
+    </script>
+  </body>
+</html>

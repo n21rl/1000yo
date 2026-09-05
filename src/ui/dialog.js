@@ -59,7 +59,18 @@ export const openConfirmDialog = ({
       if (danger) card.classList.add("app-dialog-danger");
       appendHeading(card, title);
 
-      if (body) {
+      /* `body` may be a list, so several separate points each get their
+         own line rather than running together in one sentence. */
+      if (Array.isArray(body)) {
+        const list = document.createElement("ul");
+        list.className = "app-dialog-list";
+        body.filter(Boolean).forEach((line) => {
+          const item = document.createElement("li");
+          item.textContent = line;
+          list.append(item);
+        });
+        if (list.childElementCount) card.append(list);
+      } else if (body) {
         const bodyEl = document.createElement("p");
         bodyEl.className = "app-dialog-body";
         bodyEl.textContent = body;

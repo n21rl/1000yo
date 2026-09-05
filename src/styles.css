@@ -559,19 +559,12 @@ button:disabled {
 .wizard-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-shrink: 0;
   margin-bottom: 0.5rem;
   padding: 0.75rem 0.9rem 0;
 }
 
-.wizard-step-label {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
 
 .wizard-step-count {
   font-family: var(--font-mono);
@@ -718,7 +711,7 @@ button:disabled {
 
 .wizard-added-item {
   display: flex;
-  align-items: baseline;
+  align-items: flex-start;
   gap: 0.6rem;
   padding: 0.6rem 0;
   border-bottom: 1px solid var(--color-border);
@@ -738,10 +731,11 @@ button:disabled {
 }
 
 .wizard-added-index {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-label);
-  color: var(--color-accent);
   flex-shrink: 0;
+  width: 0.35rem;
+  height: 0.35rem;
+  margin-top: 0.35rem;
+  background: var(--color-accent);
 }
 
 .wizard-added-body {
@@ -1356,6 +1350,13 @@ button:disabled {
   white-space: nowrap;
 }
 
+/* The creation ordinal, dim enough not to read as part of the name. */
+.play-memory-ordinal {
+  color: var(--color-text-dim);
+  font-family: var(--font-mono);
+  font-size: 0.8em;
+}
+
 .play-memory-subtitle {
   display: block;
   font-size: 0.8rem;
@@ -1486,13 +1487,15 @@ button:disabled {
   border-bottom: 1px solid var(--color-border);
 }
 
+/* A square bullet, drawn rather than typed, so it matches the squared-off
+   geometry everything else in the redesign uses. */
 .play-experience-index {
-  font-family: var(--font-mono);
-  font-size: var(--font-size-label);
-  color: var(--color-accent);
-  padding-top: 0.15rem;
-  width: 0.9rem;
   flex-shrink: 0;
+  width: 0.35rem;
+  height: 0.35rem;
+  margin-top: 0.45rem;
+  margin-right: 0.15rem;
+  background: var(--color-accent);
 }
 
 .play-experience-body {
@@ -1507,6 +1510,27 @@ button:disabled {
   font-style: italic;
   line-height: 1.5;
   color: var(--color-text-secondary);
+}
+
+/* A struck word: still readable, plainly negated — the same treatment a
+   struck-out Trait and a lost Memory already get. */
+.play-word-struck {
+  text-decoration: line-through;
+  opacity: 0.4;
+}
+
+/* Striking mode turns every word into its own target. */
+.play-experience-striking .play-word {
+  cursor: pointer;
+  padding: 0 0.05em;
+}
+
+.play-experience-striking .play-word:hover {
+  background: rgba(220, 38, 38, 0.18);
+}
+
+.play-experience-striking .play-word-struck:hover {
+  background: rgba(120, 113, 108, 0.25);
 }
 
 .play-experience-stamp {
@@ -1593,6 +1617,38 @@ button:disabled {
   background: none;
   border: 1px solid var(--color-border);
   color: var(--color-text-tertiary);
+}
+
+/* A dialog body given as several distinct points (e.g. what is missing
+   before a prompt is marked resolved). */
+.app-dialog-list {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+}
+
+.app-dialog-list li {
+  padding: 0.4rem 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.app-dialog-list li:last-child {
+  border-bottom: none;
+}
+
+/* Shown in the composer's place when the memory can't take an
+   Experience — see getExperienceAvailability. Carries the reason, since
+   a form that simply vanishes reads as a fault. */
+.play-experience-blocked {
+  margin: 0;
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--color-border);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-label);
+  letter-spacing: 0.04em;
+  color: var(--color-text-dim);
 }
 
 .play-trait-subtabs {
@@ -1896,6 +1952,24 @@ button:disabled {
   letter-spacing: 0.06em;
 }
 
+/* The character sheet beside the creation wizard. Only the desktop
+   layout has columns for it; on a phone the per-step lists in the form
+   already show what has been added. */
+.wizard-sheet {
+  display: none;
+}
+
+/* Separator lines must never curve. The legacy base rule gives every
+   button a 0.75rem radius, which bows the bottom border wherever a row
+   or tab uses one as a divider (memory rows, trait sub-tabs, saves
+   rows). Everything in the redesigned screens is square, per --radius. */
+.play-shell button,
+.saves-screen button,
+.menu-screen button,
+.wizard button {
+  border-radius: var(--radius);
+}
+
 /* Shared trait add/edit modal, restyled onto tokens (structure/ids unchanged) */
 .modal-shell {
   background: rgba(12, 10, 9, 0.72);
@@ -1945,11 +2019,235 @@ button:disabled {
   color: var(--color-text-tertiary);
 }
 
-/* Desktop: the mobile design as a centered column, not full-bleed
-   (spec: "use the mobile design as a centered column on desktop for
-   now; dedicated desktop UI later"). Below this width, every
-   redesigned screen is full-bleed with no outer card/margin. */
-@media (min-width: 640px) {
+/* Desktop layout (design/desktop/README.md, variation D: "split
+   workbench"). Three full-height columns — what holds memories on the
+   left, the prompt above the open memory in the middle, traits open on
+   the right — so nothing the play loop touches is behind a tab.
+
+   No markup changes: `display: contents` lets the existing panels drop
+   out of their wrappers and place themselves on one grid, and the bottom
+   tab bar becomes the left column's Memories/Diary control. Below this
+   width the mobile layout is untouched. */
+@media (min-width: 1100px) {
+  .play-shell {
+    display: grid;
+    grid-template-columns: 22rem minmax(0, 1fr) 25rem;
+    grid-template-rows: auto auto minmax(0, 1fr);
+  }
+
+  .play-header {
+    grid-column: 1 / -1;
+  }
+
+  .play-tabs-body,
+  #play-tab-memories {
+    display: contents;
+  }
+
+  /* Left: the memory list, or the Diary. */
+  #play-memory-list-view,
+  #play-tab-diary {
+    grid-column: 1;
+    grid-row: 3;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 1.25rem 1.25rem;
+    border-right: 1px solid var(--color-border);
+  }
+
+  /* Middle: the prompt, and beneath it the memory being written into. */
+  .play-prompt-card {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .play-prompt-head,
+  .play-prompt-card [data-card-content] {
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .play-prompt-text {
+    font-size: 1.15rem;
+    max-width: 44rem;
+  }
+
+  #play-memory-detail-view {
+    grid-column: 2;
+    grid-row: 3;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1.5rem 2rem 2rem;
+    border-right: 1px solid var(--color-border);
+  }
+
+  .play-memory-detail {
+    max-width: 44rem;
+  }
+
+  /* Right: traits, always open. The hidden attribute is how the mobile
+     tab bar switches panels; on desktop this one never switches. */
+  #play-tab-traits,
+  #play-tab-traits[hidden] {
+    display: block !important;
+    grid-column: 3;
+    grid-row: 2 / -1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 1.25rem 1.25rem;
+  }
+
+  #play-tab-traits .play-trait-subtabs {
+    position: sticky;
+    top: 0;
+    background: var(--color-bg);
+    margin-left: -1.25rem;
+    margin-right: -1.25rem;
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  /* The bottom tab bar becomes the left column's Memories / Diary
+     control — the same buttons, in the place the choice now belongs. */
+  .play-bottom-tabs {
+    grid-column: 1;
+    grid-row: 2;
+    /* Sits at the top of its column, level with the traits sub-tabs,
+       rather than floating in a row sized by the prompt beside it. */
+    align-self: start;
+    border-top: none;
+    border-right: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    padding-bottom: 0;
+  }
+
+  .play-bottom-tab {
+    flex-direction: row;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.7rem 0;
+    border-bottom: 2px solid transparent;
+  }
+
+  .play-bottom-tab.active {
+    border-bottom-color: var(--color-accent);
+    color: var(--color-accent);
+  }
+
+  /* Traits are on screen already, so the tab that switches to them has
+     no job here. */
+  .play-bottom-tab[data-play-tab="traits"] {
+    display: none;
+  }
+
+  /* The memory detail is a column of its own now, so the header controls
+     that exist to get back out of it aren't needed. */
+  #play-header-back,
+  #play-memory-detail-more {
+    display: none !important;
+  }
+
+  /* Home and Saves stay a centred column — a title screen and a flat
+     list gain nothing from panes. */
+  .menu-screen {
+    max-width: 26rem;
+    margin: 0 auto;
+  }
+
+  .saves-screen .menu-vampire-list {
+    max-width: 46rem;
+    width: 100%;
+    margin: 0 auto;
+  }
+
+  /* Creation takes the same three columns as play — memories left, the
+     work in the middle, traits right — so the character is visible as it
+     is built and nothing moves when creation ends and play begins. The
+     stepper stays where it is on the phone: across the top, not down the
+     side. */
+  .wizard {
+    display: grid;
+    grid-template-columns: 22rem minmax(0, 1fr) 25rem;
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  }
+
+  .wizard .play-header {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  /* The stepper belongs to the form, so it spans the middle column
+     rather than the whole window. */
+  .wizard-header {
+    grid-column: 2;
+    grid-row: 2;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  .wizard-progress-track {
+    grid-column: 2;
+    grid-row: 3;
+    margin: 0 2rem 1rem;
+  }
+
+  .wizard-sheet {
+    display: block;
+    grid-row: 4 / -1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 0 1.25rem 1.5rem;
+  }
+
+  .wizard-sheet-memories {
+    grid-column: 1;
+    border-right: 1px solid var(--color-border);
+  }
+
+  .wizard-sheet-traits {
+    grid-column: 3;
+    border-left: 1px solid var(--color-border);
+  }
+
+  .wizard-steps-scroll {
+    grid-column: 2;
+    grid-row: 4;
+    padding: 0 2rem;
+  }
+
+  /* The running sheet shows everything added so far, so the per-step
+     list under the form would only repeat it. */
+  .wizard-steps-scroll .wizard-added-list {
+    display: none;
+  }
+
+  .wizard-steps-scroll .step-panel {
+    max-width: 36rem;
+  }
+
+  .wizard-nav {
+    grid-column: 2;
+    grid-row: 5;
+    justify-content: flex-end;
+    border-top: 1px solid var(--color-border);
+  }
+
+  .wizard-save-confirmation {
+    grid-column: 2;
+    grid-row: 5;
+  }
+
+  .wizard-back-button,
+  .wizard-next-button {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 8rem;
+  }
+}
+
+/* Between the phone and the desktop layout: the mobile design as a
+   centred column, which is what shipped before either existed. */
+@media (min-width: 640px) and (max-width: 1099px) {
   .menu-screen,
   .saves-screen,
   .wizard,

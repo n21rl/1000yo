@@ -125,11 +125,15 @@ its live `isReadyForPromptOne()` "can legitimately go false" after in-play
 edits. The exception was written for the QA fixture; the same thing reaches
 real saves through ordinary play.
 
-### Defect 4 — prompt 22 deck row duplicated (data) — NOT FIXED
+### Defect 4 — RETRACTED: prompt 22's duplicated row was never a defect
 
-`refs/prompts.csv` row 22 has identical text in columns `a` and `b`, so a
-second visit repeats the first. The real 22b text is not in the file;
-recovering it needs the source rulebook. Only duplicated row in the deck.
+Row 22 having identical text in columns `a` and `b` was flagged here as a
+data defect and "fixed" in commit `876b92f` by blanking column `b`. That was
+wrong. The user supplied the source rulebook's text for 22a and 22b, and they
+are the same instruction — the repeat is intentional in the original game,
+not a transcription error. `876b92f` was reverted; `refs/prompts.csv` is
+unchanged from before this report. Left here rather than deleted, so the
+mistake and its correction stay in the record.
 
 ### Defect 5 — no stationary flag in the creation wizard (app) — NOT FIXED
 
@@ -200,4 +204,5 @@ In order:
 3. Replay the campaign from turn 1 and run it to an end condition
    (`refs/rules.txt:232`: unable to check or lose a Skill or Resource when
    required, or a terminal prompt).
-4. Decide on defects 4 and 5.
+4. Defect 4 needs no decision — retracted. Defect 5 is in progress alongside
+   defect 3's fix.

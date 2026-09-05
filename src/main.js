@@ -177,11 +177,13 @@ const serializeCharacter = (currentCharacter) => ({
 const persistCurrentCharacter = () => {
   selectedVampireId = selectedVampireId || crypto.randomUUID();
   const vampires = loadStoredVampires();
+  const previousRecord = vampires.find((entry) => entry.id === selectedVampireId) ?? null;
   const record = createStoredRecord({
     selectedVampireId,
     character,
     promptState,
     serializeCharacter,
+    previousRecord,
   });
   const nextVampires = upsertVampireRecord(vampires, record);
   persistStoredVampires(nextVampires);
@@ -198,7 +200,7 @@ const resetPlayState = () => {
 const loadCharacter = (storedCharacter) => {
   character = Character.from(storedCharacter?.data ?? {});
   selectedVampireId = storedCharacter?.id ?? "";
-  hasSavedSetup = Boolean(storedCharacter?.isComplete && character.isReadyForPromptOne());
+  hasSavedSetup = Boolean(storedCharacter?.isComplete);
   currentStep = 0;
   selectedLaterTraitIds.clear();
   selectedCurseTraitIds.clear();
@@ -1341,7 +1343,7 @@ const getFirstIncompleteStepIndex = () => {
 
 const startPlay = async () => {
   const isTestVampire = selectedVampireId === TEST_VAMPIRE_ID;
-  if (!isTestVampire && !character.isReadyForPromptOne()) {
+  if (!isTestVampire && !hasSavedSetup) {
     currentStep = getFirstIncompleteStepIndex();
     setScreen("creation", { updateRoute: true });
     render();

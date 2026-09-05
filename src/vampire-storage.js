@@ -27,10 +27,11 @@ export const createStoredRecord = ({
   character,
   promptState,
   serializeCharacter,
+  previousRecord = null,
 }) => ({
   id: selectedVampireId || crypto.randomUUID(),
   updatedAt: new Date().toISOString(),
-  isComplete: character.isReadyForPromptOne(),
+  isComplete: Boolean(previousRecord?.isComplete) || character.isReadyForPromptOne(),
   data: serializeCharacter(character),
   campaign: serializeCampaignState(promptState),
 });

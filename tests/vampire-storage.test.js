@@ -81,6 +81,53 @@ test("createStoredRecord assembles serializable campaign save data", () => {
   assert.deepEqual(record.campaign, { currentPrompt: 3, visits: [[3, 1]], resolved: [], signature: null });
 });
 
+test("createStoredRecord keeps isComplete sticky once a previous record was already complete", () => {
+  const character = {
+    isReadyForPromptOne: () => false,
+    name: "Aster",
+    memories: [],
+    skills: [],
+    resources: [],
+    characters: [],
+    marks: [],
+    diary: null,
+  };
+  const promptState = { currentPrompt: 3, visits: new Map() };
+
+  const record = createStoredRecord({
+    selectedVampireId: "v-1",
+    character,
+    promptState,
+    serializeCharacter: (currentCharacter) => ({ name: currentCharacter.name }),
+    previousRecord: { id: "v-1", isComplete: true },
+  });
+
+  assert.equal(record.isComplete, true);
+});
+
+test("createStoredRecord still gates on the live check when there is no previous record", () => {
+  const character = {
+    isReadyForPromptOne: () => false,
+    name: "Aster",
+    memories: [],
+    skills: [],
+    resources: [],
+    characters: [],
+    marks: [],
+    diary: null,
+  };
+  const promptState = { currentPrompt: 1, visits: new Map() };
+
+  const record = createStoredRecord({
+    selectedVampireId: "v-1",
+    character,
+    promptState,
+    serializeCharacter: (currentCharacter) => ({ name: currentCharacter.name }),
+  });
+
+  assert.equal(record.isComplete, false);
+});
+
 test("sortVampiresByUpdatedAt orders newest first without mutating input", () => {
   const vampires = [
     { id: "v-1", updatedAt: "2024-01-01T00:00:00.000Z" },

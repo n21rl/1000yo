@@ -1420,14 +1420,6 @@ button:disabled {
   text-decoration: line-through;
 }
 
-.play-memory-hint {
-  text-align: center;
-  padding: 0.7rem 0 0.4rem;
-  font-size: 0.7rem;
-  color: var(--color-text-dimmest);
-  margin: 0;
-}
-
 .play-tab-add {
   display: flex;
   align-items: center;
@@ -1445,14 +1437,64 @@ button:disabled {
   cursor: pointer;
 }
 
-.play-tab-add:hover:not(:disabled) {
+.play-tab-add:hover:not([aria-disabled="true"]) {
   border-color: var(--color-accent);
   color: var(--color-text-primary);
 }
 
-.play-tab-add:disabled {
+/* Unavailable, but still pressable: Add memory stays clickable when every
+   slot is full so the press can say why (src/features/play/events.js). */
+.play-tab-add[aria-disabled="true"] {
   opacity: 0.5;
-  cursor: not-allowed;
+}
+
+/* The add button is a dock, not the last row of the list: it sits against
+   the bottom of its tab — directly above the tab bar on a phone, at the
+   foot of the column on desktop — and the list scrolls underneath it, so
+   the way to add something is in the same place whatever the list is
+   doing. It stays below everything, lost memories and struck traits
+   included: which group a row is in is a convenience, not a reason to
+   move the control.
+   Two rules make that hold at both list lengths. The panel stretches to
+   fill the scrollport, so a short list still leaves the button at the
+   bottom (`min-height: 100%` plus `margin-top: auto`); `position: sticky`
+   holds it there once the list is long enough to scroll. */
+#play-tab-memories,
+#play-tab-traits {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding-bottom: 0;
+}
+
+#play-memory-list-view,
+.play-trait-panel {
+  display: flex;
+  flex-direction: column;
+  /* `flex-basis: auto`, not the `flex: 1` shorthand: a basis of 0 leaves
+     the panel nothing to size itself from in this auto-height container,
+     and it collapses when the list is long. */
+  flex: 1 0 auto;
+}
+
+/* Nothing inside a dock panel shrinks to fit — the lists keep their
+   height and the panel scrolls instead. */
+#play-memory-list-view > *,
+.play-trait-panel > * {
+  flex-shrink: 0;
+}
+
+#play-memory-list-view .play-tab-add,
+.play-trait-panel .play-tab-add {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: auto;
+  margin-bottom: 1rem;
+  /* Rows pass behind the button, so the gaps around it have to be opaque
+     too — otherwise text shows through above the dock and between it and
+     the tab bar. Blur 0, so these are background panels, not shadows. */
+  box-shadow: 0 -0.75rem 0 var(--color-bg), 0 1rem 0 var(--color-bg);
 }
 
 .play-tab-add .material-icon {
@@ -1746,42 +1788,6 @@ button:disabled {
   width: 0.85rem;
   height: 0.85rem;
   color: inherit;
-}
-
-/* The add button is a dock, not the last row of the list: it sits against
-   the bottom of the traits panel — directly above the tab bar on a phone
-   — and the list scrolls underneath it, so the way to add a trait is in
-   the same place whatever the list is doing.
-   Two rules make that hold at both list lengths. The panel stretches to
-   fill the scrollport, so a short list still leaves the button at the
-   bottom (`min-height: 100%` plus `margin-top: auto`); `position: sticky`
-   holds it there once the list is long enough to scroll. */
-#play-tab-traits {
-  display: flex;
-  flex-direction: column;
-  min-height: 100%;
-  padding-bottom: 0;
-}
-
-.play-trait-panel {
-  display: flex;
-  flex-direction: column;
-  /* `flex-basis: auto`, not the `flex: 1` shorthand: a basis of 0 leaves
-     the panel nothing to size itself from in this auto-height container,
-     and it collapses when the list is long. */
-  flex: 1 0 auto;
-}
-
-.play-trait-panel .play-tab-add {
-  position: sticky;
-  bottom: 0;
-  z-index: 1;
-  margin-top: auto;
-  margin-bottom: 1rem;
-  /* Rows pass behind the button, so the gaps around it have to be opaque
-     too — otherwise text shows through above the dock and between it and
-     the tab bar. Blur 0, so these are background panels, not shadows. */
-  box-shadow: 0 -0.75rem 0 var(--color-bg), 0 1rem 0 var(--color-bg);
 }
 
 .play-trait-panel-label {
@@ -2202,7 +2208,9 @@ button:disabled {
     display: contents;
   }
 
-  /* Left: the memory list, or the Diary. */
+  /* Left: the memory list, or the Diary. The list view stays the flex
+     column it is on a phone, so its add button docks at the foot of the
+     column rather than trailing the last row. */
   #play-memory-list-view,
   #play-tab-diary {
     grid-column: 1;

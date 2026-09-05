@@ -228,16 +228,27 @@ this section records the load-bearing facts the implementation settled on.
   control once; per-row interactions (row clicks, More menus, Check/
   Strike-out) are bound fresh on each render, matching the existing
   `renderRecords`/`renderMenu` pattern.
-- **The trait add button is a dock, not a list row.** In the Traits tab
-  it sits against the bottom of the panel — above the tab bar on a phone,
-  at the foot of the traits column on desktop — and the list scrolls
-  underneath it, so the way to add a trait doesn't move. Two CSS rules
-  hold that at both list lengths (`styles.css`): `#play-tab-traits` is a
-  flex column stretched to the scrollport (`min-height: 100%`) with
-  `margin-top: auto` on the button, which handles a short list; `position:
-  sticky` handles a long one. The button's margins carry opaque
-  `box-shadow` panels because rows pass behind them. The Memories tab's
-  add button is deliberately untouched for now — it still follows its list.
+- **The add button is a dock, not a list row.** In both Memories and
+  Traits it sits against the bottom of its tab — above the tab bar on a
+  phone, at the foot of the column on desktop — and the list scrolls
+  underneath it, so the way to add something doesn't move. It stays below
+  *everything* in the tab, lost memories and struck-out traits included:
+  which group a row is in is a display convenience, and regrouping them
+  later must not drag the control around with it. Two CSS rules hold the
+  dock at both list lengths (`styles.css`): the panel is a flex column
+  stretched to the scrollport (`min-height: 100%`) with `margin-top: auto`
+  on the button, which handles a short list; `position: sticky` handles a
+  long one. The button's margins carry opaque `box-shadow` panels because
+  rows pass behind them.
+- **A full slate is surfaced on the attempt, not by a standing note.**
+  Add memory used to sit under a permanent "when full, you may need to
+  forget one" hint and go `disabled` at N/N. Both are gone: the button is
+  marked `aria-disabled` (rendering dimmed) but stays clickable, and the
+  press opens an `openAlertDialog` naming the two ways out — forget a
+  memory, or move one to the Diary. `disabled` is wrong here precisely
+  because it swallows the click that would explain itself; the fullness
+  check lives in the handler (`src/features/play/events.js`) against the
+  character, not against the button's DOM state.
 
 - **No per-record auto-collapse.** The old `collapsedRecords` system is
   gone. Struck-out traits and lost memories live in a permanent,

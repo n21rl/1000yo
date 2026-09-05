@@ -1,5 +1,5 @@
 import { formatPromptStamp, getPlaySignature } from "../prompt-flow.js";
-import { openActionSheet, openConfirmDialog, openPromptDialog } from "../../ui/dialog.js";
+import { openActionSheet, openAlertDialog, openConfirmDialog, openPromptDialog } from "../../ui/dialog.js";
 
 export const bindPlayEvents = ({
   elements,
@@ -81,9 +81,20 @@ export const bindPlayEvents = ({
   });
 
   elements.addMemoryButton.addEventListener("click", async () => {
+    const character = getCharacter();
+    /* The full slate is surfaced when it's in the way, rather than by a
+       standing note under the list. The button is only aria-disabled, so
+       the press still lands here and can say what to do about it. */
+    if (character.activeMemories.length >= character.memorySlots) {
+      await openAlertDialog({
+        title: "Every slot is full",
+        body: "A new memory needs a free slot. Open a memory and use its ⋮ to forget it or move it to the Diary.",
+      });
+      return;
+    }
     const text = await openPromptDialog({ title: "Add a memory", label: "First experience" });
     if (text === null) return;
-    const didSave = getCharacter().addMemory(text, [], null, currentPromptStamp());
+    const didSave = character.addMemory(text, [], null, currentPromptStamp());
     if (!didSave) return;
     markDirty();
     render();

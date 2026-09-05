@@ -49,6 +49,12 @@
   color: var(--color-text-primary);
   background: var(--color-bg);
   line-height: 1.45;
+
+  /* The palette above is the only one this app has, so tell the browser:
+     the controls it draws itself — checkboxes, the select popup,
+     scrollbars — follow it instead of arriving as light-mode widgets on
+     a near-black surface. */
+  color-scheme: dark;
 }
 
 * {
@@ -1742,6 +1748,42 @@ button:disabled {
   color: inherit;
 }
 
+/* The add button is a dock, not the last row of the list: it sits against
+   the bottom of the traits panel — directly above the tab bar on a phone
+   — and the list scrolls underneath it, so the way to add a trait is in
+   the same place whatever the list is doing.
+   Two rules make that hold at both list lengths. The panel stretches to
+   fill the scrollport, so a short list still leaves the button at the
+   bottom (`min-height: 100%` plus `margin-top: auto`); `position: sticky`
+   holds it there once the list is long enough to scroll. */
+#play-tab-traits {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  padding-bottom: 0;
+}
+
+.play-trait-panel {
+  display: flex;
+  flex-direction: column;
+  /* `flex-basis: auto`, not the `flex: 1` shorthand: a basis of 0 leaves
+     the panel nothing to size itself from in this auto-height container,
+     and it collapses when the list is long. */
+  flex: 1 0 auto;
+}
+
+.play-trait-panel .play-tab-add {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: auto;
+  margin-bottom: 1rem;
+  /* Rows pass behind the button, so the gaps around it have to be opaque
+     too — otherwise text shows through above the dock and between it and
+     the tab bar. Blur 0, so these are background panels, not shadows. */
+  box-shadow: 0 -0.75rem 0 var(--color-bg), 0 1rem 0 var(--color-bg);
+}
+
 .play-trait-panel-label {
   font-family: var(--font-mono);
   font-size: 0.58rem;
@@ -1970,12 +2012,31 @@ button:disabled {
   border-radius: var(--radius);
 }
 
-/* Shared trait add/edit modal, restyled onto tokens (structure/ids unchanged) */
-.modal-shell {
+/* ---------------------------------------------------------------------
+   Shared trait/memory/diary modal (#play-trait-modal), on the same visual
+   language as the dialog primitive (.app-dialog, src/ui/dialog.js): one
+   dark surface with a square 1px border, a serif title, mono uppercase
+   field labels, square inputs on the page background, and a pair of
+   equal-width actions at the foot. A form modal and a confirm dialog are
+   the same object to the player, so they read the same.
+   Structure and ids are unchanged — what these rules override is the
+   legacy `.card` / `.compact-form` / base `input`+`button` styling the
+   modal still inherits. */
+
+/* One scrim, the same one the dialog layer uses. The shell used to tint
+   itself as well, which dimmed the screen twice as far as a confirm
+   dialog does over the same content. */
+.modal-backdrop {
   background: rgba(12, 10, 9, 0.72);
 }
 
 .modal-card.card {
+  /* The app is a phone-width column at every width; the modal matches it
+     rather than sprawling across a desktop window. */
+  width: min(100%, 26rem);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: 1.25rem;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
@@ -1985,7 +2046,36 @@ button:disabled {
   backdrop-filter: none;
 }
 
+.modal-header {
+  margin-bottom: 1rem;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--color-text-primary);
+}
+
+/* The card is the panel. A second bordered, tinted box inside it is the
+   legacy look, and the modal header already says what this form is. */
+.modal-card .compact-form {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  background: none;
+}
+
+.modal-card .supporting {
+  margin: 0 0 1rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--color-text-muted);
+}
+
 .modal-card label {
+  margin-bottom: 0.4rem;
   color: var(--color-text-tertiary);
   font-family: var(--font-mono);
   font-size: var(--font-size-label);
@@ -1997,10 +2087,73 @@ button:disabled {
 .modal-card input,
 .modal-card textarea,
 .modal-card select {
+  /* Fields carry the gap to whatever follows them, so a label reads as
+     the head of its own field rather than the tail of the one above.
+     It collapses into the actions' own margin at the foot of the form. */
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.7rem;
+  font-size: 0.9rem;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius);
   color: var(--color-text-primary);
+}
+
+.modal-card input::placeholder,
+.modal-card textarea::placeholder {
+  color: var(--color-text-dim);
+}
+
+.modal-card input:focus-visible,
+.modal-card textarea:focus-visible,
+.modal-card select:focus-visible {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+/* The edit-memory form lays its experience rows out on their own grid,
+   so the per-field margin would double up on that gap. */
+.modal-card .memory-experience-row textarea {
+  margin-bottom: 0;
+}
+
+.modal-card .modal-checkbox-row {
+  margin: 0 0 1rem;
+  align-items: center;
+}
+
+.modal-card .modal-checkbox-row input[type="checkbox"] {
+  /* The box is a checkbox, not a text field: none of the field sizing
+     above applies to it. */
+  width: 0.9rem;
+  height: 0.9rem;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--color-accent);
+}
+
+/* The action pair matches .app-dialog-actions: two equal buttons on one
+   row, cancel on the left. The submit stays first in the markup so Enter
+   still submits the form, so the row is reversed here rather than in the
+   DOM. */
+.modal-card .form-actions {
+  display: flex;
+  flex-direction: row-reverse;
+  flex-wrap: nowrap;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}
+
+.modal-card .form-actions button {
+  flex: 1;
+  width: auto;
+  min-width: 0;
+  padding: 0.7rem;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
 }
 
 .modal-card button[type="submit"] {
@@ -2017,6 +2170,11 @@ button:disabled {
   background: none;
   border: 1px solid var(--color-border);
   color: var(--color-text-tertiary);
+}
+
+.modal-card .ghost-button:hover {
+  border-color: var(--color-text-muted);
+  color: var(--color-text-primary);
 }
 
 /* Desktop layout (design/desktop/README.md, variation D: "split
@@ -2089,7 +2247,11 @@ button:disabled {
      tab bar switches panels; on desktop this one never switches. */
   #play-tab-traits,
   #play-tab-traits[hidden] {
-    display: block !important;
+    /* Flex, not block: the column is the traits panel's scrollport here,
+       and the add button docks at its foot the same way it does on a
+       phone. `!important` is only to beat the [hidden] tab switching. */
+    display: flex !important;
+    flex-direction: column;
     grid-column: 3;
     grid-row: 2 / -1;
     min-height: 0;

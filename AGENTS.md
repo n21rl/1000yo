@@ -133,6 +133,16 @@ this section records the load-bearing facts the implementation settled on.
 - **Dialogs**: `src/ui/dialog.js` — `openConfirmDialog`, `openPromptDialog`,
   `openActionSheet`, `openAlertDialog`. Every `window.confirm`/`prompt`/
   `alert` in the play/menu UI goes through these instead.
+  `.app-dialog` is also the visual language for *anything* that opens over
+  the app: the shared form modal (`#play-trait-modal` — add/edit a trait,
+  edit a memory, create the Diary) is styled to match it rather than
+  carrying a look of its own, so a form and a confirmation read as the
+  same object. One scrim at `rgba(12, 10, 9, 0.72)`, a square-bordered
+  `--color-surface` card, a serif title, mono uppercase field labels, and
+  two equal-width actions with cancel on the left. The modal markup keeps
+  its submit button first (so Enter still submits); the row is reversed in
+  CSS. `:root` sets `color-scheme: dark` so the controls the browser draws
+  itself — checkboxes, the select popup, scrollbars — follow the palette.
 - **Engine fields added for the redesign** (`src/game.js`): memory
   `title`/`createdOrder` (creation ordinal, frozen at creation — memory
   labels must never be derived from array position, since hard-delete is
@@ -218,6 +228,17 @@ this section records the load-bearing facts the implementation settled on.
   control once; per-row interactions (row clicks, More menus, Check/
   Strike-out) are bound fresh on each render, matching the existing
   `renderRecords`/`renderMenu` pattern.
+- **The trait add button is a dock, not a list row.** In the Traits tab
+  it sits against the bottom of the panel — above the tab bar on a phone,
+  at the foot of the traits column on desktop — and the list scrolls
+  underneath it, so the way to add a trait doesn't move. Two CSS rules
+  hold that at both list lengths (`styles.css`): `#play-tab-traits` is a
+  flex column stretched to the scrollport (`min-height: 100%`) with
+  `margin-top: auto` on the button, which handles a short list; `position:
+  sticky` handles a long one. The button's margins carry opaque
+  `box-shadow` panels because rows pass behind them. The Memories tab's
+  add button is deliberately untouched for now — it still follows its list.
+
 - **No per-record auto-collapse.** The old `collapsedRecords` system is
   gone. Struck-out traits and lost memories live in a permanent,
   always-expanded section instead of collapsing in place. The prompt

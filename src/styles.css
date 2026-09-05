@@ -1037,6 +1037,7 @@ button:disabled {
 /* Play screen (Phases 6-9). Fully scoped under .play-shell — the shared
    trait modal (#play-trait-modal) is restyled separately, below. */
 .play-shell {
+  position: relative;
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -1472,6 +1473,17 @@ button:disabled {
 .play-memory-detail-title {
   font-family: var(--font-serif);
   font-size: 1.35rem;
+}
+
+/* The memory's ⋮ belongs to the memory it acts on, so it lives in the
+   detail head. On the phone the detail is a pushed screen whose controls
+   sit in the header, so it is lifted into the header's right slot — which
+   is empty while a detail is open (renderMemoriesTab hides the avatar and
+   the hamburger there). The desktop layout puts it back in flow. */
+#play-memory-detail-more {
+  position: absolute;
+  top: calc(var(--safe-top) + 0.6rem);
+  right: 1.25rem;
 }
 
 .play-experience-list {
@@ -2140,11 +2152,19 @@ button:disabled {
     display: none;
   }
 
-  /* The memory detail is a column of its own now, so the header controls
-     that exist to get back out of it aren't needed. */
-  #play-header-back,
-  #play-memory-detail-more {
+  /* The memory detail is a column of its own now, so the header control
+     that exists to get back out of it isn't needed. */
+  #play-header-back {
     display: none !important;
+  }
+
+  /* Nothing to lift it into: the header keeps the avatar here, and the
+     memory detail is a column of its own — so the ⋮ sits in flow at the
+     end of the detail head, beside the title of the memory it acts on. */
+  #play-memory-detail-more {
+    position: static;
+    align-self: center;
+    margin-left: auto;
   }
 
   /* Home and Saves stay a centred column — a title screen and a flat

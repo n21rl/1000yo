@@ -1,0 +1,9 @@
+{
+  "stamp": "46a",
+  "reasoning": "No Resource is actually flagged stationary on the sheet (the cellar vault was never marked stationary at creation), so the conversion clause has no target, exactly as with 29a's stationary-Resource clause earlier. Xene flees Alexandria for Bruges under a new name and a new claimed profession.",
+  "operations": [
+    { "op": "rename", "name": "Katelijne Vos" },
+    { "op": "add_experience", "memoryId": "memory-0c77db1c-c659-40b9-9852-ac69a41f7260", "text": "Word of the mirror night follows me even after Ilya's vigil, and I take ship west for Bruges under yet another name, Katelijne Vos, claiming to be a widowed spice-merchant with a fortune in her strongbox and no husband left to answer for her." }
+  ],
+  "gameEnded": false
+}

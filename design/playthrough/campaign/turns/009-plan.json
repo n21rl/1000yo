@@ -1,0 +1,10 @@
+{
+  "stamp": "35a",
+  "reasoning": "The old foe is Radoje the Tanner. Decades on, his grandson turns up destitute in an Alexandria debtor's market; Xene, on an impulse of guilt she won't examine, buys his freedom. Checks the last untouched original trade Skill to do it.",
+  "operations": [
+    { "op": "check_skill", "id": "skill-e5a61990-f97f-4f8a-ae88-2fc1356a5d66" },
+    { "op": "create_character", "name": "Dragan", "description": "Radoje the Tanner's grandson, sold into an Alexandria debtor's market; I bought his freedom on a whim I don't examine too closely", "type": "mortal" },
+    { "op": "add_experience", "memoryId": "memory-fd7b1e1f-c3ba-40c1-a731-36feb98a12f0", "text": "In an Alexandria debtor's market I recognize a tanner's ring on a starving boy's hand — Radoje's own grandson Dragan, sold off for his grandfather's debts — and some old, unaccountable guilt makes me weigh out coral enough to buy his freedom." }
+  ],
+  "gameEnded": false
+}

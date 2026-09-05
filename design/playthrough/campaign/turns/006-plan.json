@@ -1,0 +1,10 @@
+{
+  "stamp": "25a",
+  "reasoning": "Srebrenica's mining camp is too small and watchful for Beatriz's old cover of buying butcher's blood in bulk — that Resource is lost. Jelena develops a new feeding technique instead: posing as an infirmary tender for the mine's injured, a new Skill.",
+  "operations": [
+    { "op": "strike_resource", "id": "resource-2b28dac4-3973-4636-9ac0-00c05062d2c9" },
+    { "op": "create_skill", "name": "Tending the Mine's Infirmary", "description": "I dress wounds with more care than any miner has known, and take my due from them before they wake" },
+    { "op": "add_experience", "memoryId": "memory-b7b584f5-8f65-4739-8aa7-f902637feadf", "text": "In Srebrenica's close camp, Beatriz's bought blood draws whispers within a week; I take up bandages instead and tend the mine's infirmary, learning to take my due from the wounded before they wake." }
+  ],
+  "gameEnded": false
+}

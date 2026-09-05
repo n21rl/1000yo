@@ -1,0 +1,8 @@
+{
+  "stamp": "51a",
+  "reasoning": "A pure loss prompt: hunger strips away a random Experience from a Memory near the middle of the list. Memory III sits in the middle of the active Memories (I, II, III, V, VI); losing its second Experience at random.",
+  "operations": [
+    { "op": "delete_experience", "memoryId": "memory-af6ab8dd-9657-4bf2-8b78-21aab5c4eb71", "index": 1 }
+  ],
+  "gameEnded": false
+}

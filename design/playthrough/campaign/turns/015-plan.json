@@ -1,0 +1,10 @@
+{
+  "stamp": "56a",
+  "reasoning": "The Alexandria cellar vault is left behind and lost, its worth folded into a new project in Bruges: a vast chiming clockwork Katelijne claims will track the tides for her ships, but which is secretly cut to mark centuries. Gains the named Skill Visionary.",
+  "operations": [
+    { "op": "strike_resource", "id": "resource-6fccdfb9-cde7-4559-8c25-99af80db235d" },
+    { "op": "create_skill", "name": "Visionary", "description": "I can see the shape of a vast, patient mechanism years before the last gear is cut" },
+    { "op": "add_experience", "memoryId": "memory-af6ab8dd-9657-4bf2-8b78-21aab5c4eb71", "text": "I break ground on a vast chiming clockwork in my Bruges warehouse, telling the guild it will track the tides for my ships; secretly each gear is cut to mark out centuries, not hours, and no mortal mind but mine can guess why." }
+  ],
+  "gameEnded": false
+}

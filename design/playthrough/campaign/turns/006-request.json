@@ -1,0 +1,261 @@
+{
+  "turn": 6,
+  "stamp": "25a",
+  "promptText": "Your methods for acquiring victims are no longer effective. What has changed? Lose a Resource and create a Skill which describes your new feeding techniques.",
+  "terminalPrompt": false,
+  "sheet": {
+    "name": "Jelena Vranić",
+    "memorySlots": 5,
+    "memories": [
+      {
+        "id": "memory-fd7b1e1f-c3ba-40c1-a731-36feb98a12f0",
+        "label": "Memory I",
+        "lost": false,
+        "lostReason": "",
+        "storedInDiary": false,
+        "experiences": [
+          {
+            "text": "I am Ismenia, daughter of Marin Foscari, born in the free city of Ragusa in the year of Our Lord 1358; I keep my father's ledgers and haggle for coral and salt along the Adriatic wharves.",
+            "prompt": ""
+          }
+        ]
+      },
+      {
+        "id": "memory-8256a5fe-6d33-41a5-be38-5225be43f1e5",
+        "label": "Memory II",
+        "lost": false,
+        "lostReason": "",
+        "storedInDiary": false,
+        "experiences": [
+          {
+            "text": "Marin Foscari teaches me to falsify the weights recorded in the Foscari Ledger when the harvest is thin, so that no household on our street goes hungry for want of an honest scale.",
+            "prompt": ""
+          },
+          {
+            "text": "As my father once shaped me over the ledger, I shape the foundling Vuk from infancy in the Srebrenica camps, feeding him just enough truth and just enough lies that he wants nothing in the world but to serve me.",
+            "prompt": "22a"
+          }
+        ]
+      },
+      {
+        "id": "memory-af6ab8dd-9657-4bf2-8b78-21aab5c4eb71",
+        "label": "Memory III",
+        "lost": false,
+        "lostReason": "",
+        "storedInDiary": false,
+        "experiences": [
+          {
+            "text": "I read our marriage contract aloud to Beatriz Gundulić myself, in Latin, Slavic, and Italian in turn, so that she will understand exactly what she is promising away before her father's notary arrives.",
+            "prompt": ""
+          },
+          {
+            "text": "Exposed as a monster in Ragusa, I flee inland with Beatriz Gundulić at my heels; among the strangers of Trebinje I talk my way past the gate-wardens with lies smoother than any contract and take the name Jelena Vranić.",
+            "prompt": "4a"
+          },
+          {
+            "text": "Beatriz discovers what I have become and does not scream — instead she starts buying pig's blood from the butcher twice a week in her own name, and I drink it cold behind a shuttered cellar door while she keeps watch.",
+            "prompt": "3a"
+          }
+        ]
+      },
+      {
+        "id": "memory-b3ef0407-7358-4fab-84f8-d325d73356ff",
+        "label": "Memory IV",
+        "lost": false,
+        "lostReason": "",
+        "storedInDiary": false,
+        "experiences": [
+          {
+            "text": "Fra Anzelmo climbs the stair to my rented room above the Customs House to hear confession from sailors too ashamed to kneel in the cathedral, and I listen through the wall to every sin they bring him.",
+            "prompt": ""
+          },
+          {
+            "text": "Radoje the Tanner learns that Fra Anzelmo followed us out of Ragusa to drag me home for judgment, and turns our few Trebinje friends into a mob at our door — I stand as still as ash in the dark until the priest is alone, then break his neck to keep his mouth shut forever, and Beatriz and I flee by night toward the silver mines of Srebrenica.",
+            "prompt": "14a"
+          }
+        ]
+      },
+      {
+        "id": "memory-b7b584f5-8f65-4739-8aa7-f902637feadf",
+        "label": "Memory V",
+        "lost": false,
+        "lostReason": "",
+        "storedInDiary": false,
+        "experiences": [
+          {
+            "text": "The Voivode of Ash meets me on the Customs House stair on a night thick with fog, opens my throat with one grey finger, and drinks until I am no longer Ragusa's daughter but his — I wake with A Throat That Does Not Close and the taste of ash in my mouth forever after.",
+            "prompt": ""
+          },
+          {
+            "text": "My skin dries to the grey of cold ash and I learn to stand as still as the Voivode himself, motionless in doorways until even rats forget I am there — I feel him settling further into my bones.",
+            "prompt": "7a"
+          }
+        ]
+      }
+    ],
+    "characters": [
+      {
+        "id": "character-f279516a-d109-4a49-9edc-686d584ec241",
+        "name": "Marin Foscari",
+        "description": "my father, a coral merchant who taught me the weight of a fair scale",
+        "used": false,
+        "lost": false,
+        "type": "mortal"
+      },
+      {
+        "id": "character-f80b3856-cad2-4d6a-a596-95bcf08ffa6f",
+        "name": "Beatriz Gundulić",
+        "description": "my betrothed, promised to me since childhood by our fathers' contracts — she fled Ragusa at my side rather than be left behind to answer for me",
+        "used": false,
+        "lost": false,
+        "type": "mortal"
+      },
+      {
+        "id": "character-83cbcfab-81ab-481e-b7c6-f28d2d7ab781",
+        "name": "Fra Anzelmo",
+        "description": "the Franciscan confessor who knows every sin in Ragusa, including mine",
+        "used": false,
+        "lost": true,
+        "type": "mortal"
+      },
+      {
+        "id": "character-5fccf334-1666-4768-a89f-29f1fb104c9c",
+        "name": "The Voivode of Ash",
+        "description": "a hollow, cinder-grey nobleman who has outlived seven names for his own title, and has watched Ragusa's walls rise course by course",
+        "used": false,
+        "lost": false,
+        "type": "immortal"
+      },
+      {
+        "id": "character-19914ab5-7f98-4bb6-916a-506b0f2fd509",
+        "name": "Radoje the Tanner",
+        "description": "a Trebinje local who covets Beatriz and resents the two outlander women",
+        "used": false,
+        "lost": false,
+        "type": "mortal"
+      },
+      {
+        "id": "character-83b9e061-4cef-4869-a9fd-42d7649b0fa0",
+        "name": "Vuk",
+        "description": "a foundling I have raised from infancy in the silver-mine camps to want nothing but to serve me",
+        "used": false,
+        "lost": false,
+        "type": "mortal"
+      }
+    ],
+    "skills": [
+      {
+        "id": "skill-e5a61990-f97f-4f8a-ae88-2fc1356a5d66",
+        "name": "Weighing Coral by Touch",
+        "description": "I can judge a strand's worth blind, by the roll of the beads in my palm",
+        "used": false,
+        "lost": false
+      },
+      {
+        "id": "skill-656be402-fb34-450d-9a3b-03e35ced4a6f",
+        "name": "Reading Contracts in Three Tongues",
+        "description": "Latin, Slavic, and the merchant Italian of the wharves",
+        "used": false,
+        "lost": false
+      },
+      {
+        "id": "skill-a54c9f20-6701-470a-bbfd-2d9286a48558",
+        "name": "Talking My Way Past a Locked Gate",
+        "description": "a soft voice and a plausible errand open most doors in Ragusa",
+        "used": true,
+        "lost": false
+      },
+      {
+        "id": "skill-656a60ae-4ac2-4caf-b85d-be4b5e4c015f",
+        "name": "Standing Still as Ash",
+        "description": "I can hold utterly motionless for hours, the way the Voivode does, until even rats forget I am there",
+        "used": true,
+        "lost": false
+      }
+    ],
+    "resources": [
+      {
+        "id": "resource-79b92ce9-baf9-403d-929c-b324bd6e316a",
+        "name": "A String of Uncut Coral",
+        "description": "beads my father let me keep from a bad lot, red as old blood",
+        "used": false,
+        "lost": false
+      },
+      {
+        "id": "resource-12047d88-6d1c-4ac5-b554-614f614a394c",
+        "name": "The Foscari Ledger",
+        "description": "years of trade recorded in my own hand",
+        "used": false,
+        "lost": false
+      },
+      {
+        "id": "resource-bc28d497-ac08-448f-83c1-5b210d6256c8",
+        "name": "A Rented Room Above the Customs House",
+        "description": "where I sleep when the tide keeps me from home",
+        "used": false,
+        "lost": true
+      },
+      {
+        "id": "resource-2b28dac4-3973-4636-9ac0-00c05062d2c9",
+        "name": "Butcher's Blood in Beatriz's Name",
+        "description": "twice a week she buys more than any household could eat and tells no one why",
+        "used": false,
+        "lost": false
+      }
+    ],
+    "marks": [
+      {
+        "id": "mark-171cc87d-49f9-498e-ae1f-7a20fa109044",
+        "name": "A Throat That Does Not Close",
+        "description": "a wound at my neck that never fully scars over; I bind it in silk and call it a fever-scar",
+        "used": false,
+        "lost": false
+      }
+    ],
+    "diary": {
+      "exists": false,
+      "resourceId": null,
+      "memoryIds": []
+    },
+    "remaining": {
+      "uncheckedSkills": 2,
+      "unlostSkills": 4,
+      "uncheckedResources": 3,
+      "unlostResources": 3,
+      "freeMemorySlots": 0
+    }
+  },
+  "availableOperations": [
+    "create_character",
+    "create_skill",
+    "create_resource",
+    "create_mark",
+    "add_memory",
+    "add_experience",
+    "forget_memory",
+    "move_memory_to_diary",
+    "delete_experience",
+    "edit_experience",
+    "add_memory_slot",
+    "remove_memory_slot",
+    "no_mechanical_change",
+    "rename",
+    "check_skill",
+    "check_resource",
+    "check_character",
+    "strike_skill",
+    "strike_resource",
+    "strike_character",
+    "edit_skill",
+    "edit_resource",
+    "edit_character",
+    "edit_mark",
+    "delete_skill",
+    "delete_resource",
+    "delete_character",
+    "delete_mark"
+  ],
+  "notes": [
+    "A Memory created by add_memory this turn has no id yet at plan-authoring time (its id is assigned by the app when the operation runs). Use the literal string \"$new\" as memoryId in a later operation in the SAME plan (e.g. add_experience) to target it."
+  ]
+}

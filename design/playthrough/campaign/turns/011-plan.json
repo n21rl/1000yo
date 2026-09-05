@@ -1,0 +1,10 @@
+{
+  "stamp": "42a",
+  "reasoning": "All five Memories are full (3/3 each). Fra Anzelmo's thread (Memory IV) already reached its conclusion last turn when his revenant crumbled satisfied, so it is the one forgotten to make room. The new Memory holds this prompt's Experience: Xene cannot bear the new silvered Murano mirrors coming into fashion, since she casts no reflection in them. The last unchecked Skill, Tending the Mine's Infirmary, is checked as she covers her tracks afterward.",
+  "operations": [
+    { "op": "forget_memory", "memoryId": "memory-b3ef0407-7358-4fab-84f8-d325d73356ff" },
+    { "op": "check_skill", "id": "skill-366c4cbc-0206-49f6-ae2e-65d24a59aaef" },
+    { "op": "add_memory", "text": "At a merchant's soiree I am led before a new silvered Murano mirror and see nothing where my face should be; a serving girl shrieks and the room turns on me before I fight free, and afterward I return in secret, playing physician to the wound I gave her, binding it myself to buy her silence." }
+  ],
+  "gameEnded": false
+}

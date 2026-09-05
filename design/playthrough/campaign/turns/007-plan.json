@@ -1,0 +1,9 @@
+{
+  "stamp": "29a",
+  "reasoning": "No stationary Resources exist, so that clause has nothing to strike. Exposed again, Jelena flees far past the Balkans to Alexandria, where she knows neither Arabic nor Greek; she leans on the universal language of trade to get by, and takes a new Greek-sounding name to move among the harbor's merchant community.",
+  "operations": [
+    { "op": "rename", "name": "Xene Drakos" },
+    { "op": "add_experience", "memoryId": "memory-fd7b1e1f-c3ba-40c1-a731-36feb98a12f0", "text": "Exposed once more in the Srebrenica camps, I take ship down the rivers and across the sea to Alexandria, where no one speaks my tongues; I trade in gesture, scale, and coin until the words come easier, and take the name Xene Drakos among the harbor's Greeks." }
+  ],
+  "gameEnded": false
+}

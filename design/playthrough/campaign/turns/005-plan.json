@@ -1,0 +1,10 @@
+{
+  "stamp": "22a",
+  "reasoning": "Jelena raises a foundling from infancy in the Srebrenica mining camps to want nothing but to serve her — a mortal Character shaped entirely to her will, echoing how her own father shaped her at the ledger. The room above the Ragusa Customs House is lost to her now, far away and unreachable.",
+  "operations": [
+    { "op": "create_character", "name": "Vuk", "description": "a foundling I have raised from infancy in the silver-mine camps to want nothing but to serve me", "type": "mortal" },
+    { "op": "strike_resource", "id": "resource-bc28d497-ac08-448f-83c1-5b210d6256c8" },
+    { "op": "add_experience", "memoryId": "memory-8256a5fe-6d33-41a5-be38-5225be43f1e5", "text": "As my father once shaped me over the ledger, I shape the foundling Vuk from infancy in the Srebrenica camps, feeding him just enough truth and just enough lies that he wants nothing in the world but to serve me." }
+  ],
+  "gameEnded": false
+}

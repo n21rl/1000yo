@@ -1,0 +1,10 @@
+{
+  "stamp": "70a",
+  "reasoning": "No Skill is unchecked, so check-a-Skill substitutes to losing a Resource: the wool-warehouse share, signed away in a guild contract dispute she doesn't fully understand. All five active Memories are full, so Memory II (Marin/Vuk/balance-scale, its thread not revisited in a long while) is forgotten to make room for this turn's new Memory.",
+  "operations": [
+    { "op": "strike_resource", "id": "resource-d01ec462-5274-4819-bb8c-0c2de63d8f53" },
+    { "op": "forget_memory", "memoryId": "memory-8256a5fe-6d33-41a5-be38-5225be43f1e5" },
+    { "op": "add_memory", "text": "The wool-guild masters draft me into a contract dispute I don't fully understand — the laws have moved on since my mortal years — and by the time I catch the trick, my half of the warehouse has been signed away to a smiling rival; my furious visit to his home accomplishes nothing but frightening his dog." }
+  ],
+  "gameEnded": false
+}

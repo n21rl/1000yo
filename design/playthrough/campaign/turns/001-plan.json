@@ -1,0 +1,11 @@
+{
+  "stamp": "4a",
+  "reasoning": "Ismenia is exposed as a monster in Ragusa and must flee to a neighboring region. She has no stationary Resources, so that clause has nothing to act on. She checks a Skill (Talking My Way Past a Locked Gate, fitting for talking her way out of the city and past strangers' gates). Her betrothed Beatriz Gundulić flees with her rather than be abandoned. Among strangers she adopts a new, Slavic name to blend in inland.",
+  "operations": [
+    { "op": "check_skill", "id": "skill-a54c9f20-6701-470a-bbfd-2d9286a48558" },
+    { "op": "edit_character", "id": "character-f80b3856-cad2-4d6a-a596-95bcf08ffa6f", "description": "my betrothed, promised to me since childhood by our fathers' contracts — she fled Ragusa at my side rather than be left behind to answer for me" },
+    { "op": "rename", "name": "Jelena Vranić" },
+    { "op": "add_experience", "memoryId": "memory-af6ab8dd-9657-4bf2-8b78-21aab5c4eb71", "text": "Exposed as a monster in Ragusa, I flee inland with Beatriz Gundulić at my heels; among the strangers of Trebinje I talk my way past the gate-wardens with lies smoother than any contract and take the name Jelena Vranić." }
+  ],
+  "gameEnded": false
+}

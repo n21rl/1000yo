@@ -1,0 +1,9 @@
+{
+  "stamp": "3a",
+  "reasoning": "A loved one discovers Jelena's condition and helps her — this is Beatriz, who fled Ragusa with her and is already established as beloved. Mortals are available so no new Character is needed. Her assistance becomes a Resource: blood bought under false pretenses.",
+  "operations": [
+    { "op": "create_resource", "name": "Butcher's Blood in Beatriz's Name", "description": "twice a week she buys more than any household could eat and tells no one why" },
+    { "op": "add_experience", "memoryId": "memory-af6ab8dd-9657-4bf2-8b78-21aab5c4eb71", "text": "Beatriz discovers what I have become and does not scream — instead she starts buying pig's blood from the butcher twice a week in her own name, and I drink it cold behind a shuttered cellar door while she keeps watch." }
+  ],
+  "gameEnded": false
+}

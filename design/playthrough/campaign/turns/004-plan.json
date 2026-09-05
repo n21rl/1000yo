@@ -1,0 +1,11 @@
+{
+  "stamp": "14a",
+  "reasoning": "No enemy Character exists yet, so one is created per the rule that a Prompt naming a Character type gets one created if none is available. No Resource of ours is currently lost, so the 'lost Resource' is left as narrative color rather than forced onto the sheet — instead of spending three checks to regain a Resource we don't mechanically have, Jelena takes the survival branch: check one Skill to barely survive. Fra Anzelmo, established as her old confessor, is recast as having secretly followed her out of Ragusa to bring her back to answer for her sins; the mob the enemy raises against her forces her to kill him to escape.",
+  "operations": [
+    { "op": "create_character", "name": "Radoje the Tanner", "description": "a Trebinje local who covets Beatriz and resents the two outlander women", "type": "mortal" },
+    { "op": "check_skill", "id": "skill-656a60ae-4ac2-4caf-b85d-be4b5e4c015f" },
+    { "op": "strike_character", "id": "character-83cbcfab-81ab-481e-b7c6-f28d2d7ab781" },
+    { "op": "add_experience", "memoryId": "memory-b3ef0407-7358-4fab-84f8-d325d73356ff", "text": "Radoje the Tanner learns that Fra Anzelmo followed us out of Ragusa to drag me home for judgment, and turns our few Trebinje friends into a mob at our door — I stand as still as ash in the dark until the priest is alone, then break his neck to keep his mouth shut forever, and Beatriz and I flee by night toward the silver mines of Srebrenica." }
+  ],
+  "gameEnded": false
+}

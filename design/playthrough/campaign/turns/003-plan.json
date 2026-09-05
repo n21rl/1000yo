@@ -1,0 +1,9 @@
+{
+  "stamp": "7a",
+  "reasoning": "Jelena's body begins to echo the Voivode of Ash's own hollow, cinder-grey stillness. New Skill reflects this inherited trait; the Experience joins Memory V, which already holds her turning.",
+  "operations": [
+    { "op": "create_skill", "name": "Standing Still as Ash", "description": "I can hold utterly motionless for hours, the way the Voivode does, until even rats forget I am there" },
+    { "op": "add_experience", "memoryId": "memory-b7b584f5-8f65-4739-8aa7-f902637feadf", "text": "My skin dries to the grey of cold ash and I learn to stand as still as the Voivode himself, motionless in doorways until even rats forget I am there — I feel him settling further into my bones." }
+  ],
+  "gameEnded": false
+}

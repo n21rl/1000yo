@@ -1,0 +1,11 @@
+{
+  "stamp": "65a",
+  "reasoning": "The oldest unlost Resource is A String of Uncut Coral, held since character creation in Ragusa. Traded to an antiquarian for two Resources fitting Bruges' contemporary financial world.",
+  "operations": [
+    { "op": "strike_resource", "id": "resource-79b92ce9-baf9-403d-929c-b324bd6e316a" },
+    { "op": "create_resource", "name": "A Letter of Credit with the Bruges Exchange", "description": "coin I no longer have to carry or guard" },
+    { "op": "create_resource", "name": "A Half-Share in a Wool Warehouse", "description": "a stake on the quay, bought with an antiquarian's coin" },
+    { "op": "add_experience", "memoryId": "memory-c3f62773-66dd-41c8-ba36-145889e476b2", "text": "An antiquarian recognizes the worth of my father's old coral string as a relic of Ragusan craft long fallen from fashion and pays handsomely; I fold the coin into a letter of credit at the Bruges Exchange and a half-share in a wool warehouse on the quay, more useful currency for this age than red beads." }
+  ],
+  "gameEnded": false
+}

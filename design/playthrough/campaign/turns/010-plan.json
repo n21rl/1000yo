@@ -1,0 +1,9 @@
+{
+  "stamp": "43a",
+  "reasoning": "Basing the new Resource on the checked Skill Weighing Coral by Touch: Xene still carries and trusts her father's old Ragusan balance-scale over the newer steelyards Alexandria's factors use, an archaic habit that undercuts her disguise.",
+  "operations": [
+    { "op": "create_resource", "name": "A Ragusan Balance-Scale", "description": "worn bronze pans from my father's shop; I trust nothing else to weigh true, though it marks me as a relic among the newer merchants" },
+    { "op": "add_experience", "memoryId": "memory-8256a5fe-6d33-41a5-be38-5225be43f1e5", "text": "For all my new name and new tongue, I still weigh coral on my father's old bronze balance-scale rather than the steelyards the young factors favor — a small vanity that marks me instantly as a relic to anyone paying attention." }
+  ],
+  "gameEnded": false
+}

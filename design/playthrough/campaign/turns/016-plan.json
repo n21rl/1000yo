@@ -1,0 +1,12 @@
+{
+  "stamp": "60a",
+  "reasoning": "Checks the unchecked Skill Visionary — Katelijne's reputation as Bruges' harmless mad clockmaker deflects suspicion. Mute Ilya, unable to speak in his own defense, is arrested in her place. Decades have now passed since Ragusa without a mortal dying of old age (refs/rules.txt:155), so Beatriz is struck out here as overdue background upkeep, which also empties her Memory — forgotten to make room for this turn's new one, since all five are full.",
+  "operations": [
+    { "op": "check_skill", "id": "skill-c05c673f-f8a6-41d0-8c0c-e88698bcd0f2" },
+    { "op": "strike_character", "id": "character-f80b3856-cad2-4d6a-a596-95bcf08ffa6f" },
+    { "op": "edit_character", "id": "character-6056b302-f77e-45b5-b607-5ce33d7b3b75", "description": "a mute boy Dragan sent to me; taken by the watch in my place, unable to speak a word to clear himself" },
+    { "op": "forget_memory", "memoryId": "memory-af6ab8dd-9657-4bf2-8b78-21aab5c4eb71" },
+    { "op": "add_memory", "text": "Decades gone, Beatriz finally dies old and gray in her own bed while I sleep away the day; that same week the watch comes asking after bloodless corpses near my workshop, and it is mute Ilya — who cannot speak to clear himself — that I let them take instead, my name as Bruges' harmless mad clockmaker sparing me entirely." }
+  ],
+  "gameEnded": false
+}

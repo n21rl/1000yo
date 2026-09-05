@@ -1,0 +1,11 @@
+{
+  "stamp": "40a",
+  "reasoning": "All five Skills are now checked, so 'check a Skill' converts to the substitution: lose a Resource instead (refs/rules.txt:228). The Foscari Ledger is lost — burned for kindling as Xene erases traces of her old life. The prompt's own explicit instruction then creates a new Resource: a bricked-off cellar vault to sleep in. A mortal servant is created, as the prompt allows.",
+  "operations": [
+    { "op": "strike_resource", "id": "resource-12047d88-6d1c-4ac5-b554-614f614a394c" },
+    { "op": "create_resource", "name": "A Bricked-Off Cellar Vault", "description": "a hidden chamber beneath my warehouse, sealed but for a hole no wider than my hand" },
+    { "op": "create_character", "name": "Ilya", "description": "a mute boy Dragan sent to me; he keeps watch over the bricked vault by day and asks nothing", "type": "mortal" },
+    { "op": "add_experience", "memoryId": "memory-0c77db1c-c659-40b9-9852-ac69a41f7260", "text": "After the mirror very nearly finishes me, I burn the last of the Foscari Ledger for kindling and wall off a cellar chamber beneath my warehouse with only a fist-sized breathing hole; Dragan sends me a mute boy named Ilya to keep watch over the bricks by day." }
+  ],
+  "gameEnded": false
+}

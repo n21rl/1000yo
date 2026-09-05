@@ -1,0 +1,9 @@
+{
+  "stamp": "73a",
+  "reasoning": "This is a terminal prompt (73a): the deck itself declares the game over. Katelijne's stability closes the loop the whole campaign traced — every flight, every new name, every reinvention was in service of exactly this: becoming as fixed and unmoving as the Voivode of Ash was to her on that first Ragusan night. No trait change is instructed; the closing Experience answers what the stability means and the game ends here.",
+  "operations": [
+    { "op": "add_experience", "memoryId": "memory-a2cb0e0b-3fd8-4bc9-baf9-4ce4d338760d", "text": "The clockwork completes itself at last, and I complete with it — vault sealed, coin invested to grow without me, no mortal alive who can name what I once was; I settle into the tower's heart as still as the Voivode ever stood on that Ragusan stair, and understand, finally, that this stillness was never survival. It was always what he was." }
+  ],
+  "gameEnded": true,
+  "gameEndedReason": "Terminal prompt 73a ('You achieve a position of absolute stability that might sustain you, unchanging, until the Sun dies... The game is over.') explicitly declares the game over, per refs/rules.txt:232 ('...or if a Prompt tells you that the game has ended')."
+}

@@ -1,0 +1,9 @@
+{
+  "stamp": "28a",
+  "reasoning": "The only long-dead mortal Character with a surviving related Memory is Fra Anzelmo (Memory IV, unlost). The harness exposes no restore/un-strike operation for a struck Character, and this return doesn't need one: he comes back as an animate, unquiet remnant rather than a living man restored to play, so his Character stays struck. He wants the confession he never got to hear before she broke his neck.",
+  "operations": [
+    { "op": "check_skill", "id": "skill-656be402-fb34-450d-9a3b-03e35ced4a6f" },
+    { "op": "add_experience", "memoryId": "memory-b3ef0407-7358-4fab-84f8-d325d73356ff", "text": "Something wearing Fra Anzelmo's ruined shape claws up outside Alexandria's walls, sustained on whatever hatred survives a broken neck, and demands the confession he never got to hear; I recite it back to him in Latin, and he crumbles to nothing at last, satisfied." }
+  ],
+  "gameEnded": false
+}

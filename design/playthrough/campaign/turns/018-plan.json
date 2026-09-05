@@ -1,0 +1,11 @@
+{
+  "stamp": "68a",
+  "reasoning": "No Skill is unchecked (all six are checked), so the 'check a Skill or lose a Resource' choice is settled: lose a Resource. The antiquity — the actual marriage contract with Beatriz — is gained as a new Resource. The prompt's further instruction to 'regain one of your earliest Memories' (restoring the already-forgotten Beatriz Memory) is not reachable: the app's own memory-detail menu toggles the same control between 'Forget' and 'Restore' depending on state, but the harness's forget_memory operation is hardcoded to click an item labelled exactly 'Forget', so it cannot target a lost Memory's 'Restore' label — recorded as no_mechanical_change rather than risking a failed turn. The required Experience about acquiring the antique is still written, honestly noting the years themselves stay lost.",
+  "operations": [
+    { "op": "strike_resource", "id": "resource-d1a445ba-0675-40bb-818e-693070352b50" },
+    { "op": "create_resource", "name": "The Marriage Contract with Beatriz Gundulić", "description": "the actual parchment, rat-chewed and stained, sold to me by a dealer who has no idea what it truly is" },
+    { "op": "no_mechanical_change", "why": "The prompt's 'regain one of your earliest Memories' would restore the already-forgotten Beatriz Memory (III). The app supports this in principle (the memory-detail menu's Forget control relabels to Restore once a Memory is lost), but the harness's forget_memory operation only ever clicks an action-sheet item labelled exactly 'Forget' and has no operation that targets the 'Restore' label, so a lost Memory cannot be un-forgotten through this harness. The Memory stays lost; the antiquity is still gained and the required Experience is still recorded." },
+    { "op": "add_experience", "memoryId": "memory-c3f62773-66dd-41c8-ba36-145889e476b2", "text": "A Bruges antiquities dealer, ignorant of what he's selling, offers me the actual marriage contract Beatriz and I signed two hundred years and three names ago — rat-chewed, stained, unmistakably ours; I empty my letter of credit to buy it back, though the years it should return to me stay lost all the same." }
+  ],
+  "gameEnded": false
+}

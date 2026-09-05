@@ -1,0 +1,45 @@
+{
+  "name": "Ismenia Foscari",
+  "firstMemory": "I am Ismenia, daughter of Marin Foscari, born in the free city of Ragusa in the year of Our Lord 1358; I keep my father's ledgers and haggle for coral and salt along the Adriatic wharves.",
+  "mortals": [
+    { "name": "Marin Foscari", "description": "my father, a coral merchant who taught me the weight of a fair scale" },
+    { "name": "Beatriz Gundulić", "description": "my betrothed, promised to me since childhood by our fathers' contracts" },
+    { "name": "Fra Anzelmo", "description": "the Franciscan confessor who knows every sin in Ragusa, including mine" }
+  ],
+  "skills": [
+    { "name": "Weighing Coral by Touch", "description": "I can judge a strand's worth blind, by the roll of the beads in my palm" },
+    { "name": "Reading Contracts in Three Tongues", "description": "Latin, Slavic, and the merchant Italian of the wharves" },
+    { "name": "Talking My Way Past a Locked Gate", "description": "a soft voice and a plausible errand open most doors in Ragusa" }
+  ],
+  "resources": [
+    { "name": "A String of Uncut Coral", "description": "beads my father let me keep from a bad lot, red as old blood" },
+    { "name": "The Foscari Ledger", "description": "years of trade recorded in my own hand" },
+    { "name": "A Rented Room Above the Customs House", "description": "where I sleep when the tide keeps me from home" }
+  ],
+  "laterMemories": [
+    {
+      "text": "Marin Foscari teaches me to falsify the weights recorded in the Foscari Ledger when the harvest is thin, so that no household on our street goes hungry for want of an honest scale.",
+      "traits": ["Marin Foscari", "The Foscari Ledger"]
+    },
+    {
+      "text": "I read our marriage contract aloud to Beatriz Gundulić myself, in Latin, Slavic, and Italian in turn, so that she will understand exactly what she is promising away before her father's notary arrives.",
+      "traits": ["Beatriz Gundulić", "Reading Contracts in Three Tongues"]
+    },
+    {
+      "text": "Fra Anzelmo climbs the stair to my rented room above the Customs House to hear confession from sailors too ashamed to kneel in the cathedral, and I listen through the wall to every sin they bring him.",
+      "traits": ["Fra Anzelmo", "A Rented Room Above the Customs House"]
+    }
+  ],
+  "immortal": {
+    "name": "The Voivode of Ash",
+    "description": "a hollow, cinder-grey nobleman who has outlived seven names for his own title, and has watched Ragusa's walls rise course by course"
+  },
+  "mark": {
+    "name": "A Throat That Does Not Close",
+    "description": "a wound at my neck that never fully scars over; I bind it in silk and call it a fever-scar"
+  },
+  "curseMemory": {
+    "text": "The Voivode of Ash meets me on the Customs House stair on a night thick with fog, opens my throat with one grey finger, and drinks until I am no longer Ragusa's daughter but his — I wake with A Throat That Does Not Close and the taste of ash in my mouth forever after.",
+    "traits": ["The Voivode of Ash", "A Throat That Does Not Close"]
+  }
+}

@@ -1,11 +1,25 @@
 # Playthrough simulation
 
-A complete campaign played through the real app in a real browser, once at
-phone width and once at desktop width, with every screen change captured as
-a screenshot and every action recorded as structured data.
+A scripted pass through the real app in a real browser, once at phone width
+and once at desktop width, with every screen change captured as a screenshot
+and every action recorded as structured data. It covers each mechanic once; it
+is not a campaign played to an end condition, and it does not answer the
+prompts it draws.
 
 Recorded 2026-09-05 against `http://localhost:4173/index.html`
 (`npm run dev`), prompt deck `refs/prompts.csv`.
+
+> **This is a historical record, not a picture of the app as it stands.** It was
+> taken at commit `8cb8a4c`, and the blocking defect it found (finding 1) was
+> fixed one commit later in `607ac84`. The desktop frames below therefore show
+> the *defective* layout — that is what makes them evidence. Nothing here has
+> been re-run since; a re-run would no longer reproduce finding 1.
+>
+> Two further caveats on what this run is worth. The actions were a **fixed
+> script**, written before the seed was known, so it exercises the UI but does
+> not answer the prompts it draws — see "What this run does not show" below.
+> And it stops after seven prompt entries; it is not a campaign played to an
+> end condition.
 
 ## What is here
 
@@ -66,7 +80,7 @@ final states disagree on traces back to one cause.
 
 ## Findings
 
-### 1. On desktop the memory ⋮ menu has no entry point, and the play loop dead-ends (blocking)
+### 1. On desktop the memory ⋮ menu had no entry point, and the play loop dead-ended (blocking — FIXED in `607ac84`)
 
 `styles.css` hides `#play-memory-detail-more` above 1100px:
 
@@ -103,9 +117,13 @@ Frames [mobile/076](mobile/screens/076-memory-menu.png) and [desktop/076](deskto
 are the same step of the same playthrough, one layout each: on phone the ⋮ opens
 the sheet, on desktop there is no ⋮ in the memory detail at all.
 
-The fix is to drop `#play-memory-detail-more` from that rule and place the
-button in the middle column's memory-detail header, where the memory it acts
-on lives.
+**Fixed in `607ac84`**: the button moved out of `.play-header-menus` into
+`.play-memory-detail-head`, beside the title of the memory it acts on, with an
+absolute-position rule restoring its phone placement and the desktop block
+returning it to flow. `#play-header-back` stays hidden above 1100px. A desktop
+re-run after the fix produced 111 steps, zero `blocked` steps, and a final
+state identical to mobile's; 110 of the 111 mobile frames were byte-identical
+before and after.
 
 ### 2. Both layouts are otherwise clean
 
@@ -128,6 +146,36 @@ single CDN `<img>` Material icon still used for the prompt card's chevron
 holdout) — offline it renders as nothing at all. Converting that one to
 `createMaterialFallbackIcon` would remove the app's last runtime dependency
 on a third-party host.
+
+## What this run does not show
+
+The actions were a fixed script, written before the seed was known. It drives
+every screen and exercises each mechanic once, but it **does not answer the
+prompts it draws** — the two are independent, so any match between an
+instruction and the action taken is coincidence. Scored against the seven
+entries drawn, roughly one instruction in twelve was met, and the two verbs
+that matter most were inverted: "kill a Character" means *strike out*, and the
+script used *check* for it at 1a and struck a Resource when 5a said Character.
+
+The app noticed. `getResolutionWarnings` fired at 5b and 4b ("Traits: none
+created, checked or struck out", "Experience: none recorded for this prompt"),
+and the harness auto-dismissed every warning dialog on its way to the roll.
+Those warnings are the app's own oracle for "this turn looks wrong" and this
+run threw them away.
+
+So the honest scope is: **the UI does what it should when driven; the game was
+not played.** A campaign that follows each prompt and runs to an end condition
+(`refs/rules.txt:232` — unable to check or lose a Skill or Resource when
+required, or a prompt that ends the game; deck rows 72–80 are the terminal
+entries) is separate work.
+
+Two deck defects surfaced while checking this, in `refs/prompts.csv` rather
+than the app: prompt 3's `a` cell held both the 3a and 3b entries run together
+with the literal marker `3b ` inline and `b` empty, so a second visit was
+skipped entirely — **fixed in `f3e372c`**. Prompt 22's `a` and `b` cells are
+byte-identical, so a second visit repeats the first verbatim; the real 22b text
+is not in the file and recovering it needs the source rulebook, so it is **not
+fixed**.
 
 ## Reproducing
 

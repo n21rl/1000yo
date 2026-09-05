@@ -1,0 +1,165 @@
+{
+  "recordedAt": "2026-09-05T07:18:33.258Z",
+  "app": {
+    "baseUrl": "http://localhost:4173/index.html",
+    "seed": 2654435769,
+    "promptDeck": "refs/prompts.csv"
+  },
+  "character": "Iolanthe Vess",
+  "profiles": [
+    {
+      "profile": "mobile",
+      "label": "Mobile (iPhone-class, 390x844)",
+      "layout": "bottom-tab phone layout (<640px)",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "steps": 111,
+      "screens": "mobile/screens/",
+      "actionLog": "mobile/actions.jsonl",
+      "run": "mobile/run.json",
+      "promptSequence": [
+        "PROMPT 4A",
+        "PROMPT 5A",
+        "PROMPT 5B",
+        "PROMPT 3A",
+        "PROMPT 4B",
+        "PROMPT 8A"
+      ],
+      "finalCharacter": {
+        "name": "Iolanthe of the Wet Stones",
+        "memorySlots": 5,
+        "memoriesInMind": 4,
+        "lostMemories": 1,
+        "experiences": 11,
+        "diaryMemories": 1,
+        "hasDiary": true,
+        "characters": 4,
+        "skills": 4,
+        "resources": 4,
+        "marks": 1,
+        "checked": 1,
+        "struckOut": 1
+      },
+      "finalCampaign": {
+        "currentPrompt": 8,
+        "visits": [
+          [
+            1,
+            1
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            5,
+            2
+          ],
+          [
+            8,
+            1
+          ]
+        ],
+        "resolved": [
+          "1a",
+          "4a",
+          "5a",
+          "5b",
+          "3a",
+          "4b"
+        ]
+      },
+      "diagnostics": {
+        "pageErrors": 0,
+        "consoleErrors": 6,
+        "failedRequests": [
+          "https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap",
+          "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/keyboard_arrow_down/default/24px.svg"
+        ]
+      }
+    },
+    {
+      "profile": "desktop",
+      "label": "Desktop (1440x900)",
+      "layout": "three-column desktop grid (>=1100px)",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "steps": 106,
+      "screens": "desktop/screens/",
+      "actionLog": "desktop/actions.jsonl",
+      "run": "desktop/run.json",
+      "promptSequence": [
+        "PROMPT 4A",
+        "PROMPT 5A",
+        "PROMPT 5B",
+        "PROMPT 3A",
+        "PROMPT 4B",
+        "PROMPT 8A"
+      ],
+      "finalCharacter": {
+        "name": "Iolanthe of the Wet Stones",
+        "memorySlots": 5,
+        "memoriesInMind": 5,
+        "lostMemories": 0,
+        "experiences": 10,
+        "diaryMemories": 0,
+        "hasDiary": false,
+        "characters": 4,
+        "skills": 4,
+        "resources": 3,
+        "marks": 1,
+        "checked": 1,
+        "struckOut": 1
+      },
+      "finalCampaign": {
+        "currentPrompt": 8,
+        "visits": [
+          [
+            1,
+            1
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            4,
+            2
+          ],
+          [
+            5,
+            2
+          ],
+          [
+            8,
+            1
+          ]
+        ],
+        "resolved": [
+          "1a",
+          "4a",
+          "5a",
+          "5b",
+          "3a",
+          "4b"
+        ]
+      },
+      "diagnostics": {
+        "pageErrors": 0,
+        "consoleErrors": 6,
+        "failedRequests": [
+          "https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap",
+          "https://fonts.gstatic.com/s/i/short-term/release/materialsymbolsoutlined/keyboard_arrow_down/default/24px.svg"
+        ]
+      }
+    }
+  ]
+}

@@ -1,9 +1,0 @@
-{
-  "stamp": "5a",
-  "reasoning": "5a: I have living Characters, so the conditional does not apply. Kill a Character — strike out Fra Ludovico, the priest who respects me and who has begun to notice. Check a Skill — Guild Silence, the guild's law about men who talk, now enforced with my hands. One Experience, into Memory III, the Fra Ludovico memory.",
-  "operations": [
-    { "op": "strike_character", "id": "character-e8cf1f76-f75a-45f5-9dc4-a8bdb74495ee" },
-    { "op": "check_skill", "id": "skill-69b71b19-170f-4402-b0c8-ed7e8c115fdf" },
-    { "op": "add_experience", "memoryId": "memory-71d644f5-34c1-42be-b2fc-463bab2933bd", "text": "Fra Ludovico turns Piero Sagredo's stolen scissors over in his hand in the sacristy of Santa Maria e San Donato and says the boy's name once, as a question; I keep Guild Silence the only way that is left to me, and lay the priest under the mosaic pavement he loved, with his censer beneath his cheek." }
-  ]
-}

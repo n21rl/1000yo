@@ -1,9 +1,14 @@
 # Aborted campaign — evidence, not a playthrough
 
-**Do not read this as a record of the game.** It is five turns of a campaign
-that was stopped when the app locked the save out of Play, kept because the
-screenshots and logs are the evidence for that bug. A clean campaign will be
-replayed from turn 1 once the app is fixed.
+**Do not read this as a record of the game.** It is five turns of a campaign,
+kept because the screenshots and logs are the evidence for a save-lockout bug.
+A clean campaign will be replayed from turn 1 once the app is fixed.
+
+It did not stop because of the bug and it did not reach a game end condition.
+The bug locked the save after turn 3 and blocked turn 4 for about six minutes;
+the authoring agent worked around the lock and played turns 4 and 5. The run
+was halted afterwards, once the workaround and the character it had invented
+came to light.
 
 Vampire: Domenego Zulian, a Murano glassblower, b. Venice 1268.
 Prompts drawn: 1a → 5a → 1b → 1c → 4a → (3a, unplayed).

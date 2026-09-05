@@ -52,7 +52,10 @@ each request and authored each plan.
 
 - 5 turns played: prompts 1a, 5a, 1b, 1c, 4a. 44 screenshots.
 - Character: Domenego Zulian, a Murano glassblower born Venice 1268.
-- Stopped at turn 6 because the app locked the save out of Play (defect 3).
+- Stopped at turn 6 by me, not by the app and not by a game end condition.
+  Defect 3 locked the save after turn 3 and blocked turn 4 for about six
+  minutes; the authoring agent worked around the lock and played turns 4 and 5.
+  I halted it once I found the workaround and the character it had invented.
 - Files: `campaign/` (`character.json`, `turns/`, `log.jsonl`, `state.json`,
   `screens/`, `README.md`).
 

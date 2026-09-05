@@ -42,6 +42,20 @@ identically without carrying PRNG state between processes.
 A failed operation aborts the turn without advancing state and writes
 `turns/NNN-error.json`; fix the plan and re-run.
 
+## Renaming and writing into a Memory you just created
+
+`rename` opens the header identity menu and renames the vampire — for prompts
+that ask what name you go by now (4a's "what new name do you adopt").
+
+`add_memory` creates a Memory whose id doesn't exist until the app assigns it
+at runtime, so a plan can't know it in advance. Use the literal string
+`"$new"` as `memoryId` in a later operation in the *same* plan (`add_experience`,
+`forget_memory`, `move_memory_to_diary`, ...) to target the Memory that
+`add_memory` just created — this resolves against the freshly re-fetched sheet
+each operation reads, so it always means "whichever Memory was created most
+recently in this turn." Each `turns/NNN-request.json` restates this in its
+`notes` field.
+
 ## Files
 
 ```text

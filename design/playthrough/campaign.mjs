@@ -199,7 +199,18 @@ const nameOf = (sheet, kind, id) => {
   if (!found) throw new Error(`no ${kind} with id ${id}`);
   return found.name;
 };
+/* "$new" resolves to the memory just created by an add_memory op earlier in
+   the same turn's plan. applyOperation() re-fetches the sheet fresh before
+   every op, so by the time a later op in the plan runs, add_memory's
+   crypto.randomUUID() id already exists in it — this just picks it out
+   without the plan needing to know that id in advance. Character#addMemory
+   appends, so the newest memory is always the array's last element. */
 const memoryOf = (sheet, id) => {
+  if (id === "$new") {
+    const found = sheet.memories.at(-1);
+    if (!found) throw new Error(`"$new" requested but no memory exists yet`);
+    return found;
+  }
   const found = sheet.memories.find((m) => m.id === id);
   if (!found) throw new Error(`no memory with id ${id}`);
   return found;
@@ -320,6 +331,16 @@ const OPS = {
     await page.click(".app-dialog-confirm");
   },
   async no_mechanical_change() { /* recorded, nothing driven */ },
+  async rename(page, op) {
+    /* #play-avatar-button is hidden while a memory detail is open (the
+       header's right slot is given to the memory ⋮ instead) — a prior op
+       in the same turn may have left the page there, so close it first. */
+    await goTab(page, "memories");
+    await page.click("#play-avatar-button");
+    await sheetItem(page, "Rename vampire").click();
+    await page.fill("#app-dialog-root input", op.name);
+    await page.click(".app-dialog-confirm");
+  },
 };
 
 const applyOperation = async (page, op, shots) => {
@@ -366,6 +387,10 @@ const writeRequest = async (page, turn, extra = {}) => {
     availableOperations: Object.keys(OPS).filter((k) => k !== "check" && k !== "strike" && k !== "edit_trait" && k !== "delete_trait")
       .concat(["check_skill", "check_resource", "check_character", "strike_skill", "strike_resource", "strike_character",
         "edit_skill", "edit_resource", "edit_character", "edit_mark", "delete_skill", "delete_resource", "delete_character", "delete_mark"]),
+    notes: [
+      "A Memory created by add_memory this turn has no id yet at plan-authoring time (its id is assigned by the app when the operation runs). "
+        + "Use the literal string \"$new\" as memoryId in a later operation in the SAME plan (e.g. add_experience) to target it.",
+    ],
     ...extra,
   };
   writeJson(path.join(TURNS, `${pad(turn)}-request.json`), request);

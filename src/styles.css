@@ -2183,15 +2183,26 @@ button:disabled {
     grid-row: 1;
   }
 
+  /* The stepper belongs to the form, so it spans the middle column
+     rather than the whole window. */
   .wizard-header {
-    grid-column: 1 / -1;
+    grid-column: 2;
     grid-row: 2;
+    justify-content: flex-end;
+    padding-left: 2rem;
+    padding-right: 2rem;
+  }
+
+  /* The step panel's own title already names the step; the label above
+     it only repeated that. The count is what the header adds. */
+  .wizard-step-label {
+    display: none;
   }
 
   .wizard-progress-track {
-    grid-column: 1 / -1;
+    grid-column: 2;
     grid-row: 3;
-    margin: 0 0 1rem;
+    margin: 0 2rem 1rem;
   }
 
   .wizard-sheet {

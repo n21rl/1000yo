@@ -1327,7 +1327,15 @@ const loadPromptDeck = async () => {
   } finally {
     promptState.isLoading = false;
     if (promptState.deck.length) {
-      normalizeLoadedPromptState(promptState);
+      /* A fresh vampire's first prompt needs the deck loaded to resolve
+         (its a/b/c entries decide what the roll lands on) — this is the
+         earliest point that's true, so the first-ever roll happens here
+         rather than in startPlay(). A resuming campaign already has visits
+         restored by loadCharacter() before this runs, so ensurePromptVisit
+         no-ops and normalizeLoadedPromptState only clamps/defends as before. */
+      if (!ensurePromptVisit(promptState, rollDie(10) - rollDie(6))) {
+        normalizeLoadedPromptState(promptState);
+      }
       persistCurrentCharacter();
     }
     render();
@@ -1356,9 +1364,6 @@ const startPlay = async () => {
      whatever was on screen before it — see getResolutionWarnings. */
   if (!promptState.signature) {
     promptState.signature = getPlaySignature(character);
-    persistCurrentCharacter();
-  }
-  if (ensurePromptVisit(promptState)) {
     persistCurrentCharacter();
   }
   render();

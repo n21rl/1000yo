@@ -97,6 +97,30 @@ test("normalizeLoadedPromptState and ensurePromptVisit seed current visit", () =
   assert.equal(changed, false);
 });
 
+test("ensurePromptVisit rolls from Prompt 1 for a fresh vampire, not a fixed 1a", () => {
+  const deck = Array.from({ length: 20 }, (_, index) => ({ a: `Prompt ${index + 1}a`, b: "", c: "" }));
+
+  const forward = createPromptState();
+  forward.deck = deck;
+  assert.equal(ensurePromptVisit(forward, 3), true);
+  assert.equal(forward.currentPrompt, 4);
+  assert.equal(forward.visits.get(4), 1);
+
+  const zero = createPromptState();
+  zero.deck = deck;
+  assert.equal(ensurePromptVisit(zero, 0), true);
+  assert.equal(zero.currentPrompt, 1);
+
+  /* A negative roll can't move past Prompt 1 on the first turn either —
+     same clamp as every later roll (refs/rules.txt: "You can't move
+     backward past Prompt 1. Just encounter 1 again."). */
+  const backward = createPromptState();
+  backward.deck = deck;
+  assert.equal(ensurePromptVisit(backward, -9), true);
+  assert.equal(backward.currentPrompt, 1);
+  assert.equal(backward.visits.get(1), 1);
+});
+
 const memory = (overrides = {}) => ({
   lost: false,
   storedInDiary: false,

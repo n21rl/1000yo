@@ -164,9 +164,12 @@ export const normalizeLoadedPromptState = (promptState) => {
   if (!promptState.visits.has(promptState.currentPrompt)) promptState.visits.set(promptState.currentPrompt, 1);
 };
 
-export const ensurePromptVisit = (promptState) => {
+/* "Start at Prompt 1" is the pivot for the very first roll, not a prompt
+   answered without one — the same d10-d6 subtraction that moves every later
+   turn applies here too, so a fresh vampire's actual first prompt is
+   1 + (d10 - d6), not always 1a. */
+export const ensurePromptVisit = (promptState, rollDelta) => {
   if (promptState.visits.size) return false;
-  promptState.currentPrompt = 1;
-  promptState.visits.set(1, 1);
+  advanceToNextPromptEntry(promptState, 1 + rollDelta);
   return true;
 };
